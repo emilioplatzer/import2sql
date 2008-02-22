@@ -34,9 +34,10 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="BaseDatos.cs" />
     <Compile Include="Otras.cs" />
+    <Compile Include="Parametros.cs" />
     <Compile Include="Procesar.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Pruebas.cs" />
+    <Compile Include="PruebasReflexion.cs" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="ADOX">

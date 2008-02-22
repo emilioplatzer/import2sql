@@ -9,6 +9,7 @@
 
 using System;
 using System.Data.OleDb;
+using NUnit.Framework;
 using ADOX;
 
 namespace TodoASql
@@ -21,7 +22,7 @@ namespace TodoASql
 		public BaseDatos()
 		{
 		}
-		public static ADOX.CatalogClass crearMDB(string nombreArchivo){
+		public static ADOX.CatalogClass CrearMDB(string nombreArchivo){
 			ADOX.CatalogClass cat=new CatalogClass();
 			cat.Create("Provider=Microsoft.Jet.OLEDB.4.0;" +
 				   "Data Source="+nombreArchivo+";" +
@@ -34,6 +35,17 @@ namespace TodoASql
 				@"PROVIDER=Microsoft.Jet.OLEDB.4.0;Data Source="+nombreArchivo;
 			ConexionABase.Open();
 			return ConexionABase;
+		}
+	}
+	[TestFixture]
+	public class ProbarBaseDatos{
+		[Test]
+		public void CreacionMdb(){
+			string nombreArchivo="tempAccesABorrar.mdb";
+			Archivo.Borrar(nombreArchivo);
+			Assert.IsTrue(!Archivo.Existe(nombreArchivo),"no debería existir");
+			Catalog cat=BaseDatos.CrearMDB(nombreArchivo);
+			Assert.IsTrue(Archivo.Existe(nombreArchivo),"debería existir");
 		}
 	}
 }

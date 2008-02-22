@@ -12,6 +12,7 @@ using System.Text;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using NUnit.Framework;
 
 namespace TodoASql
 {
@@ -20,7 +21,43 @@ namespace TodoASql
 	/// </summary>
 	public class Otras
 	{
-		public static int cantidadOcurrencias(char caracterBuscado, string lugarDondeBuscar){
+		public static int Min(int uno,int dos){
+			return uno<dos?uno:dos;
+		}
+		public static void ShowArray(Array theArray) {
+	        foreach (Object o in theArray) {
+	            Console.Write("[{0}]", o);
+	        }
+	        Console.WriteLine("\n");
+	    }
+	}
+	public class Archivo{
+		public static string Leer(string nombreArchivo){
+			StreamReader re = File.OpenText(nombreArchivo);
+			string rta=re.ReadToEnd();
+			re.Close();
+			return rta;
+		}
+		public static void Escribir(string nombreArchivo, string contenido){
+			StreamWriter re = File.CreateText(nombreArchivo);
+			re.Write(contenido);
+			re.Close();
+		}
+		public static void Agregar(string nombreArchivo, string contenido){
+			StreamWriter re = File.AppendText(nombreArchivo);
+			re.Write(contenido);
+			re.Close();
+		}
+		public static void Borrar(string nombreArchivo){
+			File.Delete(nombreArchivo);
+		}
+		public static bool Existe(string nombreArchivo){
+			return File.Exists(nombreArchivo);
+		}
+	}
+	
+	public class Cadena{
+		public static int CantidadOcurrencias(char caracterBuscado, string lugarDondeBuscar){
 			int i=0,rta=0;
 			while((i=lugarDondeBuscar.IndexOf(caracterBuscado,i))>=0){
 				i++; rta++;
@@ -30,13 +67,13 @@ namespace TodoASql
 		/// <summary>
 		/// Verdadero si la cantidad de "{" es igual a la de"}"
 		/// </summary>
-		public static bool llavesBalanceadas(string s){
-			return cantidadOcurrencias('{',s)==cantidadOcurrencias('}',s);
+		public static bool LlavesBalanceadas(string s){
+			return CantidadOcurrencias('{',s)==CantidadOcurrencias('}',s);
 		}
 		/// <summary>
 		/// Devuelve un string sacando acentos a las vocales
 		/// </summary>
-		public static string sinAcentos(string frase){
+		public static string SacarAcentos(string frase){
 			return frase.Replace("á","a")
 				.Replace("é","e")
 				.Replace("í","i")
@@ -50,42 +87,10 @@ namespace TodoASql
 				).ToLower();
 			*/
 		}
-		public static string leerArchivoCompleto(string nombreArchivo){
-			StreamReader re = File.OpenText(nombreArchivo);
-			string rta=re.ReadToEnd();
-			re.Close();
-			return rta;
-		}
-		public static string mayusculaPrimeraLetra(string s){
+		public static string MayusculaPrimeraLetra(string s){
 			return s.Substring(0,1).ToUpper()+s.Substring(1).ToLower();
 		}
-		public static void escribirArchivo(string nombreArchivo, string contenido){
-			StreamWriter re = File.CreateText(nombreArchivo);
-			re.Write(contenido);
-			re.Close();
-		}
-		public static void agregarArchivo(string nombreArchivo, string contenido){
-			StreamWriter re = File.AppendText(nombreArchivo);
-			re.Write(contenido);
-			re.Close();
-		}
-		public static void borrarArchivo(string nombreArchivo){
-			File.Delete(nombreArchivo);
-		}
-		public static bool existeArchivo(string nombreArchivo){
-			return File.Exists(nombreArchivo);
-		}
-		public static int min(int uno,int dos){
-			return uno<dos?uno:dos;
-		}
-		public static void ShowArray(Array theArray) {
-	        foreach (Object o in theArray) {
-	            Console.Write("[{0}]", o);
-	        }
-	        Console.WriteLine("\n");
-	    }
-
-		public static string expandirSignoIgual(string s){
+		public static string ExpandirSignoIgual(string s){
 			int i,caracterNumerico;
 			char c;
 			string digito="0123456789ABCDEF";
@@ -106,9 +111,39 @@ namespace TodoASql
 				}
 			}
 			return s;
+		}		
+		public static string SacarComillas(string valor){
+			return valor.Replace('"',' ')
+				.Replace('\n',' ')
+				.Replace('\r',' ')
+				.Replace('\t',' ')
+				.Substring(0,Otras.Min(250,valor.Length)).Trim();
 		}
 	}
-	
+	[TestFixture]
+	public class ProbarCadena{
+		public ProbarCadena(){
+		}
+		[Test]
+		public void CantidadOcurrencias(){
+			Assert.AreEqual(0,Cadena.CantidadOcurrencias('i',"hola como andás?"));
+			Assert.AreEqual(3,Cadena.CantidadOcurrencias('o',"hola como andás?"));
+			Assert.IsFalse(Cadena.LlavesBalanceadas("{{{no}no{no"),"no");
+			Assert.IsTrue(Cadena.LlavesBalanceadas("{{{no}no{no}}}si"),"si");
+		}
+		[Test]
+		public void SacarAcentos(){
+			Assert.AreEqual("hola como andas?",Cadena.SacarAcentos("hola como andás?"));
+		}
+		[Test]
+		public void SignoIgual(){
+			Assert.AreEqual("hola che",Cadena.ExpandirSignoIgual("hola=20che"));
+			Assert.AreEqual("Región",Cadena.ExpandirSignoIgual("Regi=F3n"));
+			Assert.AreEqual("Línea",Cadena.ExpandirSignoIgual("L=EDnea"));
+			Assert.AreEqual("el \nsalto",Cadena.ExpandirSignoIgual("el =\nsalto"));
+			Assert.AreEqual("lang=ES",Cadena.ExpandirSignoIgual("lang=3DES"));
+		}
+	}
 	/// <summary>
 	/// Para iterar en un loop foreach con los sufijos de texto Padre e Hijo
 	/// También se puede iterar sobre Padre e Hijo o Nada en función de un parámetro booleano
@@ -144,7 +179,7 @@ namespace TodoASql
 		public string ToLower(){
 			return ToString().ToLower();
 		}
-		public PadreHijo otro(){
+		public PadreHijo Otro(){
 			switch(soy){
 				case Posibilidades.Hijo: return new PadreHijo(Posibilidades.Padre);
 				case Posibilidades.Padre: return new PadreHijo(Posibilidades.Hijo);
