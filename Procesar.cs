@@ -52,7 +52,7 @@ namespace TodoASql
 		bool GuardarMailEnBase(){
 			StringBuilder campos=new StringBuilder();
 			StringBuilder valores=new StringBuilder();
-			string separador="";
+			Separador coma=new Separador(",");
 			for(int i=1;i<SelectAbierto.FieldCount;i++){
 				string nombreCampo=SelectAbierto.GetName(i);
 				// 
@@ -61,9 +61,8 @@ namespace TodoASql
 									:"----";
 				string valorCampo=ObtenerCampo(nombreCampo,proximoCampo);
 				if(valorCampo.Length>0){
-					campos.Append(separador+"["+nombreCampo+"]");
-					valores.Append(separador+'"'+Cadena.SacarComillas(valorCampo)+'"');
-					separador=",";
+					campos.Append(coma+"["+nombreCampo+"]");
+					valores.Append(coma.mismo()+'"'+Cadena.SacarComillas(valorCampo)+'"');
 				}
 			}
 			if(campos.Length>0){
