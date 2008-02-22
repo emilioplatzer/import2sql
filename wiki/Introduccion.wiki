@@ -1,0 +1,11 @@
+# Objetivos
+
+= Objetivos =
+
+Importar datos de fuentes no convencionales a bases de datos SQL.
+
+Por ahora solo funciona:
+  * Importar desde archivos conteniendo *mails*
+
+En desarrollo:
+  * Importar desde una matriz de *Excel* (por ejemplo datos de población en una matriz cuyas filas son los países y las columnas son los años).
