@@ -55,7 +55,6 @@ namespace TodoASql
 			return File.Exists(nombreArchivo);
 		}
 	}
-	
 	public class Cadena{
 		public static int CantidadOcurrencias(char caracterBuscado, string lugarDondeBuscar){
 			int i=0,rta=0;
@@ -142,6 +141,70 @@ namespace TodoASql
 			Assert.AreEqual("Línea",Cadena.ExpandirSignoIgual("L=EDnea"));
 			Assert.AreEqual("el \nsalto",Cadena.ExpandirSignoIgual("el =\nsalto"));
 			Assert.AreEqual("lang=ES",Cadena.ExpandirSignoIgual("lang=3DES"));
+		}
+	}
+	public class Separador{
+		string CadenaSeparadora;
+		int Vez;
+		public Separador(string cadenaSeparadora){
+			this.CadenaSeparadora=cadenaSeparadora;
+			this.Vez=0;
+		}
+		public static implicit operator string(Separador s){
+			s.Vez++;
+			return s.mismo();
+		}
+		public string mismo(){
+			if(Vez==1){
+				return "";
+			}
+			return CadenaSeparadora;
+		}
+		public static string Concatenar(ArrayList elementos,string separador){
+			StringBuilder rta=new StringBuilder();
+			Separador s=new Separador(separador);
+			foreach(string elemento in elementos){
+				rta.Append(s+elemento);
+			}
+			return rta.ToString();
+		}
+	}
+	[TestFixture]
+	public class ProbarSeparador{
+		[Test]
+		public void ProbarDirecto(){
+			Separador coma=new Separador(",");
+			Assert.AreEqual("uno",coma+"uno");
+			Separador mas=new Separador("+");
+			StringBuilder s=new StringBuilder();
+			s.Append(mas+"uno");
+			s.Append(mas+"dos");
+			Assert.AreEqual("uno+dos",s.ToString());
+		}
+		[Test]
+		public void ProbarConcatenar(){
+			ArrayList datos=new ArrayList();
+			Assert.AreEqual("",Separador.Concatenar(datos,","));
+			datos.Add("uno");
+			Assert.AreEqual("uno",Separador.Concatenar(datos,","));
+			datos.Add("dos");
+			Assert.AreEqual("uno,dos",Separador.Concatenar(datos,","));
+			datos.Add("tres");
+			Assert.AreEqual("uno; dos; tres",Separador.Concatenar(datos,"; "));
+		}
+		[Test]
+		public void ProbarMismo(){
+			string[] letras={"uno", "dos", "tres"};
+			string[] numeros={"1","2","3"};
+			string listaLetras="";
+			string listaNumeros="";
+			Separador mas=new Separador("+");
+			for(int i=0; i<3; i++){
+				listaLetras+=mas+letras[i];
+				listaNumeros+=mas.mismo()+numeros[i];
+			}
+			Assert.AreEqual("uno+dos+tres",listaLetras);
+			Assert.AreEqual("1+2+3",listaNumeros);
 		}
 	}
 	/// <summary>
