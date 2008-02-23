@@ -16,10 +16,7 @@ namespace TodoASql
 		{
 			// new Pruebas().Proceso(); /*
 			string dirBase=System.Environment.GetEnvironmentVariable("MAIL2ACCESS_DIR");
-			new MailASql(dirBase+@"\ServEsp.mdb"
-			             ,"MOCs"
-			             ,dirBase+@"\MailsAProcesar")
-				.LoQueSeaNecesario();
+			new MailASql().LoQueSeaNecesario();
 			// */
 			Console.WriteLine("Listo!");
 			

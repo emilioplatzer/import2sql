@@ -9,7 +9,7 @@
 
 using System;
 
-namespace Mail2Access
+namespace TodoASql
 {
 	/// <summary>
 	/// Para contener los parámetros de la aplicación.

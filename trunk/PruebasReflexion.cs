@@ -19,32 +19,46 @@ namespace TodoASql
 	/// </summary>
 	public class ClaseReflexiva
 	{
-		string campo1;
-		int campo2;
+		public string campo1;
+		public int campo2;
 		public ClaseReflexiva()
 		{
 			campo1="hola";
 			campo2=3;
 		}
+		public override string ToString(){
+			return campo1+campo2;
+		}
 		public string NombresMiembros(){
 			StringBuilder rta=new StringBuilder();
 			System.Reflection.MemberTypes mt=this.GetType().MemberType;
 			System.Reflection.MemberInfo[] ms=this.GetType().GetMembers();
+			Separador coma=new Separador(",");
 			foreach(MemberInfo m in ms){
-				rta.Append(m.Name+",");
+				rta.Append(coma+m.Name);
+			}
+			return rta.ToString();
+		}
+		public string NombresCampos(){
+			StringBuilder rta=new StringBuilder();
+			System.Reflection.FieldInfo[] ms=this.GetType().GetFields();
+			Separador coma=new Separador(",");
+			foreach(FieldInfo m in ms){
+				rta.Append(coma+m.Name);
 			}
 			return rta.ToString();
 		}
 	}
 	
 	[TestFixture]
-	class PruebasReflexion{
+	public class PruebasReflexion{
 		public PruebasReflexion(){
 		}
 		[Test]
 		public void NombresMiembros(){
+			ClaseReflexiva r=new ClaseReflexiva();
 			Assert.AreEqual("campo1,campo2"
-			                ,new ClaseReflexiva().NombresMiembros());
+			                ,r.NombresCampos());
 		}
 	}
 }
