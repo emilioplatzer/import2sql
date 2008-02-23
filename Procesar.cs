@@ -26,11 +26,12 @@ namespace TodoASql
 		OleDbDataReader SelectAbierto;
 		string DirectorioMails;
 		string NombreTablaReceptora;
-		public MailASql(string nombreMDB,string nombreTabla,string directorioMails)
-		{
-			this.NombreTablaReceptora=nombreTabla;
-			AbrirBase(nombreMDB);
-			this.DirectorioMails=directorioMails;
+		public MailASql():this(new ParametrosMailASql()){
+		}
+		public MailASql(ParametrosMailASql parametros){
+			this.DirectorioMails=parametros.DirMailsAProcesar;
+			this.NombreTablaReceptora=parametros.TablaReceptora;
+			AbrirBase(parametros.BaseReceptora);
 		}
 		string ObtenerCampo(string campo,string proximoCampo){
 			Regex r=new Regex(" *"+campo+"[ .]*:([^`]*?)("+proximoCampo+")", RegexOptions.Multiline);
@@ -152,7 +153,7 @@ namespace TodoASql
 				Nombre: María de las Mercedes
 				Tipo de documento: DNI - Número de documento: 12345678
 				Observaciones: condicional");
-			MailASql procesador=new MailASql(nombreArchivo,"receptor",directorio);
+			MailASql procesador=new MailASql(new ParametrosMailASql(nombreArchivo,"receptor",directorio));
 			procesador.LoQueSeaNecesario();
 			procesador.Close();
 			con=BaseDatos.abrirMDB(nombreArchivo);
@@ -165,6 +166,27 @@ namespace TodoASql
 			OleDbDataReader rdr=com.ExecuteReader();
 			rdr.Read();
 			Assert.AreEqual("123",rdr.GetValue(1));
+		}
+	}
+	public class ParametrosMailASql:Parametros{
+		public string DirTemp;
+		public string DirMailsAProcesar;
+		public string TablaReceptora;
+		public string BaseReceptora;
+		public ParametrosMailASql(){
+			string dirBase=System.Environment.GetEnvironmentVariable("MAIL2ACCESS_DIR");
+			if(dirBase.Length>0){
+				this.BaseReceptora=dirBase+@"\ServEsp.mdb";
+				this.TablaReceptora="MOCs";
+			    this.DirMailsAProcesar=dirBase+@"\MailsAProcesar";
+				this.DirTemp=System.Environment.GetEnvironmentVariable("TEMP");
+			}
+		}
+		public ParametrosMailASql(string nombreMDB,string nombreTabla,string directorioMails){
+			this.DirTemp=System.Environment.GetEnvironmentVariable("TEMP");
+			this.BaseReceptora=nombreMDB;
+			this.TablaReceptora=nombreTabla;
+			this.DirMailsAProcesar=directorioMails;
 		}
 	}
 }
