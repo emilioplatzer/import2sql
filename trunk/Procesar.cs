@@ -126,6 +126,7 @@ namespace TodoASql
 				   Nombre varchar(250),
 				   [Tipo de documento] varchar(250),
 				   [Número de documento] varchar(250),
+				   Nacimiento date,
 				   Observaciones varchar(250)
 				   )";
 			OleDbCommand com=new OleDbCommand(sentencia,con);
@@ -141,6 +142,7 @@ namespace TodoASql
 				content:quoted-printable
 				Numero: 123 :: Nombre: Carlos Perez
 				Tipo de documento: DNI Número de documento: 12.333.123.
+				Nacimiento: 15/1/1991
 				Observaciones: condicional");
 			Archivo.Escribir(directorio+@"\otro mail.eml",@"
 				lleno de basura
@@ -152,6 +154,7 @@ namespace TodoASql
 				Numero: 124
 				Nombre: María de las Mercedes
 				Tipo de documento: DNI - Número de documento: 12345678
+				Nacimiento: 10-8-71
 				Observaciones: condicional");
 			MailASql procesador=new MailASql(new ParametrosMailASql(nombreArchivo,"receptor",directorio));
 			procesador.LoQueSeaNecesario();
@@ -166,6 +169,10 @@ namespace TodoASql
 			OleDbDataReader rdr=com.ExecuteReader();
 			rdr.Read();
 			Assert.AreEqual("123",rdr.GetValue(1));
+			Assert.AreEqual(new DateTime(1991,1,15),rdr.GetDateTime(5));
+			rdr.Read();
+			Assert.AreEqual("María de las Mercedes",rdr.GetValue(2));
+			Assert.AreEqual(new DateTime(1971,8,10),rdr.GetDateTime(5));
 		}
 	}
 	public class ParametrosMailASql:Parametros{
