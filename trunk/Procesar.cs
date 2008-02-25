@@ -182,7 +182,7 @@ namespace TodoASql
 		public string BaseReceptora;
 		public ParametrosMailASql(){
 			string dirBase=System.Environment.GetEnvironmentVariable("MAIL2ACCESS_DIR");
-			if(dirBase.Length>0){
+			if(dirBase==null){
 				this.BaseReceptora=dirBase+@"\ServEsp.mdb";
 				this.TablaReceptora="MOCs";
 			    this.DirMailsAProcesar=dirBase+@"\MailsAProcesar";
