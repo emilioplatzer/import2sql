@@ -15,10 +15,9 @@ namespace TodoASql
 		public static void Main(string[] args)
 		{
 			// new Pruebas().Proceso(); /*
-			// try{
-				string dirBase=System.Environment.GetEnvironmentVariable("MAIL2ACCESS_DIR");
+			try{
 				new MailASql().LoQueSeaNecesario();
-			/* }catch(System.Data.OleDb.OleDbException e){
+			}catch(System.Data.OleDb.OleDbException e){
 				System.Windows.Forms.MessageBox.Show("Error?");
 				System.Windows.Forms.MessageBox.Show("Error "+e.Message);
 			} // */
