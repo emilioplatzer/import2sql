@@ -137,6 +137,7 @@ namespace TodoASql
 		[Test]
 		public void SignoIgual(){
 			Assert.AreEqual("hola che",Cadena.ExpandirSignoIgual("hola=20che"));
+			Assert.AreEqual(@"La región",Cadena.ExpandirSignoIgual("La regi=F3n"));
 			Assert.AreEqual("Región",Cadena.ExpandirSignoIgual("Regi=F3n"));
 			Assert.AreEqual("Línea",Cadena.ExpandirSignoIgual("L=EDnea"));
 			Assert.AreEqual("el \nsalto",Cadena.ExpandirSignoIgual("el =\nsalto"));

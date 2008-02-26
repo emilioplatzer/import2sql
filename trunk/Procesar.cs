@@ -183,11 +183,21 @@ namespace TodoASql
 		public ParametrosMailASql(){
 			string dirBase=System.Environment.GetEnvironmentVariable("MAIL2ACCESS_DIR");
 			if(dirBase==null){
-				this.BaseReceptora=dirBase+@"\ServEsp.mdb";
-				this.TablaReceptora="MOCs";
-			    this.DirMailsAProcesar=dirBase+@"\MailsAProcesar";
-				this.DirTemp=System.Environment.GetEnvironmentVariable("TEMP");
+				string[] parametros=System.Environment.GetCommandLineArgs();
+				if(parametros.Length>1 && parametros[0]=="DIR"){
+					dirBase=parametros[1];
+				}else{
+					string nombreArchivoDirBase="dirbase.ini";
+					if(Archivo.Existe(nombreArchivoDirBase)){
+						dirBase=Archivo.Leer(nombreArchivoDirBase);
+					}
+				}
 			}
+			this.BaseReceptora=dirBase+@"\ServEsp.mdb";
+			this.TablaReceptora="MOCs";
+		    this.DirMailsAProcesar=dirBase+@"\MailsAProcesar";
+			this.DirTemp=System.Environment.GetEnvironmentVariable("TEMP");
+			
 		}
 		public ParametrosMailASql(string nombreMDB,string nombreTabla,string directorioMails){
 			this.DirTemp=System.Environment.GetEnvironmentVariable("TEMP");
