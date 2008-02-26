@@ -9,6 +9,7 @@
 
 using System;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
@@ -142,6 +143,12 @@ namespace TodoASql
 			Assert.AreEqual("Línea",Cadena.ExpandirSignoIgual("L=EDnea"));
 			Assert.AreEqual("el \nsalto",Cadena.ExpandirSignoIgual("el =\nsalto"));
 			Assert.AreEqual("lang=ES",Cadena.ExpandirSignoIgual("lang=3DES"));
+		}
+		[Test]
+		public void RegexSplit(){
+			string[] varios=
+				Regex.Split("cero=0\nuno=1\ndos=2","\n");
+			Assert.AreEqual("uno=1",varios[1]);
 		}
 	}
 	public class Separador{

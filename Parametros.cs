@@ -35,7 +35,7 @@ namespace TodoASql
 		public void LeerString(string valores,Tipo tipo){
 			string finDefinicion=";" ,medioDefinicion=":";
 			if(tipo==Tipo.INI){
-				finDefinicion="\n";
+				finDefinicion="\r?\n";
 				medioDefinicion="=";
 			}
 			string[] definiciones=Regex.Split(valores,finDefinicion);
