@@ -16,20 +16,34 @@ namespace TodoASql
 		{
 			// new Pruebas().Proceso(); /*
 			try{
-				new MailASql().LoQueSeaNecesario();
+				ParametrosMailASql parametros=new ParametrosMailASql();
+				parametros.LeerString(Archivo.Leer("dirbase.ini"),Parametros.Tipo.INI);
+				new MailASql(parametros).LoQueSeaNecesario();
+				System.Windows.Forms.MessageBox.Show("Listo!");
 			}catch(System.Data.OleDb.OleDbException e){
-				System.Windows.Forms.MessageBox.Show("Error?");
-				System.Windows.Forms.MessageBox.Show("Error "+e.Message);
+				System.Windows.Forms.MessageBox.Show(
+					e.Message
+					,"Error en el manejo de la base de datos"
+					,System.Windows.Forms.MessageBoxButtons.OK
+					,System.Windows.Forms.MessageBoxIcon.Error
+				);
+			}catch(System.IO.DirectoryNotFoundException e){
+				System.Windows.Forms.MessageBox.Show(
+					e.Message
+					,"Error, no encontró el directorio. "
+					,System.Windows.Forms.MessageBoxButtons.OK
+					,System.Windows.Forms.MessageBoxIcon.Error
+				);
+			
 			} // */
-			System.Windows.Forms.MessageBox.Show("Listo!");
 				
 			// */
 			Console.WriteLine("Listo!");
 			
 			// TODO: Implement Functionality Here
 			
-			Console.Write("Press any key to continue . . . ");
-			Console.ReadKey(true);
+			// Console.Write("Press any key to continue . . . ");
+			// Console.ReadKey(true);
 		}
 	}
 }
