@@ -15,10 +15,9 @@ namespace TodoASql
 		public static void Main(string[] args)
 		{
 			// new Pruebas().Proceso(); /*
+			PruebasParametros.MostrarVariablesDelSistema();
 			try{
-				ParametrosMailASql parametros=new ParametrosMailASql();
-				parametros.LeerString(Archivo.Leer("dirbase.ini"),Parametros.Tipo.INI);
-				new MailASql(parametros).LoQueSeaNecesario();
+				new MailASql().LoQueSeaNecesario();
 				System.Windows.Forms.MessageBox.Show("Listo!");
 			}catch(System.Data.OleDb.OleDbException e){
 				System.Windows.Forms.MessageBox.Show(
@@ -36,12 +35,7 @@ namespace TodoASql
 				);
 			
 			} // */
-				
-			// */
 			Console.WriteLine("Listo!");
-			
-			// TODO: Implement Functionality Here
-			
 			// Console.Write("Press any key to continue . . . ");
 			// Console.ReadKey(true);
 		}

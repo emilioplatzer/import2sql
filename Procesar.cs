@@ -26,7 +26,7 @@ namespace TodoASql
 		OleDbDataReader SelectAbierto;
 		string DirectorioMails;
 		string NombreTablaReceptora;
-		public MailASql():this(new ParametrosMailASql()){
+		public MailASql():this(new ParametrosMailASql(Parametros.LeerPorDefecto.SI)){
 		}
 		public MailASql(ParametrosMailASql parametros){
 			this.DirectorioMails=parametros.DirMailsAProcesar;
@@ -93,7 +93,6 @@ namespace TodoASql
 		}
 		public void LoQueSeaNecesario(){
 			DirectoryInfo dir=new DirectoryInfo(DirectorioMails);
-			System.Console.WriteLine("donde:"+DirectorioMails);
 			FileInfo[] archivos=dir.GetFiles("*.eml");
 			foreach(FileInfo archivo in archivos){
 				Uno(archivo.FullName);
@@ -180,7 +179,8 @@ namespace TodoASql
 		public string DirMailsAProcesar;
 		public string TablaReceptora;
 		public string BaseReceptora;
-		public ParametrosMailASql(){
+		public ParametrosMailASql(LeerPorDefecto queHacer):base(queHacer){
+			/*
 			string dirBase=System.Environment.GetEnvironmentVariable("MAIL2ACCESS_DIR");
 			if(dirBase==null){
 				string[] parametros=System.Environment.GetCommandLineArgs();
@@ -197,9 +197,11 @@ namespace TodoASql
 			this.TablaReceptora="MOCs";
 		    this.DirMailsAProcesar=dirBase+@"\MailsAProcesar";
 			this.DirTemp=System.Environment.GetEnvironmentVariable("TEMP");
-			
+			*/
 		}
-		public ParametrosMailASql(string nombreMDB,string nombreTabla,string directorioMails){
+		public ParametrosMailASql(string nombreMDB,string nombreTabla,string directorioMails)
+			:base(LeerPorDefecto.NO)
+		{
 			this.DirTemp=System.Environment.GetEnvironmentVariable("TEMP");
 			this.BaseReceptora=nombreMDB;
 			this.TablaReceptora=nombreTabla;
