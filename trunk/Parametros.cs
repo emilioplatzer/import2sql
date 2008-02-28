@@ -29,8 +29,14 @@ namespace TodoASql
 	public class Parametros
 	{
 		public enum Tipo {INI};
-		public Parametros()
+		public enum LeerPorDefecto {SI, NO};
+		string NombreAplicacion;
+		public Parametros(LeerPorDefecto queHacer)
 		{
+			NombreAplicacion=System.Windows.Forms.Application.ProductName;
+			if(queHacer==LeerPorDefecto.SI){
+				LeerPorDefecto_();
+			}
 		}
 		public void LeerString(string valores,Tipo tipo){
 			string finDefinicion=";" ,medioDefinicion=":";
@@ -55,24 +61,61 @@ namespace TodoASql
 				}
 			}
 		}
+		void LeerPorDefecto_(){
+			string ArchivoINI=this.NombreAplicacion+".ini";
+			if(Archivo.Existe(ArchivoINI)){
+				LeerString(Archivo.Leer(ArchivoINI), Tipo.INI);
+			}
+		}
 	}
 	public class ParametrosPrueba:Parametros{
 		public string DirUno;
 		public string Frase;
 		public int Cantidad;
 		public DateTime Fecha;
+		public ParametrosPrueba(LeerPorDefecto queHacer):base(queHacer){}
 	}
 	[TestFixture]
 	public class PruebasParametros{
 		string VariablesPrueba1="DirUno=c:\\temp\nFrase=Los hermanos sean unidos\nCantidad=128\nFecha=20/12/2001";
+		string VariablesPrueba2="DirUno=c:\\temp\\aux\nFecha=1/2/3\nFrase=No hay futuro\nCantidad=-1";
 		[Test]
 		public void DesdeString(){
-			ParametrosPrueba p=new ParametrosPrueba();
+			ParametrosPrueba p=new ParametrosPrueba(Parametros.LeerPorDefecto.NO);
 			p.LeerString(VariablesPrueba1,Parametros.Tipo.INI);
 			Assert.AreEqual("c:\\temp",p.DirUno);
 			Assert.AreEqual("Los hermanos sean unidos",p.Frase);
 			Assert.AreEqual(128,p.Cantidad);
 			Assert.AreEqual(new DateTime(2001,12,20),p.Fecha);
+		}
+		public static void MostrarVariablesDelSistema(){
+			Console.WriteLine("CommandLine:"+System.Environment.CommandLine);
+			Console.WriteLine("CurrentDirectory:"+System.Environment.CurrentDirectory);
+			Console.WriteLine("MachineName:"+System.Environment.MachineName);
+			Console.WriteLine("OSVersion:"+System.Environment.OSVersion);
+			Console.WriteLine("StackTrace:"+System.Environment.StackTrace);
+			Console.WriteLine("UserDomainName:"+System.Environment.UserDomainName);
+			Console.WriteLine("UserInteractive:"+System.Environment.UserInteractive);
+			Console.WriteLine("UserName:"+System.Environment.UserName);
+			Console.WriteLine("Version:"+System.Environment.Version);
+			Console.WriteLine("WorkingSet:"+System.Environment.WorkingSet);
+			Console.WriteLine("GetCommandLineArgs[0]:"+System.Environment.GetCommandLineArgs()[0]);
+			Console.WriteLine("System.Windows.Forms.Application");
+			Console.WriteLine("ProductName:"+System.Windows.Forms.Application.ProductName);
+		}
+		[Test]
+		public void NombreAplicacion(){
+			MostrarVariablesDelSistema();
+			Assert.AreEqual("NUnit",System.Windows.Forms.Application.ProductName);
+		}
+		[Test]
+		public void LeerPorDefecto(){
+			Archivo.Escribir("NUnit.ini",VariablesPrueba2);
+			ParametrosPrueba p=new ParametrosPrueba(Parametros.LeerPorDefecto.SI);
+			Assert.AreEqual("c:\\temp\\aux",p.DirUno);
+			Assert.AreEqual("No hay futuro",p.Frase);
+			Assert.AreEqual(-1,p.Cantidad);
+			Assert.AreEqual(new DateTime(2003,2,1),p.Fecha);
 		}
 	}
 }
