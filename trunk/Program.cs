@@ -14,7 +14,9 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
+			PruebaFormularios.Primero();
 			// new Pruebas().Proceso(); /*
+			/*
 			PruebasParametros.MostrarVariablesDelSistema();
 			try{
 				new MailASql().LoQueSeaNecesario();
@@ -35,6 +37,7 @@ namespace TodoASql
 				);
 			
 			} // */
+			
 			Console.WriteLine("Listo!");
 			// Console.Write("Press any key to continue . . . ");
 			// Console.ReadKey(true);

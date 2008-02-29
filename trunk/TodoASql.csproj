@@ -38,6 +38,7 @@
     <Compile Include="Parametros.cs" />
     <Compile Include="Procesar.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="PruebaFormularios.cs" />
     <Compile Include="PruebasReflexion.cs" />
   </ItemGroup>
   <ItemGroup>
