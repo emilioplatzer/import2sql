@@ -38,8 +38,10 @@ namespace TodoASql
 			b.Top=t.Bottom+l.Height/8;
 			f.Controls.Add(b);
 			b.Click+= delegate(object sender, EventArgs e) { 
-				// System.Windows.Forms.MessageBox.Show("Aprete botón");
-				new PruebaFormDerivado().Show();
+				PruebaFormDerivado form=new PruebaFormDerivado();
+				form.Show();
+				form.CambiarAlgunosValores();
+				System.Windows.Forms.MessageBox.Show("Ya lo mostré");
 			};
 			Application.Run(f);
 		}
@@ -57,10 +59,14 @@ namespace TodoASql
 			t.Left=lbl.Left;
 			t.Top=lbl.Bottom+lbl.Height/4;
 			AgregarCampos();
+			//
 			/*
 			Controls.Add(t);
 			Controls.Add(lbl);
-			*/
+			// */
+		}
+		public void CambiarAlgunosValores(){
+			t.Text="valor cambiado";
 		}
 	}
 }
