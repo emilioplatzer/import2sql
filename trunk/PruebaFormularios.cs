@@ -38,9 +38,29 @@ namespace TodoASql
 			b.Top=t.Bottom+l.Height/8;
 			f.Controls.Add(b);
 			b.Click+= delegate(object sender, EventArgs e) { 
-				System.Windows.Forms.MessageBox.Show("Aprete botón");
+				// System.Windows.Forms.MessageBox.Show("Aprete botón");
+				new PruebaFormDerivado().Show();
 			};
 			Application.Run(f);
+		}
+	}
+	public class PruebaFormDerivado:Formulario{
+		Label lbl=new Label();
+		TextBox t;
+		Button b;
+		public PruebaFormDerivado(){
+			lbl.Text="La etiqueta";
+			lbl.Left=lbl.Height/4;
+			lbl.Top=lbl.Height/4;
+			t=new TextBox();
+			t.Text="valor";
+			t.Left=lbl.Left;
+			t.Top=lbl.Bottom+lbl.Height/4;
+			AgregarCampos();
+			/*
+			Controls.Add(t);
+			Controls.Add(lbl);
+			*/
 		}
 	}
 }
