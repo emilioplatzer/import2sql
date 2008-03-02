@@ -42,7 +42,8 @@ namespace TodoASql
 				form.Show();
 				form.CambiarAlgunosValores();
 				Formulario f2=new Formulario();
-				f2.GenerarDesdeObjeto(new ParametrosPrueba(ParametrosPrueba.LeerPorDefecto.SI));
+				ParametrosPrueba par=new ParametrosPrueba(ParametrosPrueba.LeerPorDefecto.SI);
+				f2.GenerarDesdeObjeto(par);
 				f2.Show();
 				System.Windows.Forms.MessageBox.Show("Ya lo mostré");
 			};
@@ -61,6 +62,10 @@ namespace TodoASql
 			t.Text="valor";
 			t.Left=lbl.Left;
 			t.Top=lbl.Bottom+lbl.Height/4;
+			b=new Button();
+			b.Text="aceptar";
+			b.Left=lbl.Left;
+			b.Top=t.Bottom+lbl.Height/4;
 			AgregarCampos();
 			//
 			/*

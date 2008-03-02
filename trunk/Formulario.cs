@@ -11,6 +11,7 @@ using System;
 using System.Windows.Forms;
 using System.ComponentModel;
 using System.Reflection;
+using NUnit.Framework;
 
 namespace TodoASql
 {
@@ -20,6 +21,7 @@ namespace TodoASql
 	public class Formulario:Form
 	{
 		bool camposAgregados=false;
+		Object ObjetoBase;
 		public Formulario()
 		{
 		}
@@ -39,10 +41,12 @@ namespace TodoASql
 			}
 		}
 		public void GenerarDesdeObjeto(Object objeto){
-			FieldInfo[] fs=objeto.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+			Assert.IsNotNull(objeto);
+			ObjetoBase=objeto;
 			int xlbl=10, y=10, xtxt=140;
+			FieldInfo[] fs=ObjetoBase.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo f in fs){
-				Object o=f.GetValue(objeto);
+				Object o=f.GetValue(ObjetoBase);
 				TypeConverter conv=TypeDescriptor.GetConverter(f.FieldType);
 				if(conv.CanConvertFrom(typeof(string))
 				  & conv.CanConvertTo(typeof(string)))
@@ -63,6 +67,32 @@ namespace TodoASql
 					y+=l.Height*5/4;
 				}
 			}
+			Button b=new Button();
+			b.Name="btn_Enter";
+			b.Text="Tomar";
+			b.Left=xtxt;
+			b.Top=y;
+			b.Click+= new EventHandler(EventoBotonTomarDesdeObjeto);
+			Controls.Add(b);
+		}
+		public void VolverAlObjeto(){
+			Assert.IsNotNull(ObjetoBase);
+			FieldInfo[] fs=ObjetoBase.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+			foreach(FieldInfo f in fs){
+				TypeConverter conv=TypeDescriptor.GetConverter(f.FieldType);
+				if(conv.CanConvertFrom(typeof(string))
+				  & conv.CanConvertTo(typeof(string)))
+				{
+					string valor=Controls["txt_"+f.Name].Text;
+					Object objetoValor=conv.ConvertFrom(valor);
+					f.SetValue(ObjetoBase,objetoValor);
+				}
+			}
+		}
+		private void EventoBotonTomarDesdeObjeto(object sender, System.EventArgs e){
+			VolverAlObjeto();
+			System.Console.WriteLine("par.Frase "+ObjetoBase.ToString());
+			Close();
 		}
 	}
 }
