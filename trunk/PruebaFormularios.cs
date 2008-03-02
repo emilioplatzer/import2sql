@@ -41,6 +41,9 @@ namespace TodoASql
 				PruebaFormDerivado form=new PruebaFormDerivado();
 				form.Show();
 				form.CambiarAlgunosValores();
+				Formulario f2=new Formulario();
+				f2.GenerarDesdeObjeto(new ParametrosPrueba(ParametrosPrueba.LeerPorDefecto.SI));
+				f2.Show();
 				System.Windows.Forms.MessageBox.Show("Ya lo mostré");
 			};
 			Application.Run(f);
