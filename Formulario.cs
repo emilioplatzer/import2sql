@@ -95,4 +95,51 @@ namespace TodoASql
 			Close();
 		}
 	}
+	[TestFixture]
+	public class ProbarFormulario{
+		[Test]
+		public void FormDerivado(){
+			PruebaFormDerivado form=new PruebaFormDerivado();
+			form.Show();
+			Assert.IsNotNull(form,"el form está abierto");
+			Assert.IsTrue(form.Visible,"el form es visible");
+			Assert.AreEqual("valor inicial",form.Controls["controlTextBox"].Text);
+			form.CambiarAlgunosValores();
+			Assert.AreEqual("valor cambiado",form.Controls["controlTextBox"].Text);
+			Button b=(Button) form.Controls["botonCerrar"];
+			Assert.Ignore("Falta apretar el botón y ver si cierra");
+		}
+	}
+	public class PruebaFormDerivado:Formulario{
+		Label lbl=new Label();
+		TextBox t;
+		Button b;
+		public PruebaFormDerivado(){
+			lbl.Text="La etiqueta";
+			lbl.Left=lbl.Height/4;
+			lbl.Top=lbl.Height/4;
+			t=new TextBox();
+			t.Text="valor inicial";
+			t.Name="controlTextBox";
+			t.Left=lbl.Left;
+			t.Top=lbl.Bottom+lbl.Height/4;
+			b=new Button();
+			b.Text="aceptar";
+			b.Name="botonCerrar";
+			b.Left=lbl.Left;
+			b.Top=t.Bottom+lbl.Height/4;
+			b.Click+= delegate(object sender, EventArgs e) { 
+				this.Close();
+			};
+			AgregarCampos();
+			//
+			/*
+			Controls.Add(t);
+			Controls.Add(lbl);
+			// */
+		}
+		public void CambiarAlgunosValores(){
+			t.Text="valor cambiado";
+		}
+	}
 }
