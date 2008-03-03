@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
 
 namespace TodoASql
@@ -31,6 +32,43 @@ namespace TodoASql
 	        }
 	        Console.WriteLine("\n");
 	    }
+	}
+	public class Objeto{
+		public static string ExpandirMiembros(Object o,int identacion){
+			if(o==null){
+				return "null";
+			}else if(o.GetType().Name=="String" || o.GetType().Name=="string"){
+				return '"'+o.ToString()+'"';
+			}else if(o.GetType().IsValueType){
+				return o.ToString();
+			}else{
+				int anchoTab=3;
+				StringBuilder rta=new StringBuilder();
+				rta.AppendLine(o.GetType().Name+"{");
+				string margen=new string(' ',(identacion+1)*anchoTab);
+				FieldInfo[] fs=o.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+				foreach(FieldInfo f in fs){
+					Object objetoValor=f.GetValue(o);
+					rta.AppendLine(margen+f.Name+":"+ExpandirMiembros(objetoValor,identacion+1));
+				}
+				rta.AppendLine(new string(' ',identacion*anchoTab)+"}");
+				return rta.ToString();
+			}
+		}
+		public static string ExpandirMiembros(Object o){
+			return ExpandirMiembros(o,0);
+		}
+	}
+	[TestFixture]
+	public class ProbarObjeto{
+		[Test]
+		public void ExpandirMiembros(){
+			ParametrosPrueba pNO=new ParametrosPrueba(ParametrosPrueba.LeerPorDefecto.NO);
+			Assert.AreEqual("ParametrosPrueba{\r\n   DirUno:null\r\n   Frase:null\r\n   Cantidad:0\r\n   Fecha:01/01/0001 0:00:00\r\n}\r\n",Objeto.ExpandirMiembros(pNO));
+			ParametrosPrueba pSI=new ParametrosPrueba(ParametrosPrueba.LeerPorDefecto.SI);
+			System.Console.WriteLine(Objeto.ExpandirMiembros(pSI));
+			Assert.AreEqual("ParametrosPrueba{\r\n   DirUno:\"c:\\temp\\aux\"\r\n   Frase:\"No hay futuro\"\r\n   Cantidad:-1\r\n   Fecha:01/02/2003 0:00:00\r\n}\r\n",Objeto.ExpandirMiembros(pSI));
+		}
 	}
 	public class Archivo{
 		public static string Leer(string nombreArchivo){
