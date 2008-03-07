@@ -14,7 +14,7 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
-			PruebaFormularios.Primero();
+			new ProbarFormulario().FormDerivado();
 			// new Pruebas().Proceso(); /*
 			/*
 			PruebasParametros.MostrarVariablesDelSistema();
