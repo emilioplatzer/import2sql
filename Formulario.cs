@@ -10,9 +10,12 @@
 using System;
 using System.Windows;
 using System.Windows.Forms;
+using System.Drawing;
 using System.ComponentModel;
 using System.Reflection;
 using NUnit.Framework;
+
+using System.Runtime.InteropServices;
 
 namespace TodoASql
 {
@@ -95,13 +98,41 @@ namespace TodoASql
 			System.Console.WriteLine("par.Frase "+ObjetoBase.ToString());
 			Close();
 		}
+		public static System.Drawing.Point CoordenadasVentana(Control c){
+			int left=0;
+			int top=0;
+			while(c!=null){
+				left+=c.Left;
+				top+=c.Top;
+				c=c.Parent;
+			}
+			return new System.Drawing.Point(left,top);
+		}
 	}
 	[TestFixture]
 	public class ProbarFormulario{
+		 //imports mouse_event function from user32.dll
+		[DllImport("user32.dll",CharSet=CharSet.Auto, CallingConvention=CallingConvention.StdCall)]
+		public static extern void mouse_event(long dwFlags, long dx, long dy, long cButtons, long dwExtraInfo);
+		
+		//imports keybd_event function from user32.dll
+		[DllImport("user32.dll",CharSet=CharSet.Auto, CallingConvention=CallingConvention.StdCall)]
+		public static extern void keybd_event(byte bVk, byte bScan, long dwFlags, long dwExtraInfo);
+		
+		//declare consts for mouse messages
+		public const int MOUSEEVENTF_LEFTDOWN = 0x02;
+		public const int MOUSEEVENTF_LEFTUP = 0x04;
+		public const int MOUSEEVENTF_RIGHTDOWN = 0x08;
+		public const int MOUSEEVENTF_RIGHTUP = 0x10;
+		
+		//declare consts for key scan codes
+		public const byte VK_TAB = 0x09;
+		public const byte VK_MENU = 0x12; // VK_MENU is Microsoft talk for the ALT key
+		public const int KEYEVENTF_EXTENDEDKEY = 0x01;
+		public const int KEYEVENTF_KEYUP = 0x02;
 		[Test]
 		public void FormDerivado(){
 			PruebaFormDerivado form=new PruebaFormDerivado();
-			/*
 			form.Show();
 			Assert.IsNotNull(form,"el form está abierto");
 			Assert.IsTrue(form.Visible,"el form es visible");
@@ -109,7 +140,11 @@ namespace TodoASql
 			form.CambiarAlgunosValores();
 			Assert.AreEqual("valor cambiado",form.Controls["controlTextBox"].Text);
 			Button b=(Button) form.Controls["botonCerrar"];
-			*/
+			Point p=Formulario.CoordenadasVentana(b);
+			Cursor.Position=p;
+			mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+			mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+			Assert.IsFalse(form.Visible,"el form es visible");
 			// Assert.Ignore("Falta apretar el botón y ver si cierra");
 		}
 	}
@@ -144,5 +179,13 @@ namespace TodoASql
 		public void CambiarAlgunosValores(){
 			t.Text="valor cambiado";
 		}
+	}
+	public class Boton:Button{
+		/*
+		public void EmularClick(){
+			this.Click.BeginInvoke();
+		}
+		public void RegistrarClick()
+		*/
 	}
 }
