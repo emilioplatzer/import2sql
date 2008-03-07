@@ -189,6 +189,73 @@ namespace TodoASql
 			Assert.AreEqual("uno=1",varios[1]);
 		}
 	}
+	public class ConjuntosString{
+		public static int Cardinal(string conjunto,string separador){
+			if(conjunto==null){
+				return 0;
+			}
+			if(conjunto==""){
+				return 0;
+			}
+			int cantidad=0;
+			int posicion=0;
+			while(true){
+				posicion=conjunto.IndexOf(separador,posicion);
+			if(posicion<0) break;
+				cantidad++;
+				posicion+=separador.Length;
+			}
+			return cantidad+1;
+		}
+		public static string Elemento(string conjunto,int cual,string separador){
+			int posicionInicial;
+			int posicionFinal;
+			posicionInicial=-1;
+			while(true){
+				posicionFinal=conjunto.IndexOf(separador,posicionInicial+separador.Length);
+				if(posicionFinal<0){
+					if(cual==1){
+						return conjunto.Substring(posicionInicial+separador.Length);
+					}else{
+						return null;
+					}
+				}else{
+					if(cual==1){
+						return conjunto.Substring(posicionInicial+separador.Length,posicionFinal-posicionInicial-separador.Length);
+					}
+				}
+				cual--;
+				posicionInicial=posicionFinal;
+			}
+		}
+	}
+	[TestFixture]
+	public class ProbarConjuntoString{
+		[Test]
+		public void Elemento(){
+			Assert.AreEqual("hola",ConjuntosString.Elemento("hola;che",1,";"));
+			Assert.AreEqual("che",ConjuntosString.Elemento("hola;che;como;andas",2,";"));
+			Assert.AreEqual("andas",ConjuntosString.Elemento("hola;che;como;andas",4,";"));
+			Assert.AreEqual(null,ConjuntosString.Elemento("hola;che;como;andas",5,";"));
+			Assert.AreEqual(null,ConjuntosString.Elemento("",2,";"));
+			Assert.AreEqual("che",ConjuntosString.Elemento("hola--che--como--andas",2,"--"));
+			Assert.AreEqual("andas",ConjuntosString.Elemento("hola--che--como--andas",4,"--"));
+			Assert.AreEqual("andas",ConjuntosString.Elemento("hola----como--andas",4,"--"));
+		}
+		[Test]
+		public void Cardinal(){
+			Assert.AreEqual(0,ConjuntosString.Cardinal(null,","));
+			Assert.AreEqual(0,ConjuntosString.Cardinal("",","));
+			Assert.AreEqual(3,ConjuntosString.Cardinal("hola&che&chau","&"));
+			Assert.AreEqual(1,ConjuntosString.Cardinal("hola","&"));
+			Assert.AreEqual(3,ConjuntosString.Cardinal("hola<>che<>basta","<>"));
+			Assert.AreEqual(3,ConjuntosString.Cardinal("hola,,che",","));
+			Assert.AreEqual(4,ConjuntosString.Cardinal("hola...hola......che","..."));
+			Assert.AreEqual(4,ConjuntosString.Cardinal("hola...hola.......che","..."));
+			Assert.AreEqual(4,ConjuntosString.Cardinal("hola...hola........che","..."));
+			Assert.AreEqual(5,ConjuntosString.Cardinal("hola...hola.........che","..."));
+		}
+	}
 	public class Separador{
 		string CadenaSeparadora;
 		int Vez;

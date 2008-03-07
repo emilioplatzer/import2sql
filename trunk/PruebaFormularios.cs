@@ -8,6 +8,7 @@
  */
 
 using System;
+using System.Drawing;
 using System.Windows;
 using System.Windows.Forms;
 
@@ -46,6 +47,20 @@ namespace TodoASql
 				f2.GenerarDesdeObjeto(par);
 				f2.Show();
 				System.Windows.Forms.MessageBox.Show("Ya lo mostré");
+			};
+			Button b2=new Button();
+			b2.Text="Posicion";
+			b2.Top=b.Bottom+l.Height/8;
+			f.Controls.Add(b2);
+			b2.Click+= delegate(object sender, EventArgs e) { 
+				System.Drawing.Point p=Cursor.Position;
+				/*
+				p.X=p.X/2;
+				p.Y=p.Y/2;
+				Cursor.Position=p;
+				*/
+				System.Drawing.Point bp=Formulario.CoordenadasVentana(b2);
+				System.Windows.Forms.MessageBox.Show("Posición "+p+" boton "+bp);
 			};
 			Application.Run(f);
 		}
