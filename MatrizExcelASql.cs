@@ -8,6 +8,7 @@
  */
 
 using System;
+using NUnit.Framework;
 
 namespace TodoASql
 {
@@ -23,6 +24,13 @@ namespace TodoASql
 		public void PasarHoja(RangoExcel matriz,RangoExcel[] filas, RangoExcel[] columnas){
 			int maxFila=matriz.CantidadFilas;
 			int maxCol=matriz.CantidadColumnas;
+		}
+	}
+	[TestFixture]
+	public class ProbarMatrizExcelASql{
+		[Test]
+		public void unaPrueba(){
+			
 		}
 	}
 }
