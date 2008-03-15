@@ -111,6 +111,13 @@ namespace TodoASql
 				}
 			}
 		}
+		public void Rellenar(object[,] matriz){
+			for(int fila=0;fila<matriz.GetLength(0);fila++){
+				for(int col=0;col<matriz.GetLength(1);col++){
+					PonerTexto(fila+1,col+1,(string) matriz[fila,col]);
+				}
+			}
+		}
 	}
 	[TestFixture]
 	public class probarLibroExcel{

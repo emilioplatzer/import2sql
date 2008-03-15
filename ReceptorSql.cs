@@ -50,7 +50,7 @@ namespace TodoASql
 			SelectAbierto.Close();
 			ConexionABase.Close();
 		}
-		public string[,] Dump(){
+		public string[,] DumpString(){
 			OleDbCommand cmd = new OleDbCommand("SELECT count(*) FROM ["+NombreTabla+"]",ConexionABase);
 			int registros=(int) cmd.ExecuteScalar();
 			cmd = new OleDbCommand("SELECT * FROM ["+NombreTabla+"]",ConexionABase);
@@ -63,6 +63,23 @@ namespace TodoASql
 					// string valor=(string) sel.GetValue(j+1);
 					// matriz[i,j]=valor;
 					matriz[i,j]=sel.GetString(j);
+				}
+			}
+			return matriz;
+		}
+		public object[,] DumpObject(){
+			OleDbCommand cmd = new OleDbCommand("SELECT count(*) FROM ["+NombreTabla+"]",ConexionABase);
+			int registros=(int) cmd.ExecuteScalar();
+			cmd = new OleDbCommand("SELECT * FROM ["+NombreTabla+"]",ConexionABase);
+			OleDbDataReader sel=cmd.ExecuteReader();
+			int campos=sel.FieldCount;
+			object[,] matriz=new object[registros,campos];
+			for(int i=0; i<registros; i++){
+				sel.Read();
+				for(int j=0; j<campos; j++){
+					// string valor=(string) sel.GetValue(j+1);
+					// matriz[i,j]=valor;
+					matriz[i,j]=sel.GetValue(j);
 				}
 			}
 			return matriz;
