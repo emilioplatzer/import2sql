@@ -152,37 +152,19 @@ namespace TodoASql
 			Assert.AreEqual(new DateTime(1971,8,10),rdr.GetDateTime(5));
 		}
 	}
-	public class ParametrosMailASql:Parametros{
+	public class ParametrosMailASql:Parametros,IParametorsReceptorSql{
 		public string DirTemp;
 		public string DirMailsAProcesar;
-		public string TablaReceptora;
-		public string BaseReceptora;
+		string tablaReceptora; public string TablaReceptora{ get{ return tablaReceptora; }}
+		string baseReceptora; public string BaseReceptora{ get{ return baseReceptora; }}
 		public ParametrosMailASql(LeerPorDefecto queHacer):base(queHacer){
-			/*
-			string dirBase=System.Environment.GetEnvironmentVariable("MAIL2ACCESS_DIR");
-			if(dirBase==null){
-				string[] parametros=System.Environment.GetCommandLineArgs();
-				if(parametros.Length>1 && parametros[0]=="DIR"){
-					dirBase=parametros[1];
-				}else{
-					string nombreArchivoDirBase="dirbase.ini";
-					if(Archivo.Existe(nombreArchivoDirBase)){
-						dirBase=Archivo.Leer(nombreArchivoDirBase);
-					}
-				}
-			}
-			this.BaseReceptora=dirBase+@"\ServEsp.mdb";
-			this.TablaReceptora="MOCs";
-		    this.DirMailsAProcesar=dirBase+@"\MailsAProcesar";
-			this.DirTemp=System.Environment.GetEnvironmentVariable("TEMP");
-			*/
 		}
 		public ParametrosMailASql(string nombreMDB,string nombreTabla,string directorioMails)
 			:base(LeerPorDefecto.NO)
 		{
 			this.DirTemp=System.Environment.GetEnvironmentVariable("TEMP");
-			this.BaseReceptora=nombreMDB;
-			this.TablaReceptora=nombreTabla;
+			this.baseReceptora=nombreMDB;
+			this.tablaReceptora=nombreTabla;
 			this.DirMailsAProcesar=directorioMails;
 		}
 	}
