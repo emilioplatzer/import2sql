@@ -20,8 +20,9 @@ namespace TodoASql
 		public MatrizExcelASql(ReceptorSql receptor){
 			this.Receptor=receptor;
 		}
-		public PasarHoja(RangoExcel matriz,RangoExcel[] filas, RangoExcel[] columnas){
-			HojaExcel Hoja=hoja;
+		public void PasarHoja(RangoExcel matriz,RangoExcel[] filas, RangoExcel[] columnas){
+			int maxFila=matriz.CantidadFilas;
+			int maxCol=matriz.CantidadColumnas;
 		}
 	}
 }
