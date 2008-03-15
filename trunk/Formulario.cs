@@ -142,6 +142,7 @@ namespace TodoASql
 			Button b=(Button) form.Controls["botonCerrar"];
 			Point p=Formulario.CoordenadasVentana(b);
 			Cursor.Position=p;
+			// System.Threading.Thread.Sleep(1000);
 			mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
 			mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
 			// Assert.IsFalse(form.Visible,"el form es visible");
@@ -181,6 +182,7 @@ namespace TodoASql
 		}
 	}
 	public class Boton:Button{
+		// System.Windows
 		/*
 		public void EmularClick(){
 			this.Click.BeginInvoke();
