@@ -93,6 +93,9 @@ namespace TodoASql
 		public static bool Existe(string nombreArchivo){
 			return File.Exists(nombreArchivo);
 		}
+		public static string CarpetaActual(){
+			return Directory.GetCurrentDirectory();
+		}
 	}
 	public class Cadena{
 		public static int CantidadOcurrencias(char caracterBuscado, string lugarDondeBuscar){
