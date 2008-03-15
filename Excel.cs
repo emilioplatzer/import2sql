@@ -46,6 +46,9 @@ namespace TodoASql
 		public HojaExcel Hoja(string etiqueta){
 			return new HojaExcel((Excel.Worksheet) libro.Worksheets[etiqueta]);
 		}
+		public void Close(){
+			libro.Close(___,___,___);
+		}
 	}
 	public class HojaExcel
 	{
@@ -60,6 +63,21 @@ namespace TodoASql
 		public string TextoCelda(int fila, int col){
 			return ((Excel.Range) hoja.Cells[fila,col]).Text.ToString();
 		}
+		public RangoExcel Rango(string esquina,string otraEsquina){
+			return new RangoExcel(hoja.get_Range(esquina,otraEsquina));
+		}
+	}
+	public class RangoExcel{
+		Excel.Range Rango;
+		internal RangoExcel(Excel.Range rango){
+			this.Rango=rango;
+		}
+		public int CantidadFilas{
+			get{ return Rango.Rows.Count;}
+		}
+		public int CantidadColumnas{
+			get{ return Rango.Columns.Count;}
+		}
 	}
 	[TestFixture]
 	public class probarLibroExcel{
@@ -73,6 +91,15 @@ namespace TodoASql
 			Assert.AreEqual("uno",hoja.TextoCelda("A1"));
 			Assert.AreEqual("dos",hoja.TextoCelda(2,2));
 			Assert.AreEqual("pi",hoja.TextoCelda("N3"));
+			libro.Close();
+		}
+		[Test]
+		public void Rango(){
+			LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
+			HojaExcel hoja=libro.Hoja("LaHoja1");
+			RangoExcel rango=hoja.Rango("B2","N3");
+			Assert.AreEqual(2,rango.CantidadFilas);
+			Assert.AreEqual(13,rango.CantidadColumnas);
 		}
 	}
 	[TestFixture]
