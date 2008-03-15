@@ -16,8 +16,10 @@ namespace TodoASql
 	/// <summary>
 	/// Description of Excel.
 	/// </summary>
-	public class UnExcel
+	public class LibroExcel
 	{
+		Excel.Workbook libro;
+		static object ___ = Type.Missing; 		
 		private static Excel.Application apExcel;
 		public static Excel.Application ApExcel{
 			get{
@@ -25,10 +27,9 @@ namespace TodoASql
 				return apExcel;
 			}
 		}
-		private UnExcel(){
-			
+		private LibroExcel(){
 		}
-		static UnExcel()
+		static LibroExcel()
 		{
 			AppDomain.CurrentDomain.DomainUnload+= delegate { 
 				if(apExcel!=null){
@@ -36,6 +37,42 @@ namespace TodoASql
 					apExcel=null;
 				}
 			};
+		}
+		public static LibroExcel Abrir(string nombreArchivo){
+			LibroExcel nuevo=new LibroExcel();
+			nuevo.libro=ApExcel.Workbooks.Open(nombreArchivo,___,___,___,___,___,___,___,___,___,___,___,___,___,___);
+			return nuevo;
+		}
+		public HojaExcel Hoja(string etiqueta){
+			return new HojaExcel((Excel.Worksheet) libro.Worksheets[etiqueta]);
+		}
+	}
+	public class HojaExcel
+	{
+		Excel.Worksheet hoja;
+		static object ___ = Type.Missing; 		
+		public HojaExcel(Excel.Worksheet hoja){
+			this.hoja=hoja;
+		}
+		public string TextoCelda(string rango){
+			return hoja.get_Range(rango,___).Text.ToString();
+		}
+		public string TextoCelda(int fila, int col){
+			return ((Excel.Range) hoja.Cells[fila,col]).Text.ToString();
+		}
+	}
+	[TestFixture]
+	public class probarLibroExcel{
+		string nombreArchivo=Archivo.CarpetaActual()+"\\borrar_prueba.xls";
+		public probarLibroExcel(){
+		}
+		[Test]
+		public void SegundoLeerAlgunosDatos(){
+			LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
+			HojaExcel hoja=libro.Hoja("LaHoja1");
+			Assert.AreEqual("uno",hoja.TextoCelda("A1"));
+			Assert.AreEqual("dos",hoja.TextoCelda(2,2));
+			Assert.AreEqual("pi",hoja.TextoCelda("N3"));
 		}
 	}
 	[TestFixture]
@@ -69,7 +106,7 @@ namespace TodoASql
 			Assert.IsTrue(Archivo.Existe(nombreArchivo));
 		}
 		[Test]
-		public void MeterAlgunosDatos(){
+		public void PrimeroMeterAlgunosDatos(){
 			Excel.Workbook libro=ApExcel.Workbooks.Open(nombreArchivo,___,___,___,___,___,___,___,___,___,___,___,___,___,___);
 			Excel.Worksheet hoja=(Excel.Worksheet) libro.Worksheets["LaHoja1"];
 			hoja.Cells[1,1]="uno";
@@ -78,7 +115,7 @@ namespace TodoASql
 			libro.Save();
 		}
 		[Test]
-		public void LeerAlgunosDatos(){
+		public void SegundoLeerAlgunosDatos(){
 			Excel.Workbook libro=ApExcel.Workbooks.Open(nombreArchivo,___,___,___,___,___,___,___,___,___,___,___,___,___,___);
 			Excel.Worksheet hoja=(Excel.Worksheet) libro.Worksheets["LaHoja1"];
 			// Excel.Range r=hoja.Range["A1"];
