@@ -13,6 +13,10 @@ using System.Data.OleDb;
 
 namespace TodoASql
 {
+	public interface IParametorsReceptorSql{
+		string TablaReceptora{ get; }
+		string BaseReceptora{ get; }
+	}
 	/// <summary>
 	/// Description of ReceptorSql.
 	/// </summary>
@@ -21,9 +25,11 @@ namespace TodoASql
 		internal OleDbConnection ConexionABase;
 		OleDbDataReader SelectAbierto;
 		internal string NombreTabla;
+		/*
 		public ReceptorSql():this(new ParametrosMailASql(Parametros.LeerPorDefecto.SI)){
 		}
-		public ReceptorSql(ParametrosMailASql parametros){
+		*/
+		public ReceptorSql(IParametorsReceptorSql parametros){
 			this.NombreTabla=parametros.TablaReceptora;
 			AbrirBase(parametros.BaseReceptora);
 		}
