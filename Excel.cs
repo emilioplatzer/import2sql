@@ -16,14 +16,23 @@ namespace TodoASql
 	/// <summary>
 	/// Description of Excel.
 	/// </summary>
-	public class ElExcel
+	public class UnExcel
 	{
 		private static Excel.Application ApExcel;
-		public ElExcel()
-		{
+		private UnExcel(){
+			
 		}
-		public static Excel.Application CrearArchivo(string nombreArchivo){
+		static UnExcel()
+		{
+			AppDomain.CurrentDomain.DomainUnload+= delegate { 
+				ApExcel.Quit();
+				ApExcel=null;
+			};
+		}
+		public static Excel.Workbook Nuevo(string nombreArchivo){
 			if(ApExcel==null) ApExcel = new Excel.Application();
+			Archivo.Borrar(nombreArchivo);
+			Assert.IsFalse(Archivo.Existe(nombreArchivo));
 			object opc = Type.Missing;
 			Excel.Workbook libro;
 			libro = ApExcel.Workbooks.Add(opc);
@@ -34,16 +43,25 @@ namespace TodoASql
 			hoja1.Activate();
 			hoja1.Name="LaHoja1";
 			libro.SaveAs(nombreArchivo,opc,opc,opc,opc,opc,
-			             Excel.XlSaveAsAccessMode.xlNoChange,opc,opc,opc,opc,opc);
+			             Excel.XlSaveAsAccessMode.xlNoChange,
+			             Excel.XlSaveConflictResolution.xlLocalSessionChanges,
+			             opc,opc,opc,opc);
 			libro.Close(opc,opc,opc);
-			return ApExcel;
+			return libro;
 		}
 	}
 	[TestFixture]
 	public class probarElExcel{
 		[Test]
 		public void CrearArchivo(){
-			ElExcel.CrearArchivo("borrar_prueba.xls");
+			string archivo=Archivo.CarpetaActual()+"\\borrar_prueba.xls";
+			Excel.Workbook libro=UnExcel.CrearArchivo(archivo);
+			Assert.IsTrue(Archivo.Existe(archivo));
+			Excel.Worksheet hoja=(Excel.Worksheet) libro.Worksheets["LaHoja1"];
+			// Excel.Worksheet hoja=libro.Worksheets.Item("LaHoja1");  // ["LaHoja1"];
+			hoja.Cells[1,1]="uno";
+			hoja.Cells[2,2]="dos";
+			libro.Save();
 		}
 	}
 }
