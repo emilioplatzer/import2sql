@@ -39,6 +39,7 @@
     <Compile Include="Excel.cs" />
     <Compile Include="Formulario.cs" />
     <Compile Include="MailASql.cs" />
+    <Compile Include="MatrizExcelASql.cs" />
     <Compile Include="Otras.cs" />
     <Compile Include="Parametros.cs" />
     <Compile Include="Program.cs" />
