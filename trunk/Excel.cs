@@ -16,7 +16,7 @@ namespace TodoASql
 	/// <summary>
 	/// Description of Excel.
 	/// </summary>
-	public class LibroExcel
+	public class LibroExcel:AccesoExcel
 	{
 		Excel.Workbook libro;
 		static object ___ = Type.Missing; 		
@@ -27,7 +27,10 @@ namespace TodoASql
 				return apExcel;
 			}
 		}
-		private LibroExcel(){
+		private LibroExcel(Excel.Workbook libro)
+			:base((Excel.Worksheet) libro.Worksheets[1])
+		{
+			this.libro=libro;
 		}
 		static LibroExcel()
 		{
@@ -39,9 +42,7 @@ namespace TodoASql
 			};
 		}
 		public static LibroExcel Abrir(string nombreArchivo){
-			LibroExcel nuevo=new LibroExcel();
-			nuevo.libro=ApExcel.Workbooks.Open(nombreArchivo,___,___,___,___,___,___,___,___,___,___,___,___,___,___);
-			return nuevo;
+			return new LibroExcel(ApExcel.Workbooks.Open(nombreArchivo,___,___,___,___,___,___,___,___,___,___,___,___,___,___));
 		}
 		public HojaExcel Hoja(string etiqueta){
 			return new HojaExcel((Excel.Worksheet) libro.Worksheets[etiqueta]);
@@ -50,26 +51,25 @@ namespace TodoASql
 			libro.Close(___,___,___);
 		}
 	}
-	public class HojaExcel
+	public class HojaExcel:AccesoExcel
 	{
 		Excel.Worksheet hoja;
 		static object ___ = Type.Missing; 		
-		public HojaExcel(Excel.Worksheet hoja){
+		public HojaExcel(Excel.Worksheet hoja)
+			:base(hoja)
+		{
 			this.hoja=hoja;
-		}
-		public string TextoCelda(string rango){
-			return hoja.get_Range(rango,___).Text.ToString();
-		}
-		public string TextoCelda(int fila, int col){
-			return ((Excel.Range) hoja.Cells[fila,col]).Text.ToString();
 		}
 		public RangoExcel Rango(string esquina,string otraEsquina){
 			return new RangoExcel(hoja.get_Range(esquina,otraEsquina));
 		}
 	}
-	public class RangoExcel{
+	public class RangoExcel:AccesoExcel{
 		Excel.Range Rango;
-		internal RangoExcel(Excel.Range rango){
+		static object ___ = Type.Missing; 		
+		internal RangoExcel(Excel.Range rango)
+			:base(rango)
+		{
 			this.Rango=rango;
 		}
 		public int CantidadFilas{
@@ -77,6 +77,22 @@ namespace TodoASql
 		}
 		public int CantidadColumnas{
 			get{ return Rango.Columns.Count;}
+		}
+	}
+	public class AccesoExcel{
+		Excel.Range Base;
+		static object ___ = Type.Missing; 		
+		protected AccesoExcel(Excel.Range Base){
+			this.Base=Base;
+		}
+		protected AccesoExcel(Excel.Worksheet hoja){
+			this.Base=hoja.get_Range("A1",___);
+		}
+		public string TextoCelda(string rango){
+			return Base.get_Range(rango,___).Text.ToString();
+		}
+		public string TextoCelda(int fila, int col){
+			return ((Excel.Range) Base.Cells[fila,col]).Text.ToString();
 		}
 	}
 	[TestFixture]
@@ -100,6 +116,10 @@ namespace TodoASql
 			RangoExcel rango=hoja.Rango("B2","N3");
 			Assert.AreEqual(2,rango.CantidadFilas);
 			Assert.AreEqual(13,rango.CantidadColumnas);
+			Assert.AreEqual("dos",rango.TextoCelda("A1"));
+			Assert.AreEqual("dos",hoja.TextoCelda("B2"));
+			Assert.AreEqual("dos",libro.TextoCelda("B2"));
+			libro.Close();
 		}
 	}
 	[TestFixture]
@@ -140,6 +160,7 @@ namespace TodoASql
 			hoja.Cells[2,2]="dos";
 			hoja.Cells[3,14]="pi";
 			libro.Save();
+			libro.Close(___,___,___);
 		}
 		[Test]
 		public void SegundoLeerAlgunosDatos(){
