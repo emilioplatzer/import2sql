@@ -16,7 +16,7 @@ namespace TodoASql
 	/// <summary>
 	/// Description of Excel.
 	/// </summary>
-	public class LibroExcel:AccesoExcel
+	public class LibroExcel:HojaExcel //:AccesoExcel
 	{
 		Excel.Workbook libro;
 		static object ___ = Type.Missing; 		
@@ -24,6 +24,7 @@ namespace TodoASql
 		public static Excel.Application ApExcel{
 			get{
 				if(apExcel==null) apExcel = new Excel.Application();
+				apExcel.Visible=true;
 				return apExcel;
 			}
 		}
@@ -44,8 +45,14 @@ namespace TodoASql
 		public static LibroExcel Abrir(string nombreArchivo){
 			return new LibroExcel(ApExcel.Workbooks.Open(nombreArchivo,___,___,___,___,___,___,___,___,___,___,___,___,___,___));
 		}
+		public static LibroExcel Nuevo(){
+			return new LibroExcel(ApExcel.Workbooks.Add(___));
+		}
 		public HojaExcel Hoja(string etiqueta){
 			return new HojaExcel((Excel.Worksheet) libro.Worksheets[etiqueta]);
+		}
+		public void GuardarYCerrar(string nombreArchivo){
+			libro.Close(true,nombreArchivo,___);
 		}
 		public void Close(){
 			libro.Close(___,___,___);
@@ -94,6 +101,16 @@ namespace TodoASql
 		public string TextoCelda(int fila, int col){
 			return ((Excel.Range) Base.Cells[fila,col]).Text.ToString();
 		}
+		public void PonerTexto(int fila,int col,string valor){
+			((Excel.Range) Base.Cells[fila,col]).Value2=valor;
+		}
+		public void Rellenar(string[,] matriz){
+			for(int fila=0;fila<matriz.GetLength(0);fila++){
+				for(int col=0;col<matriz.GetLength(1);col++){
+					PonerTexto(fila+1,col+1,matriz[fila,col]);
+				}
+			}
+		}
 	}
 	[TestFixture]
 	public class probarLibroExcel{
@@ -140,7 +157,7 @@ namespace TodoASql
 			Excel.Workbook libro;
 			libro = ApExcel.Workbooks.Add(___);
 			ApExcel.Visible = true;
-			libro = ApExcel.Workbooks.Add(___);
+			// libro = ApExcel.Workbooks.Add(___);
 			Excel.Worksheet hoja1 = new Excel.Worksheet();
 			hoja1 = (Excel.Worksheet)libro.Sheets.Add(___, ___, ___, ___);
 			hoja1.Activate();

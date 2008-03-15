@@ -15,7 +15,7 @@ namespace TodoASql
 		public static void Main(string[] args)
 		{
 			// new ProbarFormulario().FormDerivado();
-			new probarLibroExcel().SegundoLeerAlgunosDatos();
+			new ProbarMatrizExcelASql().trasvasar();
 			// PruebaFormularios.Primero();
 			// new Pruebas().Proceso(); /*
 			/*
