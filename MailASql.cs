@@ -22,16 +22,15 @@ namespace TodoASql
 	public class MailASql
 	{
 		string ContenidoPlano;
-		OleDbConnection ConexionABase;
-		OleDbDataReader SelectAbierto;
 		string DirectorioMails;
-		string NombreTablaReceptora;
+		ReceptorSql Receptor;
+		/*
 		public MailASql():this(new ParametrosMailASql(Parametros.LeerPorDefecto.SI)){
 		}
-		public MailASql(ParametrosMailASql parametros){
+		*/
+		public MailASql(ParametrosMailASql parametros,ReceptorSql receptor){
 			this.DirectorioMails=parametros.DirMailsAProcesar;
-			this.NombreTablaReceptora=parametros.TablaReceptora;
-			AbrirBase(parametros.BaseReceptora);
+			this.Receptor=receptor;
 		}
 		string ObtenerCampo(string campo,string proximoCampo){
 			Regex r=new Regex(" *"+campo+"[ .]*:([^`]*?)("+proximoCampo+")", RegexOptions.Multiline);
@@ -42,42 +41,23 @@ namespace TodoASql
 			string rta=m.Groups[1].ToString();
 			return rta.Trim(" \t\r\n.:-,=;".ToCharArray());
 		}
-		void AbrirBase(string nombreMDB){
-			ConexionABase = BaseDatos.abrirMDB(nombreMDB);
-			OleDbCommand cmd = new OleDbCommand("SELECT * FROM ["+NombreTablaReceptora+"]",ConexionABase);
-			SelectAbierto=cmd.ExecuteReader();
-		}
 		void LeerMail(string nombreArchivo){
 			ContenidoPlano=Cadena.ExpandirSignoIgual(Archivo.Leer(nombreArchivo));
 		}
 		bool GuardarMailEnBase(){
-			StringBuilder campos=new StringBuilder();
-			StringBuilder valores=new StringBuilder();
-			Separador coma=new Separador(",");
-			for(int i=1;i<SelectAbierto.FieldCount;i++){
-				string nombreCampo=SelectAbierto.GetName(i);
+			InsertadorSql insert=new InsertadorSql(Receptor);
+			for(int i=1;i<Receptor.FieldCount;i++){
+				string nombreCampo=Receptor.GetName(i);
 				// 
-				string proximoCampo=i<SelectAbierto.FieldCount-1
-									?SelectAbierto.GetName(i+1)
+				string proximoCampo=i<Receptor.FieldCount-1
+									?Receptor.GetName(i+1)
 									:"----";
 				string valorCampo=ObtenerCampo(nombreCampo,proximoCampo);
 				if(valorCampo.Length>0){
-					campos.Append(coma+"["+nombreCampo+"]");
-					valores.Append(coma.mismo()+'"'+Cadena.SacarComillas(valorCampo)+'"');
+					insert[nombreCampo]=valorCampo;
 				}
 			}
-			if(campos.Length>0){
-				string sentencia="INSERT INTO ["+NombreTablaReceptora+@"] ("+campos.ToString()+") VALUES ("+
-						valores.ToString()+")";
-				OleDbCommand cmd = new OleDbCommand(sentencia,ConexionABase);
-				Archivo.Escribir(System.Environment.GetEnvironmentVariable("TEMP")
-				                      + @"query.sql"
-				                      ,sentencia);
-				cmd.ExecuteNonQuery();
-				return true;
-			}else{
-				return false;
-			}
+			return insert.InsertarSiHayCampos();
 		}
 		void Uno(string nombreArchivo){
 			System.Console.Write("Mail:"+nombreArchivo);
@@ -98,10 +78,6 @@ namespace TodoASql
 				Uno(archivo.FullName);
 			}
 		} 
-		public void Close(){
-			SelectAbierto.Close();
-			ConexionABase.Close();
-		}
 	}
 	[TestFixture]
 	public class ProbarMailASql
@@ -155,9 +131,11 @@ namespace TodoASql
 				Tipo de documento: DNI - Número de documento: 12345678
 				Nacimiento: 10-8-71
 				Observaciones: condicional");
-			MailASql procesador=new MailASql(new ParametrosMailASql(nombreArchivo,"receptor",directorio));
+			ParametrosMailASql parametros=new ParametrosMailASql(nombreArchivo,"receptor",directorio);
+			ReceptorSql receptor=new ReceptorSql(parametros);
+			MailASql procesador=new MailASql(parametros,receptor);
 			procesador.LoQueSeaNecesario();
-			procesador.Close();
+			receptor.Close();
 			con=BaseDatos.abrirMDB(nombreArchivo);
 			sentencia="SELECT count(*) FROM Receptor";
 			com=new OleDbCommand(sentencia,con);
