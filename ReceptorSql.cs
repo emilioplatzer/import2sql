@@ -9,6 +9,7 @@
 
 using System;
 using System.Text;
+using System.Data;
 using System.Data.OleDb;
 
 namespace TodoASql
@@ -85,19 +86,52 @@ namespace TodoASql
 			return matriz;
 		}
 	}
-	public class InsertadorSql
+	public class InsertadorSqlViaDataSet
+	{
+		ReceptorSql Receptor;
+		OleDbDataAdapter Adaptador;
+		System.Data.DataTable Tabla;
+		DataRow Registro;
+		bool HayCamposInsertados;
+		public InsertadorSqlViaDataSet(ReceptorSql receptor){
+			Tabla=new System.Data.DataTable();
+			this.Receptor=receptor;	
+			string select="select * from "+receptor.NombreTabla;
+			this.Adaptador=new OleDbDataAdapter(select,Receptor.ConexionABase);
+			this.Adaptador.Fill(Tabla);
+			HayCamposInsertados=false;
+			Registro=Tabla.NewRow();
+		}
+		public object this[string campo]{
+			set{
+				Registro[campo]=value;
+				HayCamposInsertados=true;
+			}
+		}
+		public bool InsertarSiHayCampos(){
+			if(HayCamposInsertados){
+				HayCamposInsertados=false;
+				Tabla.Rows.Add(Registro);
+				Adaptador.Update(Tabla);
+				return true;
+			}else{
+				return false;
+			}
+		}
+	}
+	public class InsertadorSql //BaseSentenciaInsert
 	{
 		ReceptorSql Receptor;
 		StringBuilder campos=new StringBuilder();
 		StringBuilder valores=new StringBuilder();
 		Separador coma=new Separador(",");
-		public InsertadorSql(ReceptorSql receptor){
+		public InsertadorSql/*BaseSentenciaInsert*/(ReceptorSql receptor){
 			this.Receptor=receptor;	
 		}
-		public string this[string campo]{
+		public object this[string campo]{
 			set{
 				campos.Append(coma+"["+campo+"]");
-				valores.Append(coma.mismo()+'"'+Cadena.SacarComillas(value)+'"');
+				valores.Append(coma.mismo()+Cadena.ParaSql(value));
 			}
 		}
 		public bool InsertarSiHayCampos(){

@@ -33,12 +33,12 @@ namespace TodoASql
 				for(int columna=1;columna<=maxColumna;columna++){
 					InsertadorSql insert=new InsertadorSql(Receptor);
 					for(int i=0;i<encabezadosFilas.Length;i++){
-						insert[camposFilas[i]]=encabezadosFilas[i].TextoCelda(fila,1);
+						insert[camposFilas[i]]=encabezadosFilas[i].ValorCelda(fila,1);
 					}
 					for(int i=0;i<encabezadosColumnas.Length;i++){
-						insert[camposColumnas[i]]=encabezadosColumnas[i].TextoCelda(1,columna);
+						insert[camposColumnas[i]]=encabezadosColumnas[i].ValorCelda(1,columna);
 					}
-					insert[campoValor]=matriz.TextoCelda(fila,columna);
+					insert[campoValor]=matriz.ValorCelda(fila,columna);
 					insert.InsertarSiHayCampos();
 				}
 			}
@@ -203,9 +203,9 @@ namespace TodoASql
 			object[,] dumpObtenido=receptor.DumpObject();
 			object[,] dumpEsperado=
 				{
-					{"11101",new DateTime(2001,12,21),"Buenos Aires",2001,4,100.1},
-					{"11101",new DateTime(2001,12,21),"Buenos Aires",2002,1,200.2},
-					{"11101",new DateTime(2001,12,21),"Buenos Aires",2002,2,210.3},
+					{"11101",new DateTime(2001,12,20),"Buenos Aires",2001,4,100.1},
+					{"11101",new DateTime(2001,12,20),"Buenos Aires",2002,1,200.2},
+					{"11101",new DateTime(2001,12,20),"Buenos Aires",2002,2,210.3},
 					{"11102",new DateTime(2007,6,5),"Montevideo",2001,4,100.21},
 					{"11102",new DateTime(2007,6,5),"Montevideo",2002,1,120.22},
 					{"11102",new DateTime(2007,6,5),"Montevideo",2002,2,140.23}
