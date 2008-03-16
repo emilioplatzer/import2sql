@@ -19,8 +19,20 @@ namespace TodoASql
 	public class MatrizExcelASql
 	{
 		ReceptorSql Receptor;
+		public string[] CamposFijos;
+		public object[] ValoresFijos;
 		public MatrizExcelASql(ReceptorSql receptor){
 			this.Receptor=receptor;
+		}
+		InsertadorSql NuevoInsertador(){
+			InsertadorSql insert=new InsertadorSql(Receptor);
+			if(CamposFijos!=null){
+				Assert.AreEqual(CamposFijos.Length,ValoresFijos.Length);
+				for(int i=0;i<CamposFijos.Length;i++){
+					insert[CamposFijos[i]]=ValoresFijos[i];
+				}
+			}
+			return insert;
 		}
 		public void PasarHoja(RangoExcel matriz,RangoExcel[] encabezadosFilas, RangoExcel[] encabezadosColumnas, string campoValor, 
 		                      string[] camposFilas, string[] camposColumnas)
@@ -31,7 +43,7 @@ namespace TodoASql
 			Assert.AreEqual(encabezadosColumnas.Length,camposColumnas.Length);
 			for(int fila=1;fila<=maxFila;fila++){
 				for(int columna=1;columna<=maxColumna;columna++){
-					InsertadorSql insert=new InsertadorSql(Receptor);
+					InsertadorSql insert=NuevoInsertador();
 					for(int i=0;i<encabezadosFilas.Length;i++){
 						insert[camposFilas[i]]=encabezadosFilas[i].ValorCelda(fila,1);
 					}
@@ -165,6 +177,8 @@ namespace TodoASql
 			OleDbConnection con=BaseDatos.abrirMDB(nombreArchivoMDB);
 			string sentencia=@"
 				CREATE TABLE Receptor(
+				   lote varchar(10),
+				   version integer,
 				   codigo varchar(250),
 				   cierre date,
 				   ciudad varchar(250),
@@ -182,6 +196,8 @@ namespace TodoASql
 			ReceptorSql receptor=new ReceptorSql(parametros);
 			MatrizExcelASql matriz=new MatrizExcelASql(receptor);
 			LibroExcel libro=LibroExcel.Abrir(nombreArchivoXLS);
+			matriz.CamposFijos=new string[]{"lote","version"};
+			matriz.ValoresFijos=new object[]{"único",111};
 			matriz.PasarHoja(
 				libro.Rango("D3","F4"),
 				new RangoExcel[]{
@@ -203,12 +219,12 @@ namespace TodoASql
 			object[,] dumpObtenido=receptor.DumpObject();
 			object[,] dumpEsperado=
 				{
-					{"11101",new DateTime(2001,12,20),"Buenos Aires",2001,4,100.1},
-					{"11101",new DateTime(2001,12,20),"Buenos Aires",2002,1,200.2},
-					{"11101",new DateTime(2001,12,20),"Buenos Aires",2002,2,210.3},
-					{"11102",new DateTime(2007,6,5),"Montevideo",2001,4,100.21},
-					{"11102",new DateTime(2007,6,5),"Montevideo",2002,1,120.22},
-					{"11102",new DateTime(2007,6,5),"Montevideo",2002,2,140.23}
+					{"único",111,"11101",new DateTime(2001,12,20),"Buenos Aires",2001,4,100.1},
+					{"único",111,"11101",new DateTime(2001,12,20),"Buenos Aires",2002,1,200.2},
+					{"único",111,"11101",new DateTime(2001,12,20),"Buenos Aires",2002,2,210.3},
+					{"único",111,"11102",new DateTime(2007,6,5),"Montevideo",2001,4,100.21},
+					{"único",111,"11102",new DateTime(2007,6,5),"Montevideo",2002,1,120.22},
+					{"único",111,"11102",new DateTime(2007,6,5),"Montevideo",2002,2,140.23}
 				};
 			Assert.AreEqual(dumpEsperado,dumpObtenido);
 			libro.Close();
