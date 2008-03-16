@@ -98,6 +98,11 @@ namespace TodoASql
 		}
 	}
 	public class Cadena{
+		public static System.Globalization.NumberFormatInfo FormatoPuntoDecimal;
+		static Cadena(){
+			FormatoPuntoDecimal=new System.Globalization.NumberFormatInfo();
+			FormatoPuntoDecimal.NumberDecimalSeparator=".";
+		}
 		public static int CantidadOcurrencias(char caracterBuscado, string lugarDondeBuscar){
 			int i=0,rta=0;
 			while((i=lugarDondeBuscar.IndexOf(caracterBuscado,i))>=0){
@@ -160,6 +165,15 @@ namespace TodoASql
 				.Replace('\t',' ')
 				.Substring(0,Otras.Min(250,valor.Length)).Trim();
 		}
+		public static string ParaSql(object dato){
+			if(dato.GetType()==typeof(String)){
+				return '"'+SacarComillas((string) dato)+'"';
+			}else if(dato.GetType()==typeof(double)){
+				return ((double) dato).ToString(Cadena.FormatoPuntoDecimal);
+			}else{
+				return dato.ToString();
+			}
+		}
 	}
 	[TestFixture]
 	public class ProbarCadena{
@@ -190,6 +204,16 @@ namespace TodoASql
 			string[] varios=
 				Regex.Split("cero=0\nuno=1\ndos=2","\n");
 			Assert.AreEqual("uno=1",varios[1]);
+		}
+		[Test] 
+		public void Conversiones(){
+			double pi=3.14;
+			System.Globalization.NumberFormatInfo formato=new System.Globalization.NumberFormatInfo();
+			formato.NumberDecimalSeparator=".";
+			Assert.AreEqual("3.14",pi.ToString(formato));
+			Assert.AreEqual("3.14",pi.ToString(Cadena.FormatoPuntoDecimal));
+			pi+=1002000; // un millón dos mil
+			Assert.AreEqual("1002003.14",pi.ToString(Cadena.FormatoPuntoDecimal));
 		}
 	}
 	public class ConjuntosString{

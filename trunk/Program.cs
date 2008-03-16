@@ -15,11 +15,14 @@ namespace TodoASql
 		public static void Main(string[] args)
 		{
 			// new ProbarFormulario().FormDerivado();
+			// new ProbarMailASql().Proceso();
+			// /*
 			ProbarMatrizExcelASqlGenerica p=new ProbarMatrizExcelASqlGenerica();
 			p.crear();
 			p.revisar();
 			p.crearReceptor();
 			p.trasvasar();
+			// */
 			// PruebaFormularios.Primero();
 			// new Pruebas().Proceso(); /*
 			/*
