@@ -101,7 +101,16 @@ namespace TodoASql
 		public string TextoCelda(int fila, int col){
 			return ((Excel.Range) Base.Cells[fila,col]).Text.ToString();
 		}
+		public object ValorCelda(string rango){
+			return Base.get_Range(rango,___).Value2;
+		}
+		public object ValorCelda(int fila, int col){
+			return ((Excel.Range) Base.Cells[fila,col]).Value2;
+		}
 		public void PonerTexto(int fila,int col,string valor){
+			((Excel.Range) Base.Cells[fila,col]).Value2=valor;
+		}
+		public void PonerValor(int fila,int col,object valor){
 			((Excel.Range) Base.Cells[fila,col]).Value2=valor;
 		}
 		public void Rellenar(string[,] matriz){
@@ -114,7 +123,7 @@ namespace TodoASql
 		public void Rellenar(object[,] matriz){
 			for(int fila=0;fila<matriz.GetLength(0);fila++){
 				for(int col=0;col<matriz.GetLength(1);col++){
-					PonerTexto(fila+1,col+1,(string) matriz[fila,col]);
+					PonerValor(fila+1,col+1,matriz[fila,col]);
 				}
 			}
 		}
@@ -143,6 +152,13 @@ namespace TodoASql
 			Assert.AreEqual("dos",rango.TextoCelda("A1"));
 			Assert.AreEqual("dos",hoja.TextoCelda("B2"));
 			Assert.AreEqual("dos",libro.TextoCelda("B2"));
+			Assert.AreEqual("1",hoja.ValorCelda("B1"));
+			Assert.AreEqual(1,hoja.ValorCelda("C1"));
+			Assert.AreNotEqual(hoja.ValorCelda("B1").GetType(),hoja.ValorCelda("C1").GetType());
+			Assert.AreEqual(0,hoja.ValorCelda("E1"));
+			Assert.AreEqual(null,hoja.ValorCelda("F1"));
+			Assert.AreEqual(null,hoja.ValorCelda("G1"));
+			Assert.AreEqual(" ",hoja.ValorCelda("H1"));
 			libro.Close();
 		}
 	}
@@ -167,7 +183,7 @@ namespace TodoASql
 			// libro = ApExcel.Workbooks.Add(___);
 			Excel.Worksheet hoja1 = new Excel.Worksheet();
 			hoja1 = (Excel.Worksheet)libro.Sheets.Add(___, ___, ___, ___);
-			hoja1.Activate();
+			// hoja1.Activate();
 			hoja1.Name="LaHoja1";
 			libro.SaveAs(nombreArchivo,___,___,___,___,___,
 			             Excel.XlSaveAsAccessMode.xlNoChange,
@@ -181,6 +197,13 @@ namespace TodoASql
 			Excel.Workbook libro=ApExcel.Workbooks.Open(nombreArchivo,___,___,___,___,___,___,___,___,___,___,___,___,___,___);
 			Excel.Worksheet hoja=(Excel.Worksheet) libro.Worksheets["LaHoja1"];
 			hoja.Cells[1,1]="uno";
+			hoja.Cells[1,2]="'1";
+			hoja.Cells[1,3]=1;
+			hoja.Cells[1,4]=0;
+			hoja.Cells[1,5]="0";
+			// hoja.Cells[1,5]=0; queda en blanco
+			hoja.Cells[1,7]=""; // string sin caracteres
+			hoja.Cells[1,8]=" "; // string con espacio
 			hoja.Cells[2,2]="dos";
 			hoja.Cells[3,14]="pi";
 			libro.Save();
@@ -196,6 +219,15 @@ namespace TodoASql
 			Assert.AreEqual("uno",r.Text.ToString());
 			Assert.AreEqual("dos",((Excel.Range) hoja.Cells[2,2]).Text);
 			Assert.AreEqual("pi",hoja.get_Range("N3",___).Text);
+			Assert.AreEqual("1",hoja.get_Range("B1",___).Text);
+			Assert.AreEqual("1",hoja.get_Range("B1",___).Value2);
+			Assert.AreEqual("1",hoja.get_Range("C1",___).Text);
+			Assert.AreEqual(1,hoja.get_Range("C1",___).Value2);
+			Assert.AreNotEqual(hoja.get_Range("B1",___).Value2.GetType(),hoja.get_Range("C1",___).Value2.GetType());
+			Assert.AreEqual(0,hoja.get_Range("E1",___).Value2);
+			Assert.AreEqual(null,hoja.get_Range("F1",___).Value2);
+			Assert.AreEqual(null,hoja.get_Range("G1",___).Value2);
+			Assert.AreEqual(" ",hoja.get_Range("H1",___).Value2);
 		}
 	}
 }

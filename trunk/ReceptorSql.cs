@@ -108,6 +108,7 @@ namespace TodoASql
 				Archivo.Escribir(System.Environment.GetEnvironmentVariable("TEMP")
 				                      + @"query.sql"
 				                      ,sentencia);
+				System.Console.WriteLine(sentencia);
 				cmd.ExecuteNonQuery();
 				return true;
 			}else{
