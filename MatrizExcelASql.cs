@@ -155,7 +155,7 @@ namespace TodoASql
 		[Test]
 		public void revisar(){
 			LibroExcel libro=LibroExcel.Abrir(nombreArchivoXLS);
-			Assert.AreEqual("120",libro.TextoCelda("E4"));
+			Assert.AreEqual(120.22,libro.ValorCelda("E4"));
 			libro.Close();
 		}
 		[Test]
