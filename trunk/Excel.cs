@@ -19,6 +19,7 @@ namespace TodoASql
 	public class LibroExcel:HojaExcel //:AccesoExcel
 	{
 		Excel.Workbook libro;
+		bool abierto=false; public bool Abierto{ get{ return abierto; }}
 		static object ___ = Type.Missing; 		
 		private static Excel.Application apExcel;
 		public static Excel.Application ApExcel{
@@ -43,7 +44,9 @@ namespace TodoASql
 			};
 		}
 		public static LibroExcel Abrir(string nombreArchivo){
-			return new LibroExcel(ApExcel.Workbooks.Open(nombreArchivo,___,___,___,___,___,___,___,___,___,___,___,___,___,___));
+			LibroExcel nuevo=new LibroExcel(ApExcel.Workbooks.Open(nombreArchivo,___,___,___,___,___,___,___,___,___,___,___,___,___,___));
+			nuevo.abierto=true;
+			return nuevo;
 		}
 		public static LibroExcel Nuevo(){
 			return new LibroExcel(ApExcel.Workbooks.Add(___));
@@ -56,9 +59,44 @@ namespace TodoASql
 		}
 		public void Close(){
 			libro.Close(___,___,___);
+			abierto=false;
 		}
 	}
-	public class HojaExcel:AccesoExcel
+	/// Algo que puede devolver un rango:
+	public class RangueadorExcel:AccesoExcel{
+		static object ___ = Type.Missing; 		
+		protected RangueadorExcel(Excel.Worksheet hoja)
+			:base(hoja)
+		{
+		}
+		protected RangueadorExcel(Excel.Range rango)
+			:base(rango)
+		{
+		}
+		public RangoExcel Rango(string esquina,string otraEsquina){
+			return new RangoExcel(base.Base.get_Range(esquina,otraEsquina));
+		}
+		public RangoExcel Rango(string definicionRango){
+			return new RangoExcel(base.Base.get_Range(definicionRango,___));
+		}
+		public RangoExcel Columna(int columna){
+			return new RangoExcel(
+				base.Base.get_Range(
+					base.Base.Cells[1,columna],
+					base.Base.Cells[base.Base.Rows.Count,columna]
+				)
+			);
+		}
+		public RangoExcel Fila(int fila){
+			return new RangoExcel(
+				base.Base.get_Range(
+					base.Base.Cells[fila,1],
+					base.Base.Cells[fila,base.Base.Columns.Count]
+				)
+			);
+		}
+	}
+	public class HojaExcel:RangueadorExcel
 	{
 		Excel.Worksheet hoja;
 		static object ___ = Type.Missing; 		
@@ -67,27 +105,24 @@ namespace TodoASql
 		{
 			this.hoja=hoja;
 		}
-		public RangoExcel Rango(string esquina,string otraEsquina){
-			return new RangoExcel(hoja.get_Range(esquina,otraEsquina));
-		}
 	}
-	public class RangoExcel:AccesoExcel{
-		Excel.Range Rango;
+	public class RangoExcel:RangueadorExcel{
+		Excel.Range rango;
 		static object ___ = Type.Missing; 		
 		internal RangoExcel(Excel.Range rango)
 			:base(rango)
 		{
-			this.Rango=rango;
+			this.rango=rango;
 		}
 		public int CantidadFilas{
-			get{ return Rango.Rows.Count;}
+			get{ return rango.Rows.Count;}
 		}
 		public int CantidadColumnas{
-			get{ return Rango.Columns.Count;}
+			get{ return rango.Columns.Count;}
 		}
 	}
 	public class AccesoExcel{
-		Excel.Range Base;
+		internal Excel.Range Base;
 		static object ___ = Type.Missing; 		
 		protected AccesoExcel(Excel.Range Base){
 			this.Base=Base;
@@ -125,6 +160,29 @@ namespace TodoASql
 				for(int col=0;col<matriz.GetLength(1);col++){
 					PonerValor(fila+1,col+1,matriz[fila,col]);
 				}
+			}
+		}
+	}
+	public class ColeccionExcel{
+		System.Collections.Generic.Dictionary<string, LibroExcel> libros;
+		public ColeccionExcel(){
+			libros=new System.Collections.Generic.Dictionary<string, LibroExcel>();
+		}
+		public void Abrir(string nombreArchivo){
+			if(libros.ContainsKey(nombreArchivo)){
+				LibroExcel libro=libros[nombreArchivo];
+				if(!libro.Abierto){
+					libro=LibroExcel.Abrir(nombreArchivo);
+					libros[nombreArchivo]=libro;
+				}
+			}else{
+				LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
+				libros.Add(nombreArchivo,libro);
+			}
+		}
+		public LibroExcel this[string nombreArchivo]{
+			get{
+				return libros[nombreArchivo];
 			}
 		}
 	}
