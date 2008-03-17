@@ -17,11 +17,12 @@ namespace TodoASql
 			// new ProbarFormulario().FormDerivado();
 			// new ProbarMailASql().Proceso();
 			// /*
-			ProbarMatrizExcelASqlGenerica p=new ProbarMatrizExcelASqlGenerica();
+			ProbarMatrizExcelASql p=new ProbarMatrizExcelASql();
 			p.crear();
 			p.revisar();
 			p.crearReceptor();
 			p.trasvasar();
+			p.trasvasarConParametros();
 			// */
 			// PruebaFormularios.Primero();
 			// new Pruebas().Proceso(); /*

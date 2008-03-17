@@ -40,7 +40,7 @@ namespace TodoASql
 			int maxFila=matriz.CantidadFilas;
 			int maxColumna=matriz.CantidadColumnas;
 			Assert.AreEqual(encabezadosFilas.Length,camposFilas.Length);
-			Assert.AreEqual(encabezadosColumnas.Length,camposColumnas.Length);
+			// Agregar Assert.AreEqual(encabezadosColumnas.Length,camposColumnas.Length);
 			for(int fila=1;fila<=maxFila;fila++){
 				for(int columna=1;columna<=maxColumna;columna++){
 					InsertadorSql insert=NuevoInsertador();
@@ -54,6 +54,39 @@ namespace TodoASql
 					insert.InsertarSiHayCampos();
 				}
 			}
+		}
+		public void PasarHoja(RangoExcel matriz,RangoExcel encabezadosFilas, RangoExcel encabezadosColumnas, string campoValor, 
+		                      string[] camposFilas, string[] camposColumnas)
+		{
+			RangoExcel[] ArrayEncabezadosFilas=new RangoExcel[encabezadosFilas.CantidadColumnas];
+			for(int i=0;i<encabezadosFilas.CantidadColumnas;i++){
+				ArrayEncabezadosFilas[i]=encabezadosFilas.Columna(1);
+			}
+			RangoExcel[] ArrayEncabezadosColumnas=new RangoExcel[encabezadosColumnas.CantidadColumnas];
+			for(int i=0;i<encabezadosColumnas.CantidadFilas;i++){
+				ArrayEncabezadosColumnas[i]=encabezadosColumnas.Fila(1);
+			}
+			PasarHoja(matriz,ArrayEncabezadosFilas,ArrayEncabezadosColumnas,campoValor,camposFilas,camposColumnas);
+		}
+		public void PasarHoja(ParametrosMatrizExcelASql parametros){
+			if(parametros.TitulosDeFila.NombreArchivo==null){
+				parametros.TitulosDeFila.NombreArchivo=parametros.Matriz.NombreArchivo;
+			}
+			if(parametros.TitulosDeColumna.NombreArchivo==null){
+				parametros.TitulosDeColumna.NombreArchivo=parametros.Matriz.NombreArchivo;
+			}
+			ColeccionExcel libros=new ColeccionExcel();
+			libros.Abrir(parametros.Matriz.NombreArchivo);
+			libros.Abrir(parametros.TitulosDeFila.NombreArchivo);
+			libros.Abrir(parametros.TitulosDeColumna.NombreArchivo);
+			PasarHoja(
+				libros[parametros.Matriz.NombreArchivo].Rango(parametros.Matriz.Rango),
+				libros[parametros.TitulosDeFila.NombreArchivo].Rango(parametros.TitulosDeFila.Rango),
+				libros[parametros.TitulosDeColumna.NombreArchivo].Rango(parametros.TitulosDeColumna.Rango),
+				parametros.Matriz.Titulos[0],
+				parametros.TitulosDeFila.Titulos,
+				parametros.TitulosDeColumna.Titulos
+			);
 		}
 	}
 	[TestFixture]
@@ -107,7 +140,7 @@ namespace TodoASql
 				libro.Rango("D3","F4"),
 				new RangoExcel[]{
 					libro.Rango("A3","A4"),
-					libro.Rango("B3","B4"),
+					libro.Rango("B3:B4"),
 					libro.Rango("C3","C4")
 				},new RangoExcel[]{
 					libro.Rango("D1","F1"),
@@ -134,8 +167,53 @@ namespace TodoASql
 			Assert.AreEqual(dumpEsperado,dumpObtenido);
 			libro.Close();
 		}
+		[Test]
+		public void trasvasarConParametros(){
+			OleDbConnection con=BaseDatos.abrirMDB(nombreArchivoMDB);
+			OleDbCommand cmd=new OleDbCommand("delete from Receptor",con);
+			cmd.ExecuteNonQuery();
+			con.Close();
+			ParametrosMatrizExcelASql parametros=new ParametrosMatrizExcelASql(nombreArchivoMDB,"Receptor");
+			parametros.Matriz.NombreArchivo=nombreArchivoXLS;
+			parametros.Matriz.Rango="D3:F4";
+			parametros.Matriz.Titulos=new string[]{"indice"};
+			parametros.TitulosDeFila.NombreArchivo=null;
+			parametros.TitulosDeFila.Rango="A3:C4";
+			parametros.TitulosDeFila.Titulos=new string[]{
+				"continente","pais","ciudad"
+			};
+			parametros.TitulosDeColumna.NombreArchivo=null;
+			parametros.TitulosDeColumna.Rango="D1:F2";
+			parametros.TitulosDeColumna.Titulos=new string[]{
+				"año","trimestre"
+			};
+			ReceptorSql receptor=new ReceptorSql(parametros);
+			MatrizExcelASql matriz=new MatrizExcelASql(receptor);
+			LibroExcel libro=LibroExcel.Abrir(nombreArchivoXLS);
+			matriz.PasarHoja(parametros);
+			string[,] dumpObtenido=receptor.DumpString();
+			string[,] dumpEsperado=
+				{
+					{"America","Argentina","Buenos Aires","2001","4","100"},
+					{"America","Argentina","Buenos Aires","2002","1","200"},
+					{"America","Argentina","Buenos Aires","2002","2","210"},
+					{"America","Uruguay","Montevideo","2001","4","100"},
+					{"America","Uruguay","Montevideo","2002","1","120"},
+					{"America","Uruguay","Montevideo","2002","2","140"}
+				};
+			Assert.AreEqual(dumpEsperado,dumpObtenido);
+			libro.Close();
+		}
+	}
+	public struct ExcelDefinicionRango{
+		public string NombreArchivo;
+		public string Rango;
+		public string[] Titulos;
 	}
 	public class ParametrosMatrizExcelASql:Parametros,IParametorsReceptorSql{
+		public ExcelDefinicionRango Matriz;
+		public ExcelDefinicionRango TitulosDeFila;
+		public ExcelDefinicionRango TitulosDeColumna;
 		string tablaReceptora; public string TablaReceptora{ get{ return tablaReceptora; }}
 		string baseReceptora; public string BaseReceptora{ get{ return baseReceptora; }}
 		public ParametrosMatrizExcelASql(LeerPorDefecto queHacer):base(queHacer){
