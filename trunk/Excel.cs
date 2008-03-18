@@ -1,6 +1,6 @@
 /*
  * Creado por SharpDevelop.
- * Usuario: Andrea
+ * Usuario: Emilio
  * Fecha: 11/03/2008
  * Hora: 20:47
  * 
@@ -8,6 +8,8 @@
  */
 
 using System;
+#if SinOffice
+#else
 using Excel = Microsoft.Office.Interop.Excel;
 using NUnit.Framework;
 
@@ -62,57 +64,18 @@ namespace TodoASql
 			abierto=false;
 		}
 	}
-	/// Algo que puede devolver un rango:
-	public class RangueadorExcel:AccesoExcel{
-		static object ___ = Type.Missing; 		
-		protected RangueadorExcel(Excel.Worksheet hoja)
-			:base(hoja)
-		{
-		}
-		protected RangueadorExcel(Excel.Range rango)
-			:base(rango)
-		{
-		}
-		public RangoExcel Rango(string esquina,string otraEsquina){
-			return new RangoExcel(base.Base.get_Range(esquina,otraEsquina));
-		}
-		public RangoExcel Rango(string definicionRango){
-			return new RangoExcel(base.Base.get_Range(definicionRango,___));
-		}
-		public RangoExcel Columna(int columna){
-			return new RangoExcel(
-				base.Base.get_Range(
-					base.Base.Cells[1,columna],
-					base.Base.Cells[base.Base.Rows.Count,columna]
-				)
-			);
-		}
-		public RangoExcel Fila(int fila){
-			return new RangoExcel(
-				base.Base.get_Range(
-					base.Base.Cells[fila,1],
-					base.Base.Cells[fila,base.Base.Columns.Count]
-				)
-			);
-		}
-	}
-	public class HojaExcel:RangueadorExcel
-	{
-		Excel.Worksheet hoja;
+	public class HojaExcel:AccesoExcel{
 		static object ___ = Type.Missing; 		
 		public HojaExcel(Excel.Worksheet hoja)
 			:base(hoja)
 		{
-			this.hoja=hoja;
 		}
 	}
-	public class RangoExcel:RangueadorExcel{
-		Excel.Range rango;
+	public class RangoExcel:AccesoExcel{
 		static object ___ = Type.Missing; 		
-		internal RangoExcel(Excel.Range rango)
-			:base(rango)
+		internal RangoExcel(Excel.Range rango,Excel.Worksheet hoja)
+			:base(rango,hoja)
 		{
-			this.rango=rango;
 		}
 		public int CantidadFilas{
 			get{ return rango.Rows.Count;}
@@ -122,31 +85,34 @@ namespace TodoASql
 		}
 	}
 	public class AccesoExcel{
-		internal Excel.Range Base;
+		internal Excel.Worksheet hoja;
+		internal Excel.Range rango;
 		static object ___ = Type.Missing; 		
-		protected AccesoExcel(Excel.Range Base){
-			this.Base=Base;
+		protected AccesoExcel(Excel.Worksheet hoja):
+			this(hoja.get_Range("A1",___),hoja)
+		{
 		}
-		protected AccesoExcel(Excel.Worksheet hoja){
-			this.Base=hoja.get_Range("A1",___);
+		protected AccesoExcel(Excel.Range rango,Excel.Worksheet hoja){
+			this.rango=rango;
+			this.hoja=hoja;
 		}
 		public string TextoCelda(string rango){
-			return Base.get_Range(rango,___).Text.ToString();
+			return this.rango.get_Range(rango,___).Text.ToString();
 		}
 		public string TextoCelda(int fila, int col){
-			return ((Excel.Range) Base.Cells[fila,col]).Text.ToString();
+			return ((Excel.Range) rango.Cells[fila,col]).Text.ToString();
 		}
 		public object ValorCelda(string rango){
-			return Base.get_Range(rango,___).Value2;
+			return this.rango.get_Range(rango,___).Value2;
 		}
 		public object ValorCelda(int fila, int col){
-			return ((Excel.Range) Base.Cells[fila,col]).Value2;
+			return ((Excel.Range) rango.Cells[fila,col]).Value2;
 		}
 		public void PonerTexto(int fila,int col,string valor){
-			((Excel.Range) Base.Cells[fila,col]).Value2=valor;
+			((Excel.Range) rango.Cells[fila,col]).Value2=valor;
 		}
 		public void PonerValor(int fila,int col,object valor){
-			((Excel.Range) Base.Cells[fila,col]).Value2=valor;
+			((Excel.Range) rango.Cells[fila,col]).Value2=valor;
 		}
 		public void Rellenar(string[,] matriz){
 			for(int fila=0;fila<matriz.GetLength(0);fila++){
@@ -161,6 +127,28 @@ namespace TodoASql
 					PonerValor(fila+1,col+1,matriz[fila,col]);
 				}
 			}
+		}
+		public RangoExcel Rango(string esquina,string otraEsquina){
+			return new RangoExcel(rango.get_Range(esquina,otraEsquina),hoja);
+		}
+		public RangoExcel Rango(string definicionRango){
+			return new RangoExcel(rango.get_Range(definicionRango,___),hoja);
+		}
+		public RangoExcel Columna(int columna){
+			return new RangoExcel(
+				rango.get_Range(
+					hoja.Cells[1,columna],
+					hoja.Cells[rango.Rows.Count,columna]
+				),hoja
+			);
+		}
+		public RangoExcel Fila(int fila){
+			return new RangoExcel(
+				rango.get_Range(
+					hoja.Cells[fila,1],
+					hoja.Cells[fila,rango.Columns.Count]
+				),hoja
+			);
 		}
 	}
 	public class ColeccionExcel{
@@ -219,6 +207,16 @@ namespace TodoASql
 			Assert.AreEqual(" ",hoja.ValorCelda("H1"));
 			libro.Close();
 		}
+		[Test]
+		public void FilasyColumnas(){
+			LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
+			RangoExcel rango=libro.Rango("B2","N3");
+			RangoExcel columnafinal=rango.Columna(13);
+			Assert.AreEqual(1,columnafinal.CantidadColumnas);
+			Assert.AreEqual(2,columnafinal.CantidadFilas);
+			Assert.AreEqual("pi",columnafinal.ValorCelda("A2"));
+			libro.Close();
+		}
 	}
 	[TestFixture]
 	public class probarExcel{
@@ -264,6 +262,8 @@ namespace TodoASql
 			hoja.Cells[1,8]=" "; // string con espacio
 			hoja.Cells[2,2]="dos";
 			hoja.Cells[3,14]="pi";
+			hoja.Cells[4,15]="algo";
+			hoja.Cells[2,13]="nada";
 			libro.Save();
 			libro.Close(___,___,___);
 		}
@@ -286,6 +286,33 @@ namespace TodoASql
 			Assert.AreEqual(null,hoja.get_Range("F1",___).Value2);
 			Assert.AreEqual(null,hoja.get_Range("G1",___).Value2);
 			Assert.AreEqual(" ",hoja.get_Range("H1",___).Value2);
+			libro.Close(___,___,___);
+		}
+		[Test]
+		public void UltimoFilasYColumnas(){
+			Excel.Workbook libro=ApExcel.Workbooks.Open(nombreArchivo,___,___,___,___,___,___,___,___,___,___,___,___,___,___);
+			Excel.Worksheet hoja=(Excel.Worksheet) libro.Worksheets["LaHoja1"];
+			// Excel.Range r=hoja.Range["A1"];
+			Excel.Range r;
+			r=hoja.get_Range("B2","N3");
+			Assert.AreEqual(2,r.Rows.Count);
+			Assert.AreEqual(13,r.Columns.Count);
+			Assert.AreEqual("pi",((Excel.Range) r.Cells[2,13]).Value2);
+			Assert.AreEqual("pi",r.get_Range("M2",___).Value2);
+			Assert.AreEqual("dos",r.get_Range("A1",___).Text);
+			//Assert.AreEqual("dos",r.Cells[1,1]);
+			// Excel.Range r2=r.get_Range("F13C1","F13C2");
+			// Excel.Range r2=r.get_Range("M1","M2");
+			// Excel.Range r2=r.get_Range(r.Cells[1,13],r.Cells[2,13]);
+			Excel.Range r2=r.get_Range(hoja.Cells[1,13],hoja.Cells[2,13]);
+			Assert.AreEqual(2,r2.Rows.Count);
+			Assert.AreEqual(1,r2.Columns.Count);
+			Assert.AreEqual("pi",r2.get_Range("A2",___).Text);
+			r2.get_Range("A2",___).Value2="No encontre";
+			r2.Cells[2,2]="no encontrado";
+			libro.Save();
+			libro.Close(___,___,___);
 		}
 	}
 }
+#endif

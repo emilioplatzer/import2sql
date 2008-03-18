@@ -8,6 +8,8 @@
  */
 
 using System;
+#if SinOffice
+#else
 using System.Data.OleDb;
 using NUnit.Framework;
 
@@ -309,3 +311,4 @@ namespace TodoASql
 		}
 	}
 }
+#endif
