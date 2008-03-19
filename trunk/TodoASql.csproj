@@ -57,6 +57,7 @@
     <Compile Include="PruebaFormularios.cs" />
     <Compile Include="PruebasReflexion.cs" />
     <Compile Include="ReceptorSql.cs" />
+    <Compile Include="UnProcesamiento.cs" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="ADOX">
