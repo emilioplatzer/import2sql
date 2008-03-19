@@ -45,15 +45,18 @@ namespace TodoASql
 			Assert.AreEqual(encabezadosColumnas.Length,camposColumnas.Length);
 			for(int fila=1;fila<=maxFila;fila++){
 				for(int columna=1;columna<=maxColumna;columna++){
-					InsertadorSql insert=NuevoInsertador();
-					for(int i=0;i<encabezadosFilas.Length;i++){
-						insert[camposFilas[i]]=encabezadosFilas[i].ValorCelda(fila,1);
+					object valor=matriz.ValorCelda(fila,columna);
+					if(valor!=null){
+						InsertadorSql insert=NuevoInsertador();
+						for(int i=0;i<encabezadosFilas.Length;i++){
+							insert[camposFilas[i]]=encabezadosFilas[i].ValorCelda(fila,1);
+						}
+						for(int i=0;i<encabezadosColumnas.Length;i++){
+							insert[camposColumnas[i]]=encabezadosColumnas[i].ValorCelda(1,columna);
+						}
+						insert[campoValor]=valor;
+						insert.InsertarSiHayCampos();
 					}
-					for(int i=0;i<encabezadosColumnas.Length;i++){
-						insert[camposColumnas[i]]=encabezadosColumnas[i].ValorCelda(1,columna);
-					}
-					insert[campoValor]=matriz.ValorCelda(fila,columna);
-					insert.InsertarSiHayCampos();
 				}
 			}
 		}
@@ -98,7 +101,7 @@ namespace TodoASql
 		string[,] matriz={
 			{"Indice","","año","2001","2002","2002"},
 			{"continente","pais","ciudad/trimestremes","4","1","2"},
-			{"America","Argentina","Buenos Aires","100","200","210"},
+			{"America","Argentina","Buenos Aires","100",null,"210"},
 			{"America","Uruguay","Montevideo","100","120","140"}
 		};
 		[Test]
@@ -160,7 +163,6 @@ namespace TodoASql
 			string[,] dumpEsperado=
 				{
 					{"America","Argentina","Buenos Aires","2001","4","100"},
-					{"America","Argentina","Buenos Aires","2002","1","200"},
 					{"America","Argentina","Buenos Aires","2002","2","210"},
 					{"America","Uruguay","Montevideo","2001","4","100"},
 					{"America","Uruguay","Montevideo","2002","1","120"},
@@ -191,13 +193,12 @@ namespace TodoASql
 			};
 			ReceptorSql receptor=new ReceptorSql(parametros);
 			MatrizExcelASql matriz=new MatrizExcelASql(receptor);
-			LibroExcel libro=LibroExcel.Abrir(nombreArchivoXLS);
+			// LibroExcel libro=LibroExcel.Abrir(nombreArchivoXLS);
 			matriz.PasarHoja(parametros);
 			string[,] dumpObtenido=receptor.DumpString();
 			string[,] dumpEsperado=
 				{
 					{"America","Argentina","Buenos Aires","2001","4","100"},
-					{"America","Argentina","Buenos Aires","2002","1","200"},
 					{"America","Argentina","Buenos Aires","2002","2","210"},
 					{"America","Uruguay","Montevideo","2001","4","100"},
 					{"America","Uruguay","Montevideo","2002","1","120"},
