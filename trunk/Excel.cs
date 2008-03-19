@@ -208,13 +208,14 @@ namespace TodoASql
 			libro.Close();
 		}
 		[Test]
-		public void FilasyColumnas(){
+		public void UltimoFilasyColumnas(){
 			LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
 			RangoExcel rango=libro.Rango("B2","N3");
 			RangoExcel columnafinal=rango.Columna(13);
 			Assert.AreEqual(1,columnafinal.CantidadColumnas);
 			Assert.AreEqual(2,columnafinal.CantidadFilas);
 			Assert.AreEqual("pi",columnafinal.ValorCelda("A2"));
+			Assert.AreEqual("pi",columnafinal.ValorCelda(2,1));
 			libro.Close();
 		}
 	}
@@ -308,8 +309,10 @@ namespace TodoASql
 			Assert.AreEqual(2,r2.Rows.Count);
 			Assert.AreEqual(1,r2.Columns.Count);
 			Assert.AreEqual("pi",r2.get_Range("A2",___).Text);
-			r2.get_Range("A2",___).Value2="No encontre";
-			r2.Cells[2,2]="no encontrado";
+			Excel.Range r3=r.get_Range("M1","M2");
+			Assert.AreEqual(2,r3.Rows.Count);
+			Assert.AreEqual(1,r3.Columns.Count);
+			Assert.AreEqual("pi",r3.get_Range("A2",___).Text);
 			libro.Save();
 			libro.Close(___,___,___);
 		}

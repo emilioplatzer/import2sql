@@ -42,7 +42,7 @@ namespace TodoASql
 			int maxFila=matriz.CantidadFilas;
 			int maxColumna=matriz.CantidadColumnas;
 			Assert.AreEqual(encabezadosFilas.Length,camposFilas.Length);
-			// Agregar Assert.AreEqual(encabezadosColumnas.Length,camposColumnas.Length);
+			Assert.AreEqual(encabezadosColumnas.Length,camposColumnas.Length);
 			for(int fila=1;fila<=maxFila;fila++){
 				for(int columna=1;columna<=maxColumna;columna++){
 					InsertadorSql insert=NuevoInsertador();
@@ -62,11 +62,11 @@ namespace TodoASql
 		{
 			RangoExcel[] ArrayEncabezadosFilas=new RangoExcel[encabezadosFilas.CantidadColumnas];
 			for(int i=0;i<encabezadosFilas.CantidadColumnas;i++){
-				ArrayEncabezadosFilas[i]=encabezadosFilas.Columna(1);
+				ArrayEncabezadosFilas[i]=encabezadosFilas.Columna(i+1);
 			}
-			RangoExcel[] ArrayEncabezadosColumnas=new RangoExcel[encabezadosColumnas.CantidadColumnas];
+			RangoExcel[] ArrayEncabezadosColumnas=new RangoExcel[encabezadosColumnas.CantidadFilas];
 			for(int i=0;i<encabezadosColumnas.CantidadFilas;i++){
-				ArrayEncabezadosColumnas[i]=encabezadosColumnas.Fila(1);
+				ArrayEncabezadosColumnas[i]=encabezadosColumnas.Fila(i+1);
 			}
 			PasarHoja(matriz,ArrayEncabezadosFilas,ArrayEncabezadosColumnas,campoValor,camposFilas,camposColumnas);
 		}
@@ -204,7 +204,7 @@ namespace TodoASql
 					{"America","Uruguay","Montevideo","2002","2","140"}
 				};
 			Assert.AreEqual(dumpEsperado,dumpObtenido);
-			libro.Close();
+			//libro.Close();
 		}
 	}
 	public struct ExcelDefinicionRango{
