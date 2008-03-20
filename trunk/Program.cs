@@ -14,9 +14,11 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
+			new ProbarMatrizExcelASqlGenerica().trasvasar();
+			// new probarLibroExcel().Rango();
 			// new ProbarFormulario().FormDerivado();
 			// new ProbarMailASql().Proceso();
-			UnProcesamiento.Ahora();
+			// UnProcesamiento.Ahora();
 			// /*
 			/*
 			#if SinOffice

@@ -140,7 +140,7 @@ namespace TodoASql
 						valores.ToString()+")";
 				OleDbCommand cmd = new OleDbCommand(sentencia,Receptor.ConexionABase);
 				Archivo.Escribir(System.Environment.GetEnvironmentVariable("TEMP")
-				                      + @"query.sql"
+				                      + @"\query.sql"
 				                      ,sentencia);
 				System.Console.WriteLine(sentencia);
 				cmd.ExecuteNonQuery();

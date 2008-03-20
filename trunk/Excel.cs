@@ -21,6 +21,7 @@ namespace TodoASql
 	public class LibroExcel:HojaExcel //:AccesoExcel
 	{
 		Excel.Workbook libro;
+		internal static string FormatoFechas="dd/mm/yyyy";
 		bool abierto=false; public bool Abierto{ get{ return abierto; }}
 		static object ___ = Type.Missing; 		
 		private static Excel.Application apExcel;
@@ -102,17 +103,33 @@ namespace TodoASql
 		public string TextoCelda(int fila, int col){
 			return ((Excel.Range) rango.Cells[fila,col]).Text.ToString();
 		}
+		static object ValorCelda(Excel.Range rango){
+			object valor=rango.Value2;
+			if(valor!=null && valor.GetType()==typeof(double)){
+				string loQueSeVe=rango.Text.ToString();
+				if(loQueSeVe.IndexOf('/')>0 || loQueSeVe.IndexOf('-')>0){
+					return new DateTime(1900,1,1).AddDays((double)valor-2);
+				}
+			}
+			return valor;
+		}
 		public object ValorCelda(string rango){
-			return this.rango.get_Range(rango,___).Value2;
+			return ValorCelda(this.rango.get_Range(rango,___));
 		}
 		public object ValorCelda(int fila, int col){
-			return ((Excel.Range) rango.Cells[fila,col]).Value2;
+			return ValorCelda((Excel.Range) rango.Cells[fila,col]);
 		}
 		public void PonerTexto(int fila,int col,string valor){
 			((Excel.Range) rango.Cells[fila,col]).Value2=valor;
 		}
+		static void PonerValor(Excel.Range rango,object valor){
+			rango.Value2=valor;
+			if(valor!=null && valor.GetType()==typeof(DateTime)){
+				rango.NumberFormat=LibroExcel.FormatoFechas;
+			}
+		}
 		public void PonerValor(int fila,int col,object valor){
-			((Excel.Range) rango.Cells[fila,col]).Value2=valor;
+			PonerValor((Excel.Range) rango.Cells[fila,col],valor);
 		}
 		public void Rellenar(string[,] matriz){
 			for(int fila=0;fila<matriz.GetLength(0);fila++){
@@ -218,6 +235,13 @@ namespace TodoASql
 			Assert.AreEqual("pi",columnafinal.ValorCelda(2,1));
 			libro.Close();
 		}
+		[Test]
+		public void TipoFecha(){
+			LibroExcel libro=LibroExcel.Nuevo();
+			libro.PonerValor(2,2,new DateTime(2008,3,2));
+			Assert.AreEqual(new DateTime(2008,3,2),libro.ValorCelda(2,2));
+			libro.Close();
+		}
 	}
 	[TestFixture]
 	public class probarExcel{
@@ -313,8 +337,19 @@ namespace TodoASql
 			Assert.AreEqual(2,r3.Rows.Count);
 			Assert.AreEqual(1,r3.Columns.Count);
 			Assert.AreEqual("pi",r3.get_Range("A2",___).Text);
-			libro.Save();
 			libro.Close(___,___,___);
+		}
+		[Test]
+		public void TipoFecha(){
+			/* Todo esto no camina, ni el close ni las fechas
+			Excel.Workbook libro=ApExcel.Workbooks.Open(nombreArchivo,___,___,___,___,___,___,___,___,___,___,___,___,___,___);
+			Excel.Worksheet hoja=(Excel.Worksheet) libro.Worksheets["LaHoja1"];
+			hoja.Cells[4,4]="2/3/2008";
+			Assert.AreEqual(new DateTime(2008,3,2),hoja.get_Range("D4",___).Value2);
+			
+			ApExcel.ActiveWindow;
+			libro.Close(false,___,___);
+			*/
 		}
 	}
 }
