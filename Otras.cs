@@ -63,13 +63,12 @@ namespace TodoASql
 	public class ProbarObjeto{
 		[Test]
 		public void ExpandirMiembros(){
-			// 
 			ParametrosPrueba pNO=new ParametrosPrueba(ParametrosPrueba.LeerPorDefecto.NO);
 			Assert.AreEqual("ParametrosPrueba{\r\n   DirUno:null\r\n   Frase:null\r\n   Cantidad:0\r\n   Fecha:01/01/0001 0:00:00\r\n}\r\n",Objeto.ExpandirMiembros(pNO));
 			ParametrosPrueba pSI=new ParametrosPrueba(ParametrosPrueba.LeerPorDefecto.SI);
 			System.Console.WriteLine(Objeto.ExpandirMiembros(pSI));
 			Assert.AreEqual("ParametrosPrueba{\r\n   DirUno:\"c:\\temp\\aux\"\r\n   Frase:\"No hay futuro\"\r\n   Cantidad:-1\r\n   Fecha:01/02/2003 0:00:00\r\n}\r\n",Objeto.ExpandirMiembros(pSI));
-			Assert.Ignore("Ojo que esto falla la primera vez que se usa");
+			// Assert.Ignore("Ojo que esto falla la primera vez que se usa");
 		}
 	}
 	public class Archivo{
