@@ -175,6 +175,8 @@ namespace TodoASql
 				return '"'+SacarComillas((string) dato)+'"';
 			}else if(dato.GetType()==typeof(double)){
 				return ((double) dato).ToString(Cadena.FormatoPuntoDecimal);
+			}else if(dato.GetType()==typeof(DateTime)){
+				return '"'+dato.ToString()+'"';
 			}else{
 				return dato.ToString();
 			}
