@@ -54,8 +54,6 @@ namespace TodoASql
 			System.Windows.Forms.Application.OleRequired();
 			PostgreSql db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 			ProbarBaseDatos.ObjEnTodasLasBases(db);
-			Assert.AreEqual(3,db.ExecuteScalar("SELECT 3"));
-			Assert.AreEqual(3.1416,db.ExecuteScalar("SELECT 3.1416"));
 		}
 	}
 }
