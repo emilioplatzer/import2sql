@@ -10,7 +10,8 @@
 using System;
 using System.Text;
 using System.Data;
-using System.Data.OleDb;
+using System.Data.Common;
+// using System.Data.OleDb;
 
 namespace TodoASql
 {
@@ -23,20 +24,28 @@ namespace TodoASql
 	/// </summary>
 	public class ReceptorSql
 	{
-		internal OleDbConnection ConexionABase;
-		OleDbDataReader SelectAbierto;
+		internal IDbConnection ConexionABase;
+		IDataReader SelectAbierto;
 		internal string NombreTabla;
 		/*
 		public ReceptorSql():this(new ParametrosMailASql(Parametros.LeerPorDefecto.SI)){
 		}
 		*/
+		public ReceptorSql(IDbConnection conexion,string nombreTablaReceptora){
+			this.ConexionABase=conexion;
+			this.NombreTabla=nombreTablaReceptora;
+			IDbCommand com=ConexionABase.CreateCommand();
+			com.CommandText="SELECT * FROM "+NombreTabla;
+			SelectAbierto=com.ExecuteReader();
+		}
 		public ReceptorSql(IParametorsReceptorSql parametros){
 			this.NombreTabla=parametros.TablaReceptora;
 			AbrirBase(parametros.BaseReceptora);
 		}
 		void AbrirBase(string nombreMDB){
-			ConexionABase = BaseDatos.abrirMDB(nombreMDB);
-			OleDbCommand cmd = new OleDbCommand("SELECT * FROM ["+NombreTabla+"]",ConexionABase);
+			ConexionABase=BaseDatos.abrirMDB(nombreMDB);
+			IDbCommand cmd=ConexionABase.CreateCommand();
+			cmd.CommandText="SELECT * FROM ["+NombreTabla+"]";
 			SelectAbierto=cmd.ExecuteReader();
 		}
 		public int FieldCount{
@@ -52,10 +61,11 @@ namespace TodoASql
 			ConexionABase.Close();
 		}
 		public string[,] DumpString(){
-			OleDbCommand cmd = new OleDbCommand("SELECT count(*) FROM ["+NombreTabla+"]",ConexionABase);
+			IDbCommand cmd=ConexionABase.CreateCommand();
+			cmd.CommandText="SELECT count(*) FROM ["+NombreTabla+"]";
 			int registros=(int) cmd.ExecuteScalar();
-			cmd = new OleDbCommand("SELECT * FROM ["+NombreTabla+"]",ConexionABase);
-			OleDbDataReader sel=cmd.ExecuteReader();
+			cmd.CommandText="SELECT * FROM ["+NombreTabla+"]";
+			IDataReader sel=cmd.ExecuteReader();
 			int campos=sel.FieldCount;
 			string[,] matriz=new string[registros,campos];
 			for(int i=0; i<registros; i++){
@@ -69,10 +79,11 @@ namespace TodoASql
 			return matriz;
 		}
 		public object[,] DumpObject(){
-			OleDbCommand cmd = new OleDbCommand("SELECT count(*) FROM ["+NombreTabla+"]",ConexionABase);
+			IDbCommand cmd=ConexionABase.CreateCommand();
+			cmd.CommandText="SELECT count(*) FROM ["+NombreTabla+"]";
 			int registros=(int) cmd.ExecuteScalar();
-			cmd = new OleDbCommand("SELECT * FROM ["+NombreTabla+"]",ConexionABase);
-			OleDbDataReader sel=cmd.ExecuteReader();
+			cmd.CommandText="SELECT * FROM ["+NombreTabla+"]";
+			IDataReader sel=cmd.ExecuteReader();
 			int campos=sel.FieldCount;
 			object[,] matriz=new object[registros,campos];
 			for(int i=0; i<registros; i++){
@@ -86,6 +97,7 @@ namespace TodoASql
 			return matriz;
 		}
 	}
+	/*
 	public class InsertadorSqlViaDataSet
 	{
 		ReceptorSql Receptor;
@@ -119,13 +131,14 @@ namespace TodoASql
 			}
 		}
 	}
-	public class InsertadorSql //BaseSentenciaInsert
+	*/
+	public class InsertadorSql 
 	{
 		ReceptorSql Receptor;
 		StringBuilder campos=new StringBuilder();
 		StringBuilder valores=new StringBuilder();
 		Separador coma=new Separador(",");
-		public InsertadorSql/*BaseSentenciaInsert*/(ReceptorSql receptor){
+		public InsertadorSql(ReceptorSql receptor){
 			this.Receptor=receptor;	
 		}
 		public object this[string campo]{
@@ -138,7 +151,8 @@ namespace TodoASql
 			if(campos.Length>0){
 				string sentencia="INSERT INTO ["+Receptor.NombreTabla+@"] ("+campos.ToString()+") VALUES ("+
 						valores.ToString()+")";
-				OleDbCommand cmd = new OleDbCommand(sentencia,Receptor.ConexionABase);
+				IDbCommand cmd=Receptor.ConexionABase.CreateCommand();
+				cmd.CommandText=sentencia;
 				Archivo.Escribir(System.Environment.GetEnvironmentVariable("TEMP")
 				                      + @"\query.sql"
 				                      ,sentencia);

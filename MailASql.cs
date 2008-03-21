@@ -104,8 +104,8 @@ namespace TodoASql
 				   Nacimiento date,
 				   Observaciones varchar(250)
 				   )";
-			OleDbCommand com=new OleDbCommand(sentencia,con);
-			com.ExecuteNonQuery();
+			OleDbCommand cmd=new OleDbCommand(sentencia,con);
+			cmd.ExecuteNonQuery();
 			con.Close();
 			System.IO.Directory.CreateDirectory(directorio);
 			Archivo.Escribir(directorio+@"\unmail.eml",@"
@@ -138,12 +138,12 @@ namespace TodoASql
 			receptor.Close();
 			con=BaseDatos.abrirMDB(nombreArchivo);
 			sentencia="SELECT count(*) FROM Receptor";
-			com=new OleDbCommand(sentencia,con);
-			string cantidadRegistros=com.ExecuteScalar().ToString();
+			cmd=new OleDbCommand(sentencia,con);
+			string cantidadRegistros=cmd.ExecuteScalar().ToString();
 			Assert.AreEqual("2",cantidadRegistros);
 			sentencia="SELECT * FROM Receptor ORDER BY Numero";
-			com=new OleDbCommand(sentencia,con);
-			OleDbDataReader rdr=com.ExecuteReader();
+			cmd=new OleDbCommand(sentencia,con);
+			OleDbDataReader rdr=cmd.ExecuteReader();
 			rdr.Read();
 			Assert.AreEqual("123",rdr.GetValue(1));
 			Assert.AreEqual(new DateTime(1991,1,15),rdr.GetDateTime(5));
