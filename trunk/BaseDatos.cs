@@ -48,7 +48,6 @@ namespace TodoASql
 		}
 		public static OdbcConnection abrirPostgre(string Servidor,string Base, string Usuario, string Clave){
 			OdbcConnection ConexionABase = new OdbcConnection();
-			// ConexionABase.ConnectionString=Archivo.Leer(@"e:\hecho\cs\import2sql\soporte\PostgreODBC.dsn");
 			ConexionABase.ConnectionString=@"DRIVER=PostgreSQL Unicode;UID=import2sql;PORT=5432;SERVER=127.0.0.1;DATABASE=import2sqlDB;PASSWORD=sqlimport";
 			ConexionABase.Open();
 			return ConexionABase;
@@ -75,15 +74,8 @@ namespace TodoASql
 		public void ConexionPostgre(){
 			
 			System.Windows.Forms.Application.OleRequired();
-			// OleDbConnection 
 			IDbConnection con=BaseDatos.abrirPostgre("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 			AuxEnTodasLasBases(con);
-			// OleDbCommand com=new OleDbCommand("select 3",con);
-			// OleDbDataReader rdr=com.ExecuteReader();
-			// Assert.AreEqual(3,com.ExecuteScalar());
-			// OleDbCommand com=new OleDbCommand("select * from \"TablaExistente\"",con);
-			// OleDbCommand com=new OleDbCommand("select * from TablaExistente",con);
-			// OleDbCommand 
 			IDbCommand com=con.CreateCommand();
 			com.CommandText="SELECT 3";
 			Assert.AreEqual(3,com.ExecuteScalar());
@@ -91,9 +83,12 @@ namespace TodoASql
 			Assert.AreEqual(3.14,com.ExecuteScalar());
 		}
 		public void AuxEnTodasLasBases(IDbConnection con){
+			AuxOperacionesSimples(con);
+			AuxUsarReceptor(con);
+		}
+		public void AuxOperacionesSimples(IDbConnection con){
 			IDbCommand com=con.CreateCommand();
 			com.CommandText="SELECT * FROM tablaexistente";	
-			//OleDbDataREader
 			IDataReader rdr=com.ExecuteReader();
 			rdr.Read();
 			Assert.AreEqual("uno",rdr["texto"]);
@@ -114,6 +109,26 @@ namespace TodoASql
 						break;
 				}
 			}
+			com.CommandText=@"CREATE TABLE nueva_tabla_prueba (
+				nombre varchar(100),
+				numero integer,
+				monto double precision,
+				fecha date,
+				primary key (nombre));
+			";
+			com.ExecuteNonQuery();
+			com.CommandText="INSERT INTO nueva_tabla_prueba (nombre) VALUES ('solo')";
+			com.ExecuteNonQuery();
+			com.CommandText="SELECT * FROM nueva_tabla_prueba";
+			rdr=com.ExecuteReader();
+			rdr.Read();
+			Assert.AreEqual("solo",rdr["nombre"]);
+			rdr.Close();
+			com.CommandText="DROP TABLE nueva_tabla_prueba";
+			com.ExecuteNonQuery();
+		}
+		public void AuxUsarReceptor(IDbConnection con){
+			
 		}
 	}
 }
