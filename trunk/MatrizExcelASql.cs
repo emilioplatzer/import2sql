@@ -120,9 +120,9 @@ namespace TodoASql
 		[Test]
 		public void crearReceptor(){
 			Archivo.Borrar(nombreArchivoMDB);
-			BaseDatos.CrearMDB(nombreArchivoMDB);
-			OleDbConnection con=BaseDatos.abrirMDB(nombreArchivoMDB);
-			string sentencia=@"
+			BdAccess.Crear(nombreArchivoMDB);
+			BdAccess db=BdAccess.Abrir(nombreArchivoMDB);
+			db.ExecuteNonQuery(@"
 				CREATE TABLE Receptor(
 				   continente varchar(250),
 				   pais varchar(250),
@@ -130,10 +130,8 @@ namespace TodoASql
 				   [año] varchar(250),
 				   trimestre varchar(250),
 				   indice varchar(250)
-				   )";
-			OleDbCommand com=new OleDbCommand(sentencia,con);
-			com.ExecuteNonQuery();
-			con.Close();
+				   )");
+			db.Close();
 		}
 		[Test]
 		public void trasvasar(){
@@ -173,10 +171,9 @@ namespace TodoASql
 		}
 		[Test]
 		public void trasvasarConParametros(){
-			OleDbConnection con=BaseDatos.abrirMDB(nombreArchivoMDB);
-			OleDbCommand cmd=new OleDbCommand("delete from Receptor",con);
-			cmd.ExecuteNonQuery();
-			con.Close();
+			using(BdAccess db=BdAccess.Abrir(nombreArchivoMDB)){
+				db.ExecuteNonQuery("delete from Receptor");
+			}
 			ParametrosMatrizExcelASql parametros=new ParametrosMatrizExcelASql(nombreArchivoMDB,"Receptor");
 			parametros.Matriz.NombreArchivo=nombreArchivoXLS;
 			parametros.Matriz.Rango="D3:F4";
@@ -254,9 +251,9 @@ namespace TodoASql
 		[Test]
 		public void crearReceptor(){
 			Archivo.Borrar(nombreArchivoMDB);
-			BaseDatos.CrearMDB(nombreArchivoMDB);
-			OleDbConnection con=BaseDatos.abrirMDB(nombreArchivoMDB);
-			string sentencia=@"
+			BdAccess.Crear(nombreArchivoMDB);
+			BdAccess db=BdAccess.Abrir(nombreArchivoMDB);
+			db.ExecuteNonQuery(@"
 				CREATE TABLE Receptor(
 				   lote varchar(10),
 				   version integer,
@@ -266,10 +263,8 @@ namespace TodoASql
 				   [año] integer,
 				   trimestre integer,
 				   indice double
-				   )";
-			OleDbCommand com=new OleDbCommand(sentencia,con);
-			com.ExecuteNonQuery();
-			con.Close();
+				   )");
+			db.Close();
 		}
 		[Test]
 		public void trasvasar(){

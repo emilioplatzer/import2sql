@@ -24,29 +24,25 @@ namespace TodoASql
 	/// </summary>
 	public class ReceptorSql
 	{
-		internal IDbConnection ConexionABase;
+		internal BaseDatos db;
 		IDataReader SelectAbierto;
 		internal string NombreTabla;
 		/*
 		public ReceptorSql():this(new ParametrosMailASql(Parametros.LeerPorDefecto.SI)){
 		}
 		*/
-		public ReceptorSql(IDbConnection conexion,string nombreTablaReceptora){
-			this.ConexionABase=conexion;
+		public ReceptorSql(BaseDatos db,string nombreTablaReceptora){
+			this.db=db;
 			this.NombreTabla=nombreTablaReceptora;
-			IDbCommand com=ConexionABase.CreateCommand();
-			com.CommandText="SELECT * FROM "+NombreTabla;
-			SelectAbierto=com.ExecuteReader();
+			SelectAbierto=db.ExecuteReader("SELECT * FROM "+db.StuffTabla(NombreTabla));
 		}
 		public ReceptorSql(IParametorsReceptorSql parametros){
 			this.NombreTabla=parametros.TablaReceptora;
-			AbrirBase(parametros.BaseReceptora);
+			AbrirBaseMDB(parametros.BaseReceptora);
 		}
-		void AbrirBase(string nombreMDB){
-			ConexionABase=BaseDatos.abrirMDB(nombreMDB);
-			IDbCommand cmd=ConexionABase.CreateCommand();
-			cmd.CommandText="SELECT * FROM ["+NombreTabla+"]";
-			SelectAbierto=cmd.ExecuteReader();
+		void AbrirBaseMDB(string nombreMDB){
+			db=BdAccess.Abrir(nombreMDB);
+			SelectAbierto=db.ExecuteReader("SELECT * FROM "+db.StuffTabla(NombreTabla));
 		}
 		public int FieldCount{
 			get{
@@ -58,14 +54,11 @@ namespace TodoASql
 		}
 		public void Close(){
 			SelectAbierto.Close();
-			ConexionABase.Close();
+			db.Close();
 		}
 		public string[,] DumpString(){
-			IDbCommand cmd=ConexionABase.CreateCommand();
-			cmd.CommandText="SELECT count(*) FROM ["+NombreTabla+"]";
-			int registros=(int) cmd.ExecuteScalar();
-			cmd.CommandText="SELECT * FROM ["+NombreTabla+"]";
-			IDataReader sel=cmd.ExecuteReader();
+			int registros=(int) db.ExecuteScalar("SELECT count(*) FROM ["+NombreTabla+"]");
+			IDataReader sel=db.ExecuteReader("SELECT * FROM ["+NombreTabla+"]");
 			int campos=sel.FieldCount;
 			string[,] matriz=new string[registros,campos];
 			for(int i=0; i<registros; i++){
@@ -79,11 +72,8 @@ namespace TodoASql
 			return matriz;
 		}
 		public object[,] DumpObject(){
-			IDbCommand cmd=ConexionABase.CreateCommand();
-			cmd.CommandText="SELECT count(*) FROM ["+NombreTabla+"]";
-			int registros=(int) cmd.ExecuteScalar();
-			cmd.CommandText="SELECT * FROM ["+NombreTabla+"]";
-			IDataReader sel=cmd.ExecuteReader();
+			int registros=(int) db.ExecuteScalar("SELECT count(*) FROM ["+NombreTabla+"]");
+			IDataReader sel=db.ExecuteReader("SELECT * FROM ["+NombreTabla+"]");
 			int campos=sel.FieldCount;
 			object[,] matriz=new object[registros,campos];
 			for(int i=0; i<registros; i++){
@@ -132,36 +122,39 @@ namespace TodoASql
 		}
 	}
 	*/
-	public class InsertadorSql 
+	public class InsertadorSql:IDisposable
 	{
 		ReceptorSql Receptor;
 		StringBuilder campos=new StringBuilder();
 		StringBuilder valores=new StringBuilder();
 		Separador coma=new Separador(",");
+		UnSoloUso controlar=new UnSoloUso();
 		public InsertadorSql(ReceptorSql receptor){
 			this.Receptor=receptor;	
 		}
 		public object this[string campo]{
 			set{
-				campos.Append(coma+"["+campo+"]");
-				valores.Append(coma.mismo()+Cadena.ParaSql(value));
+				campos.Append(coma+Receptor.db.StuffCampo(campo));
+				valores.Append(coma.mismo()+Receptor.db.StuffValor(value));
 			}
 		}
 		public bool InsertarSiHayCampos(){
+			controlar.Uso();
 			if(campos.Length>0){
-				string sentencia="INSERT INTO ["+Receptor.NombreTabla+@"] ("+campos.ToString()+") VALUES ("+
-						valores.ToString()+")";
-				IDbCommand cmd=Receptor.ConexionABase.CreateCommand();
-				cmd.CommandText=sentencia;
+				string sentencia="INSERT INTO "+Receptor.db.StuffTabla(Receptor.NombreTabla)
+					+@" ("+campos.ToString()+") VALUES ("+valores.ToString()+")";
 				Archivo.Escribir(System.Environment.GetEnvironmentVariable("TEMP")
 				                      + @"\query.sql"
 				                      ,sentencia);
 				System.Console.WriteLine(sentencia);
-				cmd.ExecuteNonQuery();
+				Receptor.db.ExecuteNonQuery(sentencia);
 				return true;
 			}else{
 				return false;
 			}
+		}
+		public void Dispose(){
+			
 		}
 	}
 }

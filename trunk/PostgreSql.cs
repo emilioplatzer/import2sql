@@ -8,7 +8,8 @@
  */
 
 using System;
-using System.Data.OleDb;
+using System.Data;
+using System.Data.Odbc;
 using NUnit.Framework;
 
 namespace TodoASql
@@ -16,11 +17,45 @@ namespace TodoASql
 	/// <summary>
 	/// Description of PostgreSql.
 	/// </summary>
-	public class PostgreSql
+	public class PostgreSql:BaseDatos
 	{
-		public const int ErrorCode_NoExisteTabla=-2146232009;
-		public PostgreSql()
+		PostgreSql(OdbcConnection con)
+			:base(con)
 		{
+		}
+		/*
+		public static OleDbConnection abrirPostgreOleDb(string Servidor,string Base, string Usuario, string Clave){
+			OleDbConnection ConexionABase = new System.Data.OleDb.OleDbConnection();
+			ConexionABase.ConnectionString="Provider=PostgreSQL OLE DB Provider;Data Source="+Servidor+";" +
+				"Location="+Base+";User id="+Usuario+";Password="+Clave+";"; // "timeout=1000";
+			ConexionABase.Open();
+			return ConexionABase;
+		}
+		*/
+		public static PostgreSql Abrir(string Servidor,string Base, string Usuario, string Clave){
+			OdbcConnection ConexionABase = new OdbcConnection();
+			ConexionABase.ConnectionString=@"DRIVER=PostgreSQL Unicode;UID=import2sql;PORT=5432;SERVER=127.0.0.1;DATABASE=import2sqlDB;PASSWORD=sqlimport";
+			ConexionABase.Open();
+			return new PostgreSql(ConexionABase);
+		}
+		public override int ErrorCode_NoExisteTabla{ get{ return -2146232009;}}
+		public override string StuffTabla(string nombreTabla){
+			return '"'+nombreTabla+'"';
+		}
+		public override string StuffFecha(DateTime fecha){
+			return "'"+fecha.Year+"/"+fecha.Month+"/"+fecha.Day+"'";
+		}
+
+	}
+	[TestFixture]
+	public class ProbarPostgreSql{
+		[Test]
+		public void ConexionPostgre(){
+			System.Windows.Forms.Application.OleRequired();
+			PostgreSql db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
+			ProbarBaseDatos.ObjEnTodasLasBases(db);
+			Assert.AreEqual(3,db.ExecuteScalar("SELECT 3"));
+			Assert.AreEqual(3.1416,db.ExecuteScalar("SELECT 3.1416"));
 		}
 	}
 }

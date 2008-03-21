@@ -11,7 +11,7 @@ using System;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.IO;
-using System.Data.OleDb;
+using System.Data;
 using NUnit.Framework;
 
 namespace TodoASql
@@ -91,10 +91,10 @@ namespace TodoASql
 			string directorio="temp_borrar";
 			Archivo.Borrar(nombreArchivo);
 			Assert.IsTrue(!Archivo.Existe(nombreArchivo),"no debería existir");
-			BaseDatos.CrearMDB(nombreArchivo);
+			BdAccess.Crear(nombreArchivo);
 			Assert.IsTrue(Archivo.Existe(nombreArchivo),"debería existir");
-			OleDbConnection con=BaseDatos.abrirMDB(nombreArchivo);
-			string sentencia=@"
+			BdAccess db=BdAccess.Abrir(nombreArchivo);
+			db.ExecuteNonQuery(@"
 				CREATE TABLE Receptor(
 				   id number,
 				   Numero varchar(250),
@@ -103,10 +103,7 @@ namespace TodoASql
 				   [Número de documento] varchar(250),
 				   Nacimiento date,
 				   Observaciones varchar(250)
-				   )";
-			OleDbCommand cmd=new OleDbCommand(sentencia,con);
-			cmd.ExecuteNonQuery();
-			con.Close();
+				   )");
 			System.IO.Directory.CreateDirectory(directorio);
 			Archivo.Escribir(directorio+@"\unmail.eml",@"
 				lleno de basura
@@ -136,14 +133,10 @@ namespace TodoASql
 			MailASql procesador=new MailASql(parametros,receptor);
 			procesador.LoQueSeaNecesario();
 			receptor.Close();
-			con=BaseDatos.abrirMDB(nombreArchivo);
-			sentencia="SELECT count(*) FROM Receptor";
-			cmd=new OleDbCommand(sentencia,con);
-			string cantidadRegistros=cmd.ExecuteScalar().ToString();
+			db=BdAccess.Abrir(nombreArchivo);
+			string cantidadRegistros=db.ExecuteScalar("SELECT count(*) FROM Receptor").ToString();
 			Assert.AreEqual("2",cantidadRegistros);
-			sentencia="SELECT * FROM Receptor ORDER BY Numero";
-			cmd=new OleDbCommand(sentencia,con);
-			OleDbDataReader rdr=cmd.ExecuteReader();
+			IDataReader rdr=db.ExecuteReader("SELECT * FROM Receptor ORDER BY Numero");
 			rdr.Read();
 			Assert.AreEqual("123",rdr.GetValue(1));
 			Assert.AreEqual(new DateTime(1991,1,15),rdr.GetDateTime(5));
