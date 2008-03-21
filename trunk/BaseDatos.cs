@@ -63,11 +63,11 @@ namespace TodoASql
 			Catalog cat=BaseDatos.CrearMDB(nombreArchivo);
 			Assert.IsTrue(Archivo.Existe(nombreArchivo),"debería existir");
 			IDbConnection con=BaseDatos.abrirMDB(nombreArchivo);
-			IDbCommand com=con.CreateCommand();
-			com.CommandText="CREATE TABLE tablaexistente (texto varchar(100), numero integer)";
-			com.ExecuteNonQuery();
-			com.CommandText="INSERT INTO tablaexistente (texto, numero) VALUES ('uno',1)";
-			com.ExecuteNonQuery();
+			IDbCommand cmd=con.CreateCommand();
+			cmd.CommandText="CREATE TABLE tablaexistente (texto varchar(100), numero integer)";
+			cmd.ExecuteNonQuery();
+			cmd.CommandText="INSERT INTO tablaexistente (texto, numero) VALUES ('uno',1)";
+			cmd.ExecuteNonQuery();
 			AuxEnTodasLasBases(con);
 		}
 		[Test]
@@ -76,28 +76,28 @@ namespace TodoASql
 			System.Windows.Forms.Application.OleRequired();
 			IDbConnection con=BaseDatos.abrirPostgre("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 			AuxEnTodasLasBases(con);
-			IDbCommand com=con.CreateCommand();
-			com.CommandText="SELECT 3";
-			Assert.AreEqual(3,com.ExecuteScalar());
-			com.CommandText="SELECT 3.14";
-			Assert.AreEqual(3.14,com.ExecuteScalar());
+			IDbCommand cmd=con.CreateCommand();
+			cmd.CommandText="SELECT 3";
+			Assert.AreEqual(3,cmd.ExecuteScalar());
+			cmd.CommandText="SELECT 3.14";
+			Assert.AreEqual(3.14,cmd.ExecuteScalar());
 		}
 		public void AuxEnTodasLasBases(IDbConnection con){
 			AuxOperacionesSimples(con);
 			AuxUsarReceptor(con);
 		}
 		public void AuxOperacionesSimples(IDbConnection con){
-			IDbCommand com=con.CreateCommand();
-			com.CommandText="SELECT * FROM tablaexistente";	
-			IDataReader rdr=com.ExecuteReader();
+			IDbCommand cmd=con.CreateCommand();
+			cmd.CommandText="SELECT * FROM tablaexistente";	
+			IDataReader rdr=cmd.ExecuteReader();
 			rdr.Read();
 			Assert.AreEqual("uno",rdr["texto"]);
 			rdr.Close();
-			com.CommandText="SELECT 10.0/16 FROM tablaexistente WHERE numero=1";
-			Assert.AreEqual(0.625,com.ExecuteScalar());
+			cmd.CommandText="SELECT 10.0/16 FROM tablaexistente WHERE numero=1";
+			Assert.AreEqual(0.625,cmd.ExecuteScalar());
 			try{
-				com.CommandText="DROP TABLE nueva_tabla_prueba";
-				com.ExecuteNonQuery();
+				cmd.CommandText="DROP TABLE nueva_tabla_prueba";
+				cmd.ExecuteNonQuery();
 				Assert.Ignore("se pudo DROPear la tabla, la vez anterior la prueba se interrumpió porque no "+
 				              "debería existir. Hay que correr la prueba de vuelta. Lo normal era que no exista");
 			}catch(DbException ex){
@@ -109,23 +109,23 @@ namespace TodoASql
 						break;
 				}
 			}
-			com.CommandText=@"CREATE TABLE nueva_tabla_prueba (
+			cmd.CommandText=@"CREATE TABLE nueva_tabla_prueba (
 				nombre varchar(100),
 				numero integer,
 				monto double precision,
 				fecha date,
 				primary key (nombre));
 			";
-			com.ExecuteNonQuery();
-			com.CommandText="INSERT INTO nueva_tabla_prueba (nombre) VALUES ('solo')";
-			com.ExecuteNonQuery();
-			com.CommandText="SELECT * FROM nueva_tabla_prueba";
-			rdr=com.ExecuteReader();
+			cmd.ExecuteNonQuery();
+			cmd.CommandText="INSERT INTO nueva_tabla_prueba (nombre) VALUES ('solo')";
+			cmd.ExecuteNonQuery();
+			cmd.CommandText="SELECT * FROM nueva_tabla_prueba";
+			rdr=cmd.ExecuteReader();
 			rdr.Read();
 			Assert.AreEqual("solo",rdr["nombre"]);
 			rdr.Close();
-			com.CommandText="DROP TABLE nueva_tabla_prueba";
-			com.ExecuteNonQuery();
+			cmd.CommandText="DROP TABLE nueva_tabla_prueba";
+			cmd.ExecuteNonQuery();
 		}
 		public void AuxUsarReceptor(IDbConnection con){
 			
