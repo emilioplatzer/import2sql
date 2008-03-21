@@ -136,6 +136,8 @@ namespace TodoASql
 			rdr.Read();
 			Assert.AreEqual(Math.Exp(1),(double) rdr["monto"],0.00000000000001);
 			Assert.AreEqual(new DateTime(1969,5,6),rdr["fecha"]);
+			Assert.AreEqual(3,db.ExecuteScalar("SELECT 3"));
+			Assert.AreEqual(3.1416,db.ExecuteScalar("SELECT 3.1416"));
 		}
 		/*
 		public static void AuxEnTodasLasBases(IDbConnection con){
