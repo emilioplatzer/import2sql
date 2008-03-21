@@ -14,7 +14,7 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
-			new ProbarBaseDatos().CreacionMdb();
+			// new ProbarBaseDatos().CreacionMdb();
 			// new ProbarMatrizExcelASqlGenerica().trasvasar();
 			// new probarLibroExcel().Rango();
 			// new ProbarFormulario().FormDerivado();

@@ -159,26 +159,16 @@ namespace TodoASql
 			}
 			return s;
 		}		
-		public static string SacarComillas(string valor){
+		public static string Simplificar(string valor){
 			return valor.Replace('"',' ')
+				.Replace('\'',' ')
 				.Replace('\n',' ')
 				.Replace('\r',' ')
 				.Replace('\t',' ')
 				.Substring(0,Otras.Min(250,valor.Length)).Trim();
 		}
-		public static string ParaSql(object dato){
-			if(dato==null){
-				return "null";
-			}
-			if(dato.GetType()==typeof(String)){
-				return '"'+SacarComillas((string) dato)+'"';
-			}else if(dato.GetType()==typeof(double)){
-				return ((double) dato).ToString(Cadena.FormatoPuntoDecimal);
-			}else if(dato.GetType()==typeof(DateTime)){
-				return '"'+dato.ToString()+'"';
-			}else{
-				return dato.ToString();
-			}
+		public static string BuscarYReemplazar(string fuente, string queBuscar, string porQueReemplazar){
+			return fuente;
 		}
 	}
 	[TestFixture]
@@ -393,6 +383,15 @@ namespace TodoASql
 				case Posibilidades.Hijo: return new PadreHijo(Posibilidades.Padre);
 				case Posibilidades.Padre: return new PadreHijo(Posibilidades.Hijo);
 				default: return this;
+			}
+		}
+	}
+	public class UnSoloUso{
+		int usos=0;
+		public void Uso(){
+			usos++;
+			if(usos>1){
+				throw new System.Exception("Solo se puede usar una vez");
 			}
 		}
 	}

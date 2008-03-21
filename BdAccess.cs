@@ -8,17 +8,57 @@
  */
 
 using System;
+using System.Data;
+using System.Data.OleDb;
+using ADOX;
+using NUnit.Framework;
 
 namespace TodoASql
 {
 	/// <summary>
 	/// Description of BdAccess.
 	/// </summary>
-	public class BdAccess
+	public class BdAccess:BaseDatos
 	{
-		public const int ErrorCode_NoExisteTabla=-2147217865;
-		public BdAccess()
+		BdAccess(OleDbConnection con)
+			:base(con)
 		{
+		}
+		public static ADOX.CatalogClass Crear(string nombreArchivo){
+			ADOX.CatalogClass cat=new CatalogClass();
+			cat.Create("Provider=Microsoft.Jet.OLEDB.4.0;" +
+				   "Data Source="+nombreArchivo+";" +
+				   "Jet OLEDB:Engine Type=5");
+			return cat;
+		}
+		public static BdAccess Abrir(string nombreArchivo){
+			OleDbConnection ConexionABase = new System.Data.OleDb.OleDbConnection();
+			ConexionABase.ConnectionString = 
+				@"PROVIDER=Microsoft.Jet.OLEDB.4.0;Data Source="+nombreArchivo;
+			ConexionABase.Open();
+			return new BdAccess(ConexionABase);
+		}
+		public override int ErrorCode_NoExisteTabla{ get{ return -2147217865;}}
+		public override string StuffTabla(string nombreTabla){
+			return "["+nombreTabla+"]";
+		}
+		public override string StuffFecha(DateTime fecha){
+			return "#"+fecha.Month+"/"+fecha.Day+"/"+fecha.Year+"#";
+		}
+	}
+	[TestFixture]
+	public class ProbarBdAccess{
+		[Test]
+		public void Creacion(){
+			string nombreArchivo="tempAccesABorrar.mdb";
+			Archivo.Borrar(nombreArchivo);
+			Assert.IsTrue(!Archivo.Existe(nombreArchivo),"no debería existir");
+			Catalog cat=BdAccess.Crear(nombreArchivo);
+			Assert.IsTrue(Archivo.Existe(nombreArchivo),"debería existir");
+			BdAccess db=BdAccess.Abrir(nombreArchivo);
+			db.ExecuteNonQuery("CREATE TABLE tablaexistente (texto varchar(100), numero integer)");
+			db.ExecuteNonQuery("INSERT INTO tablaexistente (texto, numero) VALUES ('uno',1)");
+			ProbarBaseDatos.ObjEnTodasLasBases(db);
 		}
 	}
 }
