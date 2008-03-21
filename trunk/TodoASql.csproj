@@ -40,7 +40,6 @@
     <Reference Include="nunit.framework" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Data.resources" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -48,6 +47,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="BaseDatos.cs" />
+    <Compile Include="BdAccess.cs" />
     <Compile Include="Excel.cs" />
     <Compile Include="Formulario.cs" />
     <Compile Include="MailASql.cs" />

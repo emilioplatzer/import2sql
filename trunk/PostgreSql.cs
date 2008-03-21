@@ -18,15 +18,9 @@ namespace TodoASql
 	/// </summary>
 	public class PostgreSql
 	{
+		public const int ErrorCode_NoExisteTabla=-2146232009;
 		public PostgreSql()
 		{
-		}
-	}
-	public class ProbarPostgreSql{
-		public static void CrearObjetosDePrueba(){
-			string script=@"
-";
-			
 		}
 	}
 }
