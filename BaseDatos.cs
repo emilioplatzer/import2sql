@@ -9,6 +9,7 @@
 
 using System;
 using System.Data;
+using System.Data.Common;
 using System.Data.Odbc;
 using System.Data.OleDb;
 using NUnit.Framework;
@@ -62,6 +63,13 @@ namespace TodoASql
 			Assert.IsTrue(!Archivo.Existe(nombreArchivo),"no debería existir");
 			Catalog cat=BaseDatos.CrearMDB(nombreArchivo);
 			Assert.IsTrue(Archivo.Existe(nombreArchivo),"debería existir");
+			IDbConnection con=BaseDatos.abrirMDB(nombreArchivo);
+			IDbCommand com=con.CreateCommand();
+			com.CommandText="CREATE TABLE tablaexistente (texto varchar(100), numero integer)";
+			com.ExecuteNonQuery();
+			com.CommandText="INSERT INTO tablaexistente (texto, numero) VALUES ('uno',1)";
+			com.ExecuteNonQuery();
+			AuxEnTodasLasBases(con);
 		}
 		[Test]
 		public void ConexionPostgre(){
@@ -69,6 +77,7 @@ namespace TodoASql
 			System.Windows.Forms.Application.OleRequired();
 			// OleDbConnection 
 			IDbConnection con=BaseDatos.abrirPostgre("127.0.0.1","import2sqlDB","import2sql","sqlimport");
+			AuxEnTodasLasBases(con);
 			// OleDbCommand com=new OleDbCommand("select 3",con);
 			// OleDbDataReader rdr=com.ExecuteReader();
 			// Assert.AreEqual(3,com.ExecuteScalar());
@@ -76,16 +85,35 @@ namespace TodoASql
 			// OleDbCommand com=new OleDbCommand("select * from TablaExistente",con);
 			// OleDbCommand 
 			IDbCommand com=con.CreateCommand();
-			com.CommandText="select * from tablaexistente";	
+			com.CommandText="SELECT 3";
+			Assert.AreEqual(3,com.ExecuteScalar());
+			com.CommandText="SELECT 3.14";
+			Assert.AreEqual(3.14,com.ExecuteScalar());
+		}
+		public void AuxEnTodasLasBases(IDbConnection con){
+			IDbCommand com=con.CreateCommand();
+			com.CommandText="SELECT * FROM tablaexistente";	
 			//OleDbDataREader
 			IDataReader rdr=com.ExecuteReader();
 			rdr.Read();
 			Assert.AreEqual("uno",rdr["texto"]);
 			rdr.Close();
-			com.CommandText="select 3";
-			Assert.AreEqual(3,com.ExecuteScalar());
-			com.CommandText="select 3.14";
-			Assert.AreEqual(3.14,com.ExecuteScalar());
+			com.CommandText="SELECT 10.0/16 FROM tablaexistente WHERE numero=1";
+			Assert.AreEqual(0.625,com.ExecuteScalar());
+			try{
+				com.CommandText="DROP TABLE nueva_tabla_prueba";
+				com.ExecuteNonQuery();
+				Assert.Ignore("se pudo DROPear la tabla, la vez anterior la prueba se interrumpió porque no "+
+				              "debería existir. Hay que correr la prueba de vuelta. Lo normal era que no exista");
+			}catch(DbException ex){
+				switch(ex.ErrorCode){
+					case BdAccess.ErrorCode_NoExisteTabla: break; // ok Error de MDB
+					case PostgreSql.ErrorCode_NoExisteTabla: break; // ok Error de Postgre
+					default:
+						Assert.Ignore("DROP TABLE cantó "+ex.ErrorCode+": "+ex.Message+" no es un error conocido");
+						break;
+				}
+			}
 		}
 	}
 }
