@@ -42,6 +42,14 @@ namespace Indices
 					primary key(agrupacion,grupo)
 				);
 			");
+			db.ExecuteNonQuery(@"
+				create table numeros(
+					numero integer primary key
+				);
+			");
+			for(int i=0; i<=20; i++){
+				db.ExecuteNonQuery("insert into numeros (numero) values ("+i.ToString()+")");
+			}
 			return new Repositorio(db);
 		}
 		public static Repositorio Abrir(BaseDatos db){
@@ -88,6 +96,17 @@ namespace Indices
 			}			
 		}
 		public void CalcularPonderadores(Grupo grupo){
+			SentenciaSql secuencia=new SentenciaSql(db,@"
+				UPDATE grupos SET nivel=0
+				  WHERE grupopadre is null 
+				    AND agrupacion={agrupacion};
+				UPDATE grupos h SET h.nivel=p.nivel+1
+				  FROM grupos p
+				  WHERE p.grupo=h.grupopadre
+				    AND p.agrupacion=h.agrupacion 
+				    AND h.agrupacion={agrupacion};
+			").Arg("agrupacion",grupo.Agrupacion);
+			db.EjecutrarSecuencia(secuencia);
 		}
 		public void ReglasDeIntegridad(){
 			db.AssertSinRegistros(
@@ -154,6 +173,27 @@ namespace Indices
 				SELECT p.grupo,p.nombre,p.ponderador,sum(h.ponderador)
 				  FROM grupos p left join grupos h on p.grupo=h.grupopadre and p.agrupacion=h.agrupacion
 				  HAVING abs(p.ponderador)-sum(h.ponderador)>0.00000000000001
+			");
+			db.AssertSinRegistros(
+				"Solo deben ser hojas los productos",
+			@"
+				SELECT g.grupo, g.nombre, p.producto, p.nombre as nombreproducto
+				  FROM grupos g inner join productos p ON g.grupo=p.producto
+				  WHERE g.esproducto='N'
+			");
+			db.AssertSinRegistros(
+				"Si esta marcado como producto debe existir el producto",
+			@"
+				SELECT g.grupo, g.nombre, p.producto, p.nombre as nombreproducto
+				  FROM grupos g left join productos p ON g.grupo=p.producto
+				  WHERE g.esproducto='S' AND p.producto is null
+			");
+			db.AssertSinRegistros(
+				"Los ponderadores de cada nivel deben sumar 1",
+			@"
+				SELECT n.numero as nivel, suma(ponderadores)
+				  FROM numeros as n, grupos as g
+				  WHERE g.nivel=n.numero OR g.esproducto='S' AND g.nivel<n.numero
 			");
 		}
 	}
