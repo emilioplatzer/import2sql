@@ -49,11 +49,18 @@ namespace TodoASql
 	}
 	[TestFixture]
 	public class ProbarPostgreSql{
+		#if SinPostgre
+		[Test]
+		public void SinPostgre(){
+			Controlar.Definido("SinPostgre");
+		}
+		#else
 		[Test]
 		public void ConexionPostgre(){
 			System.Windows.Forms.Application.OleRequired();
 			PostgreSql db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 			ProbarBaseDatos.ObjEnTodasLasBases(db);
 		}
+		#endif
 	}
 }

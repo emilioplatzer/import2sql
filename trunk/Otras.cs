@@ -395,4 +395,20 @@ namespace TodoASql
 			}
 		}
 	}
+	public class Controlar{
+		static string etiquetas;
+		static Controlar(){
+			string nombreArchivo="ControlarEtiquetas.txt";
+			if(Archivo.Existe(nombreArchivo)){
+				etiquetas=";"+Archivo.Leer(nombreArchivo)+";";
+			}else{
+				etiquetas=";";
+			}
+		}
+		public static void Definido(string etiqueta){
+			if(etiquetas.IndexOf(";"+etiqueta+";")<0){
+				Assert.Fail("Sobra la etiqueta "+etiqueta);
+			}
+		}
+	}
 }

@@ -6,7 +6,9 @@
  * 
  * Para cambiar esta plantilla use Herramientas | Opciones | Codificación | Editar Encabezados Estándar
  */
+ 
 using System;
+using Indices;
 
 namespace TodoASql
 {
@@ -14,6 +16,7 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
+			new ProbarIndiceD3().VerCanasta();
 			// new ProbarBaseDatos().CreacionMdb();
 			// new ProbarMatrizExcelASqlGenerica().trasvasar();
 			// new probarLibroExcel().Rango();
