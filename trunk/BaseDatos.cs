@@ -19,14 +19,10 @@ using ADOX;
 
 namespace TodoASql
 {
-	/// <summary>
-	/// Description of BaseDatos.
-	/// </summary>
-	public abstract class BaseDatos:IDisposable
-	{
-		protected IDbConnection con;
+	public class EjecutadorBaseDatos{
+		internal IDbConnection con;
 		protected IDbCommand cmd;
-		protected BaseDatos(IDbConnection con)
+		protected EjecutadorBaseDatos(IDbConnection con)
 		{
 			Assert.IsNotNull(con);
 			this.con=con;
@@ -35,18 +31,60 @@ namespace TodoASql
 		public IDataReader ExecuteReader(SentenciaSql sentencia){
 			Assert.IsNotNull(con);
 			IDbCommand cmd_local=con.CreateCommand();
-			cmd_local.CommandText=sentencia.ToString();
+			cmd_local.CommandText=AdaptarSentecia(sentencia);
 			return cmd_local.ExecuteReader();
 		}
 		public object ExecuteScalar(SentenciaSql sentencia){
 			Assert.IsNotNull(cmd);
-			cmd.CommandText=sentencia.ToString();
+			cmd.CommandText=AdaptarSentecia(sentencia);
 			return cmd.ExecuteScalar();
 		}
 		public int ExecuteNonQuery(SentenciaSql sentencia){
 			Assert.IsNotNull(cmd);
-			cmd.CommandText=sentencia.ToString();
+			cmd.CommandText=AdaptarSentecia(sentencia);
 			return cmd.ExecuteNonQuery();
+		}
+		public void EjecutrarSecuencia(SentenciaSql secuencia){
+			foreach(string sentencia in secuencia.Separar()){
+				ExecuteNonQuery(sentencia);
+			}
+		}
+		public bool SinRegistros(string sentencia){
+			IDataReader rdr=ExecuteReader(sentencia);
+			bool rta=!rdr.Read();
+			rdr.Close();
+			return rta;
+		}
+		public void AssertSinRegistros(string explicacion,string sentencia){
+			Assert.IsTrue(SinRegistros(sentencia),explicacion);
+		}
+		protected virtual string AdaptarSentecia(SentenciaSql sentencia){
+			return sentencia.ToString();
+		}
+		public class SentenciaSql{
+			protected string sentencia;
+			protected SentenciaSql(string sentencia){
+				this.sentencia=sentencia;
+			}
+			public static implicit operator SentenciaSql(string sentencia){
+				return new SentenciaSql(sentencia);
+			}
+			public override string ToString(){
+				return sentencia;
+			}
+			public string[] Separar(){
+				return sentencia.Split(';');
+			}
+		}
+	}
+	/// <summary>
+	/// Description of BaseDatos.
+	/// </summary>
+	public abstract class BaseDatos:EjecutadorBaseDatos,IDisposable
+	{
+		protected BaseDatos(IDbConnection con)
+			:base(con)
+		{
 		}
 		public bool EliminarTablaSiExiste(string nombreTabla){
 			Assert.IsNotNull(cmd);
@@ -61,17 +99,11 @@ namespace TodoASql
 				throw;
 			}
 		}
-		public void EjecutrarSecuencia(SentenciaSql secuencia){
-			ExecuteNonQuery(secuencia);
+		public EjecutadorSql Ejecutador(EjecutadorSql.Parametros[] p){
+			return new EjecutadorSql(this,p);
 		}
-		public bool SinRegistros(string sentencia){
-			IDataReader rdr=ExecuteReader(sentencia);
-			bool rta=!rdr.Read();
-			rdr.Close();
-			return rta;
-		}
-		public void AssertSinRegistros(string explicacion,string sentencia){
-			Assert.IsTrue(SinRegistros(sentencia),explicacion);
+		public EjecutadorSql Ejecutador(params object[] p){
+			return new EjecutadorSql(this,p);
 		}
 		public string StuffValor(object valor){
 			if(valor==null){
@@ -101,18 +133,6 @@ namespace TodoASql
 		public abstract string StuffTabla(string nombreTabla);
 		public abstract string StuffFecha(DateTime fecha);
 		public virtual string StuffCampo(string nombreCampo){ return StuffTabla(nombreCampo); }
-		public class SentenciaSql{
-			protected string sentencia;
-			protected SentenciaSql(string sentencia){
-				this.sentencia=sentencia;
-			}
-			public static implicit operator SentenciaSql(string sentencia){
-				return new SentenciaSql(sentencia);
-			}
-			public override string ToString(){
-				return sentencia;
-			}
-		}
 	}
 	public class SentenciaSql{
 		StringBuilder sentencia;
@@ -132,12 +152,58 @@ namespace TodoASql
 		public static implicit operator BaseDatos.SentenciaSql(SentenciaSql s){
 			return s.sentencia.ToString();
 		}
+		public override string ToString()
+		{
+			return sentencia.ToString();
+		}
+	}
+	public class EjecutadorSql:EjecutadorBaseDatos,IDisposable{
+		BaseDatos db;
+		Parametros[] param;
+		public class Parametros{
+			public string Parametro;
+			public object Valor;
+			public Parametros(string Parametro,object Valor){
+				this.Parametro=Parametro;
+				this.Valor=Valor;
+			}
+		}
+		public EjecutadorSql(BaseDatos db,Parametros[] param)
+			:base(db.con)
+		{
+			this.db=db;
+			this.param=param;
+		}		
+		public EjecutadorSql(BaseDatos db,params object[] paramPlanos)
+			:base(db.con)
+		{
+			this.db=db;
+			Assert.AreEqual(0,paramPlanos.Length % 2);
+			int cant=paramPlanos.Length/2;
+			this.param=new Parametros[cant];
+			for(int i=0;i<cant;i++){
+				this.param[i]=new Parametros((string) paramPlanos[i*2], paramPlanos[i*2+1]);
+			}
+		}		
+		protected override string AdaptarSentecia(SentenciaSql sentencia)
+		{
+			System.Console.WriteLine("Adaptando: "+sentencia.ToString());
+			TodoASql.SentenciaSql s=new TodoASql.SentenciaSql(db,base.AdaptarSentecia(sentencia));
+			foreach(Parametros p in param){
+				s.Arg(p.Parametro,p.Valor);
+			}
+			System.Console.WriteLine("Adaptado: "+s.ToString());
+			return s.ToString();
+		}
+		public void Dispose(){
+		}
 	}
 	[TestFixture]
 	public class ProbarBaseDatos{
 		public static void ObjEnTodasLasBases(BaseDatos db){
 			ObjOperacionesSimples(db);
 			ObjUsarReceptor(db);
+			ObjUsarEjectuador(db);
 		}
 		public static void ObjOperacionesSimples(BaseDatos db){
 			IDataReader rdr=db.ExecuteReader("SELECT * FROM tablaexistente");
@@ -200,62 +266,22 @@ namespace TodoASql
 			));
 			
 		}
-		/*
-		public static void AuxEnTodasLasBases(IDbConnection con){
-			AuxOperacionesSimples(con);
-			// AuxUsarReceptor(con);
-		}
-		public static void AuxOperacionesSimples(IDbConnection con){
-			IDbCommand cmd=con.CreateCommand();
-			cmd.CommandText="SELECT * FROM tablaexistente";	
-			IDataReader rdr=cmd.ExecuteReader();
-			rdr.Read();
-			Assert.AreEqual("uno",rdr["texto"]);
-			rdr.Close();
-			cmd.CommandText="SELECT 10.0/16 FROM tablaexistente WHERE numero=1";
-			Assert.AreEqual(0.625,cmd.ExecuteScalar());
-			try{
-				cmd.CommandText="DROP TABLE nueva_tabla_prueba";
-				cmd.ExecuteNonQuery();
-			}catch(DbException ex){
-				if(ex.ErrorCode==BdAccess.ErrorCode_NoExisteTabla ||
-				   ex.ErrorCode==PostgreSql.ErrorCode_NoExisteTabla){
-				}else{
-					Assert.Ignore("DROP TABLE cantó "+ex.ErrorCode+": "+ex.Message+" no es un error conocido");
-				}
+		public static void ObjUsarEjectuador(BaseDatos db){
+			using(EjecutadorSql ej=db.Ejecutador(
+				new EjecutadorSql.Parametros[]{
+					new EjecutadorSql.Parametros("nombre","toto"),
+					new EjecutadorSql.Parametros("fecha",new DateTime(1969,5,6))
+				} ))
+			{
+				Assert.AreEqual(1,ej.ExecuteScalar("SELECT count(*) FROM nueva_tabla_prueba WHERE fecha={fecha}"));
+                Assert.AreEqual(1,ej.ExecuteScalar("SELECT count(*) FROM nueva_tabla_prueba WHERE nombre={nombre}"));
+                Assert.AreEqual(0,ej.ExecuteScalar("SELECT count(*) FROM nueva_tabla_prueba WHERE nombre={nombre} AND fecha={fecha}"));
 			}
-			cmd.CommandText=@"CREATE TABLE nueva_tabla_prueba (
-				nombre varchar(100),
-				numero integer,
-				monto double precision,
-				fecha date,
-				primary key (nombre));
-			";
-			cmd.ExecuteNonQuery();
-			cmd.CommandText="INSERT INTO nueva_tabla_prueba (nombre) VALUES ('solo')";
-			cmd.ExecuteNonQuery();
-			cmd.CommandText="SELECT * FROM nueva_tabla_prueba";
-			rdr=cmd.ExecuteReader();
-			rdr.Read();
-			Assert.AreEqual("solo",rdr["nombre"]);
-			rdr.Close();
+			using(EjecutadorSql ej=db.Ejecutador("nombre","tute","fecha",new DateTime(2001,12,20))){
+				Assert.AreEqual("toto",ej.ExecuteScalar("SELECT nombre FROM nueva_tabla_prueba WHERE fecha={fecha} ORDER BY nombre"));
+                Assert.AreEqual("tute",ej.ExecuteScalar("SELECT nombre FROM nueva_tabla_prueba WHERE nombre={nombre} ORDER BY nombre"));
+                Assert.AreEqual(0,ej.ExecuteScalar("SELECT count(*) FROM nueva_tabla_prueba WHERE nombre={nombre} AND fecha={fecha}"));
+			}
 		}
-		public static void AuxUsarReceptor(IDbConnection con){
-			ReceptorSql receptor=new ReceptorSql(con,"nueva_tabla_prueba");
-			InsertadorSql insertador=new InsertadorSql(receptor);
-			insertador["nombre"]="toto";
-			insertador["numero"]=2;
-			insertador["monto"]=3.1416;
-			insertador["fecha"]=new DateTime(2001,12,20);
-			insertador.InsertarSiHayCampos();
-			IDbCommand cmd=con.CreateCommand();
-			cmd.CommandText="SELECT * FROM nueva_tabla_prueba ORDER BY nombre";
-			IDataReader rdr=cmd.ExecuteReader();
-			rdr.Read();
-			rdr.Read();
-			Assert.AreEqual(3.1416,rdr["monto"]);
-			Assert.AreEqual(new DateTime(2001,12,20),rdr["fecha"]);
-		}
-		*/
 	}
 }

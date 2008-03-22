@@ -21,7 +21,7 @@ namespace TodoASql
 	public class LibroExcel:HojaExcel //:AccesoExcel
 	{
 		Excel.Workbook libro;
-		internal static string FormatoFechas="dd/mm/yyyy";
+		internal static string FormatoFechas="dd/mm/aaaa";
 		bool abierto=false; public bool Abierto{ get{ return abierto; }}
 		static object ___ = Type.Missing; 		
 		private static Excel.Application apExcel;
@@ -59,6 +59,9 @@ namespace TodoASql
 		}
 		public void GuardarYCerrar(string nombreArchivo){
 			libro.Close(true,nombreArchivo,___);
+		}
+		public void GuardarYCerrar(){
+			libro.Close(true,___,___);
 		}
 		public void Close(){
 			libro.Close(___,___,___);
@@ -237,10 +240,13 @@ namespace TodoASql
 		}
 		[Test]
 		public void TipoFecha(){
+			string nombreArchivo=Archivo.CarpetaActual()+"\\borrar_prueba_fechas.xls";
 			LibroExcel libro=LibroExcel.Nuevo();
 			libro.PonerValor(2,2,new DateTime(2008,3,2));
 			Assert.AreEqual(new DateTime(2008,3,2),libro.ValorCelda(2,2));
-			libro.Close();
+			Assert.AreEqual("02/03/2008",libro.TextoCelda("B2"));
+			Archivo.Borrar(nombreArchivo);
+			libro.GuardarYCerrar(nombreArchivo);
 		}
 	}
 	[TestFixture]
