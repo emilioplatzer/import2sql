@@ -12,6 +12,8 @@ using System.Data;
 using System.Data.Common;
 using System.Data.Odbc;
 using System.Data.OleDb;
+using System.Text;
+using System.Reflection;
 using NUnit.Framework;
 using ADOX;
 
@@ -30,20 +32,20 @@ namespace TodoASql
 			this.con=con;
 			cmd=this.con.CreateCommand();
 		}
-		public IDataReader ExecuteReader(string sentencia){
+		public IDataReader ExecuteReader(SentenciaSql sentencia){
 			Assert.IsNotNull(con);
 			IDbCommand cmd_local=con.CreateCommand();
-			cmd_local.CommandText=sentencia;
+			cmd_local.CommandText=sentencia.ToString();
 			return cmd_local.ExecuteReader();
 		}
-		public object ExecuteScalar(string sentencia){
+		public object ExecuteScalar(SentenciaSql sentencia){
 			Assert.IsNotNull(cmd);
-			cmd.CommandText=sentencia;
+			cmd.CommandText=sentencia.ToString();
 			return cmd.ExecuteScalar();
 		}
-		public int ExecuteNonQuery(string sentencia){
+		public int ExecuteNonQuery(SentenciaSql sentencia){
 			Assert.IsNotNull(cmd);
-			cmd.CommandText=sentencia;
+			cmd.CommandText=sentencia.ToString();
 			return cmd.ExecuteNonQuery();
 		}
 		public bool EliminarTablaSiExiste(string nombreTabla){
@@ -59,7 +61,7 @@ namespace TodoASql
 				throw;
 			}
 		}
-		public void EjecutrarSecuencia(string secuencia){
+		public void EjecutrarSecuencia(SentenciaSql secuencia){
 			ExecuteNonQuery(secuencia);
 		}
 		public bool SinRegistros(string sentencia){
@@ -99,6 +101,37 @@ namespace TodoASql
 		public abstract string StuffTabla(string nombreTabla);
 		public abstract string StuffFecha(DateTime fecha);
 		public virtual string StuffCampo(string nombreCampo){ return StuffTabla(nombreCampo); }
+		public class SentenciaSql{
+			protected string sentencia;
+			protected SentenciaSql(string sentencia){
+				this.sentencia=sentencia;
+			}
+			public static implicit operator SentenciaSql(string sentencia){
+				return new SentenciaSql(sentencia);
+			}
+			public override string ToString(){
+				return sentencia;
+			}
+		}
+	}
+	public class SentenciaSql{
+		StringBuilder sentencia;
+		BaseDatos db;
+		public SentenciaSql(BaseDatos db){
+			this.db=db;	
+			this.sentencia=new StringBuilder("");
+		}
+		public SentenciaSql(BaseDatos db,string sentencia){
+			this.db=db;	
+			this.sentencia=new StringBuilder(sentencia);
+		}
+		public SentenciaSql Arg(string parametro,object valor){
+			sentencia.Replace("{"+parametro+"}",db.StuffValor(valor));
+			return this;
+		}
+		public static implicit operator BaseDatos.SentenciaSql(SentenciaSql s){
+			return s.sentencia.ToString();
+		}
 	}
 	[TestFixture]
 	public class ProbarBaseDatos{
@@ -155,6 +188,17 @@ namespace TodoASql
 			Assert.IsFalse(db.SinRegistros("SELECT * FROM nueva_tabla_prueba ORDER BY nombre"));
 			Assert.IsTrue(db.SinRegistros("SELECT * FROM nueva_tabla_prueba WHERE nombre='nadie'"));
 			db.AssertSinRegistros("no debe fallar","SELECT * FROM nueva_tabla_prueba WHERE nombre='nadie'");
+			SentenciaSql s=new SentenciaSql(db,@"
+				SELECT nombre FROM nueva_tabla_prueba WHERE fecha={fecha}
+			").Arg("fecha",new DateTime(1969,5,6));
+			Assert.AreEqual("tute",db.ExecuteScalar(s));
+			DateTime fecha=new DateTime(2001,12,20);
+			Assert.AreEqual("toto",db.ExecuteScalar(
+				new SentenciaSql(db,@"
+					SELECT nombre FROM nueva_tabla_prueba WHERE fecha={fecha}
+				").Arg("fecha",fecha)
+			));
+			
 		}
 		/*
 		public static void AuxEnTodasLasBases(IDbConnection con){
