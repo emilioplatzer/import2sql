@@ -124,30 +124,36 @@ namespace TodoASql
 	*/
 	public class InsertadorSql:IDisposable
 	{
-		ReceptorSql Receptor;
+		BaseDatos db;
+		string NombreTabla;
 		StringBuilder campos=new StringBuilder();
 		StringBuilder valores=new StringBuilder();
 		Separador coma=new Separador(",");
 		UnSoloUso controlar=new UnSoloUso();
-		public InsertadorSql(ReceptorSql receptor){
-			this.Receptor=receptor;	
+		public InsertadorSql(ReceptorSql receptor)
+			:this(receptor.db,receptor.NombreTabla)
+		{
+		}
+		public InsertadorSql(BaseDatos db,string NombreTabla){
+			this.db=db;
+			this.NombreTabla=NombreTabla;
 		}
 		public object this[string campo]{
 			set{
-				campos.Append(coma+Receptor.db.StuffCampo(campo));
-				valores.Append(coma.mismo()+Receptor.db.StuffValor(value));
+				campos.Append(coma+db.StuffCampo(campo));
+				valores.Append(coma.mismo()+db.StuffValor(value));
 			}
 		}
 		public bool InsertarSiHayCampos(){
 			controlar.Uso();
 			if(campos.Length>0){
-				string sentencia="INSERT INTO "+Receptor.db.StuffTabla(Receptor.NombreTabla)
+				string sentencia="INSERT INTO "+db.StuffTabla(NombreTabla)
 					+@" ("+campos.ToString()+") VALUES ("+valores.ToString()+")";
 				Archivo.Escribir(System.Environment.GetEnvironmentVariable("TEMP")
 				                      + @"\query.sql"
 				                      ,sentencia);
 				System.Console.WriteLine(sentencia);
-				Receptor.db.ExecuteNonQuery(sentencia);
+				db.ExecuteNonQuery(sentencia);
 				return true;
 			}else{
 				return false;

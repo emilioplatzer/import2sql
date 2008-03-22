@@ -59,6 +59,18 @@ namespace TodoASql
 				throw;
 			}
 		}
+		public void EjecutrarSecuencia(string secuencia){
+			ExecuteNonQuery(secuencia);
+		}
+		public bool SinRegistros(string sentencia){
+			IDataReader rdr=ExecuteReader(sentencia);
+			bool rta=!rdr.Read();
+			rdr.Close();
+			return rta;
+		}
+		public void AssertSinRegistros(string explicacion,string sentencia){
+			Assert.IsTrue(SinRegistros(sentencia),explicacion);
+		}
 		public string StuffValor(object valor){
 			if(valor==null){
 				return "null";
@@ -81,6 +93,8 @@ namespace TodoASql
 		public void Dispose(){
 			Close();
 		}
+		public object Verdadero{ get {return "S";} }
+		public object Falso{ get {return "N";} }
 		public abstract int ErrorCode_NoExisteTabla{ get; }
 		public abstract string StuffTabla(string nombreTabla);
 		public abstract string StuffFecha(DateTime fecha);
@@ -138,6 +152,9 @@ namespace TodoASql
 			Assert.AreEqual(new DateTime(1969,5,6),rdr["fecha"]);
 			Assert.AreEqual(3,db.ExecuteScalar("SELECT 3"));
 			Assert.AreEqual(3.1416,db.ExecuteScalar("SELECT 3.1416"));
+			Assert.IsFalse(db.SinRegistros("SELECT * FROM nueva_tabla_prueba ORDER BY nombre"));
+			Assert.IsTrue(db.SinRegistros("SELECT * FROM nueva_tabla_prueba WHERE nombre='nadie'"));
+			db.AssertSinRegistros("no debe fallar","SELECT * FROM nueva_tabla_prueba WHERE nombre='nadie'");
 		}
 		/*
 		public static void AuxEnTodasLasBases(IDbConnection con){
