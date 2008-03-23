@@ -9,6 +9,7 @@
 
 using System;
 using System.Data;
+using System.Text;
 using NUnit.Framework;
 using TodoASql;
 
@@ -47,6 +48,15 @@ namespace Indices
 					numero integer primary key
 				);
 			");
+			db.ExecuteNonQuery(@"
+				CREATE TABLE auxgrupos(
+				    agrupacion varchar(9),
+				    grupo varchar(9),
+				    ponderadororiginal double precision,
+				    sumaponderadorhijos double precision,
+				    primary key(agrupacion,grupo)
+				);
+			");
 			for(int i=0; i<=20; i++){
 				db.ExecuteNonQuery("insert into numeros (numero) values ("+i.ToString()+")");
 			}
@@ -65,25 +75,27 @@ namespace Indices
 			}
 			return AbrirProducto(codigo);
 		}
-		public Grupo AbrirGrupo(string codigo){
-			return new Grupo(this,codigo);
+		public Grupo AbrirGrupo(string agrupacion,string codigo){
+			return new Grupo(this,agrupacion,codigo);
 		}
 		public Grupo CrearGrupo(string codigo){
 			return CrearGrupo(codigo,null,1);
 		}
 		public Grupo CrearGrupo(string codigo,Grupo padre,double ponderador){
+			string Agrupacion;
 			using(InsertadorSql ins=new InsertadorSql(db,"grupos")){
 				ins["grupo"]=codigo;
 				ins["ponderador"]=ponderador;
 				if(padre==null){
-					ins["agrupacion"]=codigo;
+					Agrupacion=codigo;
 				}else{
-					ins["agrupacion"]=padre.Agrupacion;
+					Agrupacion=padre.Agrupacion;
 					ins["grupopadre"]=padre.Clave;
 				}
+				ins["agrupacion"]=Agrupacion;
 				ins.InsertarSiHayCampos();
 			}
-			return AbrirGrupo(codigo);
+			return AbrirGrupo(Agrupacion,codigo);
 		}
 		public void CrearHoja(Producto producto,Grupo grupo,double ponderador){
 			using(InsertadorSql ins=new InsertadorSql(db,"grupos")){
@@ -96,17 +108,73 @@ namespace Indices
 			}			
 		}
 		public void CalcularPonderadores(Grupo grupo){
-			SentenciaSql secuencia=new SentenciaSql(db,@"
-				UPDATE grupos SET nivel=0
-				  WHERE grupopadre is null 
-				    AND agrupacion={agrupacion};
-				UPDATE grupos h SET h.nivel=p.nivel+1
-				  FROM grupos p
-				  WHERE p.grupo=h.grupopadre
-				    AND p.agrupacion=h.agrupacion 
-				    AND h.agrupacion={agrupacion};
-			").Arg("agrupacion",grupo.Agrupacion);
-			db.EjecutrarSecuencia(secuencia);
+			using(EjecutadorSql ej=db.Ejecutador("agrupacion",grupo.Agrupacion)){
+				ej.ExecuteNonQuery(@"
+					UPDATE grupos SET nivel=0,ponderador=1
+					  WHERE grupopadre is null 
+					    AND agrupacion={agrupacion};
+				");
+				for(int i=0;i<10;i++){
+				ej.ExecuteNonQuery(new SentenciaSql(db,@"
+					UPDATE grupos h SET h.nivel={nivel}+1
+					  WHERE (h.grupopadre) 
+						IN (SELECT grupo 
+                             FROM grupos 
+                             WHERE nivel={nivel} 
+                               AND agrupacion={agrupacion})
+                        AND h.agrupacion={agrupacion}
+				").Arg("nivel",i));
+				}
+				for(int i=9;i>=0;i--){ // Subir ponderadores nulos
+					if(db.GetType()==typeof(BdAccess)){
+						ej.ExecuteNonQuery(new SentenciaSql(db,@"
+						").Arg("nivel",i));
+						ej.ExecuteNonQuery(new SentenciaSql(db,@"
+							UPDATE grupos p SET p.ponderador=
+							    DSum('ponderador','grupos','grupopadre=''' & grupo & ''' and agrupacion=''' & agrupacion & '''')
+							  WHERE agrupacion={agrupacion} 
+		                        AND nivel={nivel}
+		                        AND ponderador IS NULL
+						").Arg("nivel",i));
+					}else{
+						ej.ExecuteNonQuery(new SentenciaSql(db,@"
+							UPDATE grupos p SET p.ponderador=
+							    (SELECT sum(h.ponderador)
+							       FROM grupos h
+							       WHERE h.grupopadre=p.grupo
+							         AND h.agrupacion=p.agrupacion)
+							  WHERE agrupacion={agrupacion} 
+		                        AND nivel={nivel}
+		                        AND ponderador IS NULL
+						").Arg("nivel",i));
+					}
+				}
+				for(int i=1;i<10;i++){
+					if(db.GetType()==typeof(BdAccess)){
+						ej.ExecuteNonQuery(new SentenciaSql(db,@"
+							UPDATE grupos h SET h.ponderador=h.ponderador/
+							    DSum('ponderador','grupos','grupopadre=''' & grupopadre & ''' and agrupacion=''' & agrupacion & '''')*
+							    DSum('ponderador','grupos','grupo=''' & grupopadre & ''' and agrupacion=''' & agrupacion & '''')
+							  WHERE agrupacion={agrupacion} 
+		                        AND nivel={nivel}
+						").Arg("nivel",i));
+					}else{
+						ej.ExecuteNonQuery(new SentenciaSql(db,@"
+							UPDATE grupos h SET h.ponderador=h.ponderador/
+							    (SELECT sum(b.ponderador)
+							       FROM grupos b 
+							       WHERE b.grupopadre=h.grupopadre
+							         AND b.agrupacion=h.agrupacion)
+							    (SELECT p.ponderador
+							       FROM grupos p
+							       WHERE p.grupo=h.grupopadre
+							         AND p.agrupacion=h.agrupacion)
+							  WHERE agrupacion={agrupacion} 
+		                        AND nivel={nivel}
+						").Arg("nivel",i));
+					}
+				}
+			}
 		}
 		public void ReglasDeIntegridad(){
 			db.AssertSinRegistros(
@@ -201,16 +269,19 @@ namespace Indices
 		protected Repositorio Repo;
 		string NombreTabla;
 		public string Clave;
-		string[] Claves;
 		protected IDataReader Registro;
-		protected Tabla(Repositorio repo,string nombreTabla,string clave){
+		protected Tabla(Repositorio repo,string nombreTabla,params string[] clavesPlanas){
 			this.Repo=repo;	
 			this.NombreTabla=nombreTabla;
-			this.Clave=clave;
-			this.Claves=new string[1];
-			this.Claves[0]=clave;
-			this.Registro=repo.db.ExecuteReader("SELECT * FROM "+repo.db.StuffTabla(nombreTabla));
+			// this.Claves=clavesPlanas;
+			StringBuilder sentencia=new StringBuilder("SELECT * FROM "+repo.db.StuffTabla(nombreTabla));
+			Separador and=new Separador(" WHERE "," AND ");
+			for(int i=0;i<clavesPlanas.Length/2;i++){
+				sentencia.Append(and+repo.db.StuffCampo(clavesPlanas[i*2])+"="+repo.db.StuffValor(clavesPlanas[i*2+1]));
+			}
+			this.Registro=repo.db.ExecuteReader(sentencia.ToString());
 			this.Registro.Read();
+			Clave=(string)Registro[clavesPlanas[clavesPlanas.Length-2]];
 		}
 		public void Dispose(){
 			Registro.Close();
@@ -219,29 +290,30 @@ namespace Indices
 	public class Grupo:Tabla{
 		public double Ponderador;
 		public string Agrupacion;
-		public Grupo(Repositorio repo,string codigo)
-			:base(repo,"grupos",codigo)
+		public Grupo(Repositorio repo,string agrupacion,string grupo)
+			:base(repo,"grupos","agrupacion",agrupacion,"grupo",grupo)
 		{
-			Agrupacion=(string)Registro["grupo"];
 			if(Registro["agrupacion"]!=null){
 				Agrupacion=(string)Registro["agrupacion"];
 			}
-			if(Registro["ponderador"]!=null){
+			if(Registro["ponderador"].GetType()!=typeof(DBNull)){
+				object valor=Registro["ponderador"];
+				System.Console.WriteLine("tipo = "+valor.GetType().Name);
 				Ponderador=(double)Registro["ponderador"];
 			}
 		}
 	}
 	public class Producto:Tabla{
 		public Producto(Repositorio repo,string codigo)
-			:base(repo,"productos",codigo)
+			:base(repo,"productos","producto",codigo)
 		{}
 		public double Ponderador(Grupo grupo){
 			double wP=(double)
 				Repo.db.ExecuteScalar(@"
 					SELECT ponderador
-					  FROM grupro 
+					  FROM grupos 
 					  WHERE agrupacion="+Repo.db.StuffValor(grupo.Agrupacion)+@"
-					    AND producto="+Repo.db.StuffValor(Clave)
+					    AND grupo="+Repo.db.StuffValor(Clave)
 				);
 			double wG=(double)
 				Repo.db.ExecuteScalar(@"
@@ -268,10 +340,15 @@ namespace Indices
 			Grupo A=repo.CrearGrupo("A");
 			Grupo A1=repo.CrearGrupo("A1",A,60);
 			Grupo A2=repo.CrearGrupo("A2",A,40);
+			Grupo T=repo.CrearGrupo("T");
 			repo.CrearHoja(P100,A1,60);
 			repo.CrearHoja(P101,A1,40);
 			repo.CrearHoja(P102,A2,100);
+			repo.CrearHoja(P100,T,60);
+			repo.CrearHoja(P101,T,40);
+			repo.CrearHoja(P102,T,100);
 			repo.CalcularPonderadores(A);
+			repo.CalcularPonderadores(T);
 			/*
 			Periodo pAnt=repo.CrearPeriodo(2001,12);
 			repo.RegistrarPromedios(pAnt,P100,2.0);
@@ -281,11 +358,11 @@ namespace Indices
 		}
 		[Test]
 		public void VerCanasta(){
-			Grupo A=repo.AbrirGrupo("A");
-			Grupo A1=repo.AbrirGrupo("A1");
+			Grupo A=repo.AbrirGrupo("A","A");
+			Grupo A1=repo.AbrirGrupo("A","A1");
 			Producto P100=repo.AbrirProducto("P100");
 			Assert.AreEqual(1.0,A.Ponderador);
-			Assert.AreEqual(0.6,A1.Ponderador);
+			Assert.AreEqual(0.6,A1.Ponderador,0.00000001);
 			Assert.AreEqual(0.36,P100.Ponderador(A));
 			Assert.AreEqual(0.6,P100.Ponderador(A1));
 		}

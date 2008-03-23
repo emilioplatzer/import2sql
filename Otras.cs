@@ -281,9 +281,14 @@ namespace TodoASql
 	}
 	public class Separador{
 		string CadenaSeparadora;
+		string CadenaComenzadora;
 		int Vez;
-		public Separador(string cadenaSeparadora){
+		public Separador(string cadenaSeparadora)
+			:this("",cadenaSeparadora)
+		{} 
+		public Separador(string cadenaComenzadora,string cadenaSeparadora){
 			this.CadenaSeparadora=cadenaSeparadora;
+			this.CadenaComenzadora=cadenaComenzadora;
 			this.Vez=0;
 		}
 		public static implicit operator string(Separador s){
@@ -292,7 +297,7 @@ namespace TodoASql
 		}
 		public string mismo(){
 			if(Vez==1){
-				return "";
+				return CadenaComenzadora;
 			}
 			return CadenaSeparadora;
 		}
@@ -341,6 +346,17 @@ namespace TodoASql
 			}
 			Assert.AreEqual("uno+dos+tres",listaLetras);
 			Assert.AreEqual("1+2+3",listaNumeros);
+		}
+		[Test]
+		public void ProbarComenzador(){
+			string[] letras={"uno", "dos", "tres"};
+			string[] numeros={"1","2","3"};
+			string lista="";
+			Separador and=new Separador("WHERE "," AND ");
+			for(int i=0; i<3; i++){
+				lista+=and+letras[i]+"="+numeros[i];
+			}
+			Assert.AreEqual("WHERE uno=1 AND dos=2 AND tres=3",lista);
 		}
 	}
 	/// <summary>
