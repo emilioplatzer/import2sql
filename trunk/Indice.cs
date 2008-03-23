@@ -49,6 +49,9 @@ namespace Indices
 				);
 			");
 			db.ExecuteNonQuery(@"
+				CREATE VIEW grupos_2 AS SELECT * FROM grupos;
+			");
+			db.ExecuteNonQuery(@"
 				CREATE TABLE auxgrupos(
 				    agrupacion varchar(9),
 				    grupo varchar(9),
@@ -116,13 +119,13 @@ namespace Indices
 				");
 				for(int i=0;i<10;i++){
 				ej.ExecuteNonQuery(new SentenciaSql(db,@"
-					UPDATE grupos h SET h.nivel={nivel}+1
-					  WHERE (h.grupopadre) 
+					UPDATE grupos SET nivel={nivel}+1
+					  WHERE (grupopadre) 
 						IN (SELECT grupo 
                              FROM grupos 
                              WHERE nivel={nivel} 
                                AND agrupacion={agrupacion})
-                        AND h.agrupacion={agrupacion}
+                        AND agrupacion={agrupacion}
 				").Arg("nivel",i));
 				}
 				for(int i=9;i>=0;i--){ // Subir ponderadores nulos
@@ -130,6 +133,17 @@ namespace Indices
 						ej.ExecuteNonQuery(new SentenciaSql(db,@"
 							UPDATE grupos p SET p.ponderador=
 							    DSum('ponderador','grupos','grupopadre=''' & grupo & ''' and agrupacion=''' & agrupacion & '''')
+							  WHERE agrupacion={agrupacion} 
+		                        AND nivel={nivel}
+		                        AND ponderador IS NULL
+						").Arg("nivel",i));
+					}else if(db.GetType()==typeof(SqLite)){
+						ej.ExecuteNonQuery(new SentenciaSql(db,@"
+							UPDATE grupos SET ponderador=
+							    (SELECT sum(ponderador)
+							       FROM grupos_2 h
+							       WHERE h.grupopadre=grupos.grupo
+							         AND h.agrupacion=grupos.agrupacion)
 							  WHERE agrupacion={agrupacion} 
 		                        AND nivel={nivel}
 		                        AND ponderador IS NULL
@@ -148,43 +162,28 @@ namespace Indices
 					}
 				}
 				for(int i=1;i<10;i++){
+					ej.ExecuteNonQuery(new SentenciaSql(db,@"
+						INSERT INTO auxgrupos (agrupacion,grupo,ponderadororiginal,sumaponderadorhijos)
+						  SELECT p.agrupacion,p.grupo,p.ponderador,sum(h.ponderador)
+						    FROM grupos p INNER JOIN grupos h ON p.agrupacion=h.agrupacion AND p.grupo=h.grupopadre
+						    WHERE h.agrupacion={agrupacion} 
+	                          AND h.nivel={nivel}
+						    GROUP BY p.agrupacion,p.grupo,p.ponderador;
+					").Arg("nivel",i));
 					if(db.GetType()==typeof(BdAccess)){
-						ej.ExecuteNonQuery(new SentenciaSql(db,@"
-							INSERT INTO auxgrupos (agrupacion,grupo,ponderadororiginal,sumaponderadorhijos)
-							  SELECT p.agrupacion,p.grupo,p.ponderador,sum(h.ponderador)
-							    FROM grupos p INNER JOIN grupos h ON p.agrupacion=h.agrupacion AND p.grupo=h.grupopadre
-							    WHERE h.agrupacion={agrupacion} 
-		                          AND h.nivel={nivel}
-							    GROUP BY p.agrupacion,p.grupo,p.ponderador;
-						").Arg("nivel",i));
 						ej.ExecuteNonQuery(new SentenciaSql(db,@"
 							UPDATE grupos h INNER JOIN auxgrupos a ON a.grupo=h.grupopadre AND a.agrupacion=h.agrupacion
                               SET h.ponderador=h.ponderador*a.ponderadororiginal/a.sumaponderadorhijos
 							  WHERE h.agrupacion={agrupacion} 
 		                        AND h.nivel={nivel}
 						").Arg("nivel",i));
-						/*
-						ej.ExecuteNonQuery(new SentenciaSql(db,@"
-							UPDATE grupos h SET h.ponderador=h.ponderador*
-							    (SELECT ponderadororiginal/sumaponderadorhijos
-							       FROM auxgrupos a
-							       WHERE a.grupo=h.grupopadre
-							         AND a.agrupacion=h.agrupacion)
-							  WHERE agrupacion={agrupacion} 
-		                        AND nivel={nivel}
-						").Arg("nivel",i));
-						*/
 					}else{
 						ej.ExecuteNonQuery(new SentenciaSql(db,@"
-							UPDATE grupos h SET h.ponderador=h.ponderador/
-							    (SELECT sum(b.ponderador)
-							       FROM grupos b 
-							       WHERE b.grupopadre=h.grupopadre
-							         AND b.agrupacion=h.agrupacion)
-							    (SELECT p.ponderador
-							       FROM grupos p
-							       WHERE p.grupo=h.grupopadre
-							         AND p.agrupacion=h.agrupacion)
+							UPDATE grupos SET ponderador=ponderador
+							    *(SELECT a.ponderadororiginal/a.sumaponderadorhijos
+							       FROM auxgrupos a 
+							       WHERE a.grupo=grupos.grupopadre
+							         AND a.agrupacion=grupos.agrupacion)
 							  WHERE agrupacion={agrupacion} 
 		                        AND nivel={nivel}
 						").Arg("nivel",i));
@@ -357,10 +356,17 @@ namespace Indices
 	public class ProbarIndiceD3{
 		Repositorio repo;
 		public ProbarIndiceD3(){
-			string archivoMDB="indices_canastaD3.mdb";
-			Archivo.Borrar(archivoMDB);
-			BdAccess.Crear(archivoMDB);
-			BdAccess db=BdAccess.Abrir(archivoMDB);
+			BaseDatos db;
+			if(1==1){ // probar con access
+				string archivoMDB="indices_canastaD3.mdb";
+				Archivo.Borrar(archivoMDB);
+				BdAccess.Crear(archivoMDB);
+				db=BdAccess.Abrir(archivoMDB);
+			}else{
+				string archivoSqLite="prueba_sqlite.db";
+				Archivo.Borrar(archivoSqLite);
+				db=SqLite.Abrir(archivoSqLite);
+			}
 			repo=Repositorio.Crear(db);
 			Producto P100=repo.CrearProducto("P100");
 			Producto P101=repo.CrearProducto("P101");

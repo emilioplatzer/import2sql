@@ -16,6 +16,7 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
+			// new ProbarSqLite().ConexionSqLite();
 			new ProbarIndiceD3().VerCanasta();
 			// new ProbarBaseDatos().CreacionMdb();
 			// new ProbarMatrizExcelASqlGenerica().trasvasar();

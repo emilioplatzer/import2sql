@@ -55,6 +55,8 @@ namespace TodoASql
 			Controlar.Definido("SinPostgre");
 		}
 		#else
+		public void SinPostgre(){
+		}
 		[Test]
 		public void ConexionPostgre(){
 			System.Windows.Forms.Application.OleRequired();
