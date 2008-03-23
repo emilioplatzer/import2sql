@@ -128,8 +128,6 @@ namespace Indices
 				for(int i=9;i>=0;i--){ // Subir ponderadores nulos
 					if(db.GetType()==typeof(BdAccess)){
 						ej.ExecuteNonQuery(new SentenciaSql(db,@"
-						").Arg("nivel",i));
-						ej.ExecuteNonQuery(new SentenciaSql(db,@"
 							UPDATE grupos p SET p.ponderador=
 							    DSum('ponderador','grupos','grupopadre=''' & grupo & ''' and agrupacion=''' & agrupacion & '''')
 							  WHERE agrupacion={agrupacion} 
@@ -152,12 +150,30 @@ namespace Indices
 				for(int i=1;i<10;i++){
 					if(db.GetType()==typeof(BdAccess)){
 						ej.ExecuteNonQuery(new SentenciaSql(db,@"
-							UPDATE grupos h SET h.ponderador=h.ponderador/
-							    DSum('ponderador','grupos','grupopadre=''' & grupopadre & ''' and agrupacion=''' & agrupacion & '''')*
-							    DSum('ponderador','grupos','grupo=''' & grupopadre & ''' and agrupacion=''' & agrupacion & '''')
+							INSERT INTO auxgrupos (agrupacion,grupo,ponderadororiginal,sumaponderadorhijos)
+							  SELECT p.agrupacion,p.grupo,p.ponderador,sum(h.ponderador)
+							    FROM grupos p INNER JOIN grupos h ON p.agrupacion=h.agrupacion AND p.grupo=h.grupopadre
+							    WHERE h.agrupacion={agrupacion} 
+		                          AND h.nivel={nivel}
+							    GROUP BY p.agrupacion,p.grupo,p.ponderador;
+						").Arg("nivel",i));
+						ej.ExecuteNonQuery(new SentenciaSql(db,@"
+							UPDATE grupos h INNER JOIN auxgrupos a ON a.grupo=h.grupopadre AND a.agrupacion=h.agrupacion
+                              SET h.ponderador=h.ponderador*a.ponderadororiginal/a.sumaponderadorhijos
+							  WHERE h.agrupacion={agrupacion} 
+		                        AND h.nivel={nivel}
+						").Arg("nivel",i));
+						/*
+						ej.ExecuteNonQuery(new SentenciaSql(db,@"
+							UPDATE grupos h SET h.ponderador=h.ponderador*
+							    (SELECT ponderadororiginal/sumaponderadorhijos
+							       FROM auxgrupos a
+							       WHERE a.grupo=h.grupopadre
+							         AND a.agrupacion=h.agrupacion)
 							  WHERE agrupacion={agrupacion} 
 		                        AND nivel={nivel}
 						").Arg("nivel",i));
+						*/
 					}else{
 						ej.ExecuteNonQuery(new SentenciaSql(db,@"
 							UPDATE grupos h SET h.ponderador=h.ponderador/
@@ -208,16 +224,9 @@ namespace Indices
 			db.AssertSinRegistros(
 				"Los niveles de los hijos deben ser exactamente 1 más que el padre",
 			@"
-				SELECT h.grupopadre, p.nivel as nivelpadre, h.grupo, h.nivel, p.nombre as nombrepadre, h.nombre
+				SELECT h.grupopadre, p.nivel as nivelpadre, h.grupo, h.nivel, p.nombre as nombrepadre, h.nombre, p.nivel+1-h.nivel
 				  FROM grupos p inner join grupos h on p.grupo=h.grupopadre and p.agrupacion=h.agrupacion
-				  WHERE p.nivel<>h.nivel+1
-			");
-			db.AssertSinRegistros(
-				"Los niveles de los hijos deben ser exactamente 1 más que el padre",
-			@"
-				SELECT h.grupopadre, p.nivel as nivelpadre, h.grupo, h.nivel, p.nombre as nombrepadre, h.nombre
-				  FROM grupos p inner join grupos h on p.grupo=h.grupopadre and p.agrupacion=h.agrupacion
-				  WHERE p.nivel<>h.nivel+1
+				  WHERE p.nivel+1<>h.nivel
 			");
 			db.AssertSinRegistros(
 				"Todas las agrupaciones que no son productos deben tener hijos",
@@ -240,6 +249,7 @@ namespace Indices
 			@"
 				SELECT p.grupo,p.nombre,p.ponderador,sum(h.ponderador)
 				  FROM grupos p left join grupos h on p.grupo=h.grupopadre and p.agrupacion=h.agrupacion
+				  GROUP BY p.grupo,p.nombre,p.ponderador
 				  HAVING abs(p.ponderador)-sum(h.ponderador)>0.00000000000001
 			");
 			db.AssertSinRegistros(
@@ -259,9 +269,27 @@ namespace Indices
 			db.AssertSinRegistros(
 				"Los ponderadores de cada nivel deben sumar 1",
 			@"
-				SELECT n.numero as nivel, suma(ponderadores)
+				SELECT g.agrupacion,n.numero as nivel, sum(ponderador) as suma, sum(ponderador)-1 as diferencia
 				  FROM numeros as n, grupos as g
 				  WHERE g.nivel=n.numero OR g.esproducto='S' AND g.nivel<n.numero
+				  GROUP BY g.agrupacion,n.numero
+				  HAVING sum(ponderador)<>1;
+			");
+			db.AssertSinRegistros(
+				"No debe haber dos códigos de grupo iguales en distintas agrupaciones",
+			@"
+				SELECT grupo, count(*) as cantidad, min(agrupacion) as primero, max(agrupacion) as ultimo
+				  FROM grupos as g
+				  WHERE esproducto='N'
+				  GROUP BY grupo
+				  HAVING count(*)>1
+			");
+			db.AssertSinRegistros(
+				"No debe haber hijos sin padre",
+			@"
+				SELECT h.grupopadre,h.grupo,h.nombre
+				  FROM grupos h left join grupos p on p.grupo=h.grupopadre and p.agrupacion=h.agrupacion
+				  WHERE p.grupo IS NULL and h.grupopadre IS NOT NULL;
 			");
 		}
 	}
@@ -320,7 +348,7 @@ namespace Indices
 					SELECT ponderador
 					  FROM grupos 
 					  WHERE agrupacion="+Repo.db.StuffValor(grupo.Agrupacion)+@"
-					    AND grupo="+Repo.db.StuffValor(Clave)
+					    AND grupo="+Repo.db.StuffValor(grupo.Clave)
 				);
 			return wP/wG;
 		}
