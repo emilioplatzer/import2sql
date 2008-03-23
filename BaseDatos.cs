@@ -56,7 +56,32 @@ namespace TodoASql
 			return rta;
 		}
 		public void AssertSinRegistros(string explicacion,string sentencia){
-			Assert.IsTrue(SinRegistros(sentencia),explicacion);
+			IDataReader rdr=ExecuteReader(sentencia);
+			bool rta=!rdr.Read();
+			if(!rta){
+				Archivo.Escribir(System.Environment.GetEnvironmentVariable("TEMP")
+			                      + @"\dataquery.txt"
+			                      ,explicacion+"\n"+
+			                      Dump(rdr,10));
+			}
+			rdr.Close();
+			Assert.IsTrue(rta,explicacion);
+		}
+		public static string Dump(IDataReader rdr,int maxRegistros){
+			StringBuilder rta=new StringBuilder("");
+			if(maxRegistros==0) maxRegistros--;
+			object[] valores=new object[rdr.FieldCount];
+			while(maxRegistros<0 || maxRegistros>0){
+				rdr.GetValues(valores);
+				Separador s=new Separador(";");
+				foreach(object valor in valores){
+					rta.Append(s+valor.ToString());
+				}
+				rta.AppendLine();
+			if(!rdr.Read()) break;
+				maxRegistros--;
+			}
+			return rta.ToString();
 		}
 		protected virtual string AdaptarSentecia(SentenciaSql sentencia){
 			Archivo.Escribir(System.Environment.GetEnvironmentVariable("TEMP")
