@@ -149,10 +149,6 @@ namespace TodoASql
 			if(campos.Length>0){
 				string sentencia="INSERT INTO "+db.StuffTabla(NombreTabla)
 					+@" ("+campos.ToString()+") VALUES ("+valores.ToString()+")";
-				Archivo.Escribir(System.Environment.GetEnvironmentVariable("TEMP")
-				                      + @"\query.sql"
-				                      ,sentencia);
-				System.Console.WriteLine(sentencia);
 				db.ExecuteNonQuery(sentencia);
 				return true;
 			}else{
