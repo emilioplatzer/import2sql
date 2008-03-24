@@ -87,41 +87,6 @@ namespace TodoASql
 			return matriz;
 		}
 	}
-	/*
-	public class InsertadorSqlViaDataSet
-	{
-		ReceptorSql Receptor;
-		OleDbDataAdapter Adaptador;
-		System.Data.DataTable Tabla;
-		DataRow Registro;
-		bool HayCamposInsertados;
-		public InsertadorSqlViaDataSet(ReceptorSql receptor){
-			Tabla=new System.Data.DataTable();
-			this.Receptor=receptor;	
-			string select="select * from "+receptor.NombreTabla;
-			this.Adaptador=new OleDbDataAdapter(select,Receptor.ConexionABase);
-			this.Adaptador.Fill(Tabla);
-			HayCamposInsertados=false;
-			Registro=Tabla.NewRow();
-		}
-		public object this[string campo]{
-			set{
-				Registro[campo]=value;
-				HayCamposInsertados=true;
-			}
-		}
-		public bool InsertarSiHayCampos(){
-			if(HayCamposInsertados){
-				HayCamposInsertados=false;
-				Tabla.Rows.Add(Registro);
-				Adaptador.Update(Tabla);
-				return true;
-			}else{
-				return false;
-			}
-		}
-	}
-	*/
 	public class InsertadorSql:IDisposable
 	{
 		BaseDatos db;

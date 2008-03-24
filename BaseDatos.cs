@@ -118,11 +118,25 @@ namespace TodoASql
 		public bool EliminarTablaSiExiste(string nombreTabla){
 			Assert.IsNotNull(cmd);
 			try{
-				cmd.CommandText="DROP TABLE "+StuffTabla(nombreTabla);
-				cmd.ExecuteNonQuery();
+				ExecuteNonQuery("DROP TABLE "+StuffTabla(nombreTabla));
 				return true;
 			}catch(DbException ex){
-				if(ex.ErrorCode==ErrorCode_NoExisteTabla){
+				if(ex.Message.StartsWith(ErrorCode_NoExisteTabla)){
+					System.Console.WriteLine("EliminarTablaSiExiste. Ex:"+ex.Message);
+					return false; // ok, no existía la tabla por eso salto la excepción
+				}
+				System.Console.WriteLine("EliminarTablaSiExiste. Ex:"+ex.Message);
+				throw;
+			}
+		}
+		public bool EliminarVistaSiExiste(string nombreTabla){
+			Assert.IsNotNull(cmd);
+			try{
+				ExecuteNonQuery("DROP VIEW "+StuffTabla(nombreTabla));
+				return true;
+			}catch(DbException ex){
+				System.Console.WriteLine("EliminarVistaSiExiste. Ex:"+ex.Message);
+				if(ex.Message.StartsWith(ErrorCode_NoExisteVista)){
 					return false; // ok, no existía la tabla por eso salto la excepción
 				}
 				throw;
@@ -158,7 +172,8 @@ namespace TodoASql
 		}
 		public object Verdadero{ get {return "S";} }
 		public object Falso{ get {return "N";} }
-		public abstract int ErrorCode_NoExisteTabla{ get; }
+		public abstract string ErrorCode_NoExisteTabla{ get; }
+		public abstract string ErrorCode_NoExisteVista{ get; }
 		public abstract string StuffTabla(string nombreTabla);
 		public abstract string StuffFecha(DateTime fecha);
 		public virtual string StuffCampo(string nombreCampo){ return StuffTabla(nombreCampo); }
@@ -216,23 +231,21 @@ namespace TodoASql
 		}		
 		protected override string AdaptarSentecia(SentenciaSql sentencia)
 		{
-			System.Console.WriteLine("Adaptando: "+sentencia.ToString());
 			TodoASql.SentenciaSql s=new TodoASql.SentenciaSql(db,base.AdaptarSentecia(sentencia));
 			foreach(Parametros p in param){
 				s.Arg(p.Parametro,p.Valor);
 			}
-			System.Console.WriteLine("Adaptado: "+s.ToString());
 			return s.ToString();
 		}
 		public void Dispose(){
 		}
 	}
-	[TestFixture]
 	public class ProbarBaseDatos{
 		public static void ObjEnTodasLasBases(BaseDatos db){
 			ObjOperacionesSimples(db);
 			ObjUsarReceptor(db);
 			ObjUsarEjectuador(db);
+			ObjOperacionesEstructurales(db);
 		}
 		public static void ObjOperacionesSimples(BaseDatos db){
 			IDataReader rdr=db.ExecuteReader("SELECT * FROM tablaexistente");
@@ -311,6 +324,25 @@ namespace TodoASql
                 Assert.AreEqual("tute",ej.ExecuteScalar("SELECT nombre FROM nueva_tabla_prueba WHERE nombre={nombre} ORDER BY nombre"));
                 Assert.AreEqual(0,ej.ExecuteScalar("SELECT count(*) FROM nueva_tabla_prueba WHERE nombre={nombre} AND fecha={fecha}"));
 			}
+		}
+		public static void ObjOperacionesEstructurales(BaseDatos db){
+			db.EliminarVistaSiExiste("v_temporaria_a_borrar");
+			db.EliminarTablaSiExiste("temporaria_a_borrar");
+			db.ExecuteNonQuery("create table temporaria_a_borrar(texto varchar(100));");
+			db.ExecuteNonQuery("create view v_temporaria_a_borrar as select * from temporaria_a_borrar;");
+			bool NoFalloYDebia=false;
+			try{
+				db.EliminarTablaSiExiste("temporaria_a_borrar");
+				NoFalloYDebia=true;
+			}catch(Exception ex){
+				System.Console.WriteLine("Correcto. Dio una excepción: "+ex.Message);
+			}
+			if(NoFalloYDebia && db.GetType()!=typeof(SqLite) && db.GetType()!=typeof(BdAccess)){
+				Assert.Fail("Debió dar error porque no la pudo borrar porque estaba relacionada");
+			}
+			db.EliminarTablaSiExiste("esta_no_existe");
+			db.EliminarVistaSiExiste("v_temporaria_a_borrar");
+			db.EliminarTablaSiExiste("temporaria_a_borrar");
 		}
 	}
 }

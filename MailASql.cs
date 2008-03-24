@@ -24,10 +24,6 @@ namespace TodoASql
 		string ContenidoPlano;
 		string DirectorioMails;
 		ReceptorSql Receptor;
-		/*
-		public MailASql():this(new ParametrosMailASql(Parametros.LeerPorDefecto.SI)){
-		}
-		*/
 		public MailASql(ParametrosMailASql parametros,ReceptorSql receptor){
 			this.DirectorioMails=parametros.DirMailsAProcesar;
 			this.Receptor=receptor;

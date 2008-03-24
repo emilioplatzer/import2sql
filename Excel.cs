@@ -21,7 +21,7 @@ namespace TodoASql
 	public class LibroExcel:HojaExcel //:AccesoExcel
 	{
 		Excel.Workbook libro;
-		internal static string FormatoFechas="dd/mm/aaaa";
+		internal static string FormatoFechas=null; //null=autodetectar "dd/mm/aaaa";
 		bool abierto=false; public bool Abierto{ get{ return abierto; }}
 		static object ___ = Type.Missing; 		
 		private static Excel.Application apExcel;
@@ -128,6 +128,14 @@ namespace TodoASql
 		static void PonerValor(Excel.Range rango,object valor){
 			rango.Value2=valor;
 			if(valor!=null && valor.GetType()==typeof(DateTime)){
+				if(LibroExcel.FormatoFechas==null){
+					rango.NumberFormat="dd/mm/yyyy";
+					if(rango.Text.ToString().IndexOf("y")>0){
+						LibroExcel.FormatoFechas="dd/mm/aaaa";
+					}else{
+						LibroExcel.FormatoFechas="dd/mm/yyyy";
+					}
+				}
 				rango.NumberFormat=LibroExcel.FormatoFechas;
 			}
 		}

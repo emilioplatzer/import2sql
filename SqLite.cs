@@ -29,7 +29,8 @@ namespace TodoASql
 			ConexionABase.Open();
 			return new SqLite(ConexionABase);
 		}
-		public override int ErrorCode_NoExisteTabla{ get{ return -2146232009;}}
+		public override string ErrorCode_NoExisteTabla{ get{ return "ERROR [HY000]";}}
+		public override string ErrorCode_NoExisteVista{ get{ return "ERROR [HY000]";}}
 		public override string StuffTabla(string nombreTabla){
 			return '"'+nombreTabla+'"';
 		}
