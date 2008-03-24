@@ -34,11 +34,12 @@ namespace TodoASql
 		*/
 		public static PostgreSql Abrir(string Servidor,string Base, string Usuario, string Clave){
 			OdbcConnection ConexionABase = new OdbcConnection();
-			ConexionABase.ConnectionString=@"DRIVER=PostgreSQL Unicode;UID=import2sql;PORT=5432;SERVER=127.0.0.1;DATABASE=import2sqlDB;PASSWORD=sqlimport";
+			ConexionABase.ConnectionString=@"DRIVER=PostgreSQL Unicode;UID="+Usuario+";PORT=5432;SERVER="+Servidor+";DATABASE="+Base+";PASSWORD="+Clave;
 			ConexionABase.Open();
 			return new PostgreSql(ConexionABase);
 		}
-		public override int ErrorCode_NoExisteTabla{ get{ return -2146232009;}}
+		public override string ErrorCode_NoExisteTabla{ get{ return "ERROR [42P01]";}}
+		public override string ErrorCode_NoExisteVista{ get{ return "ERROR [42P01]";}}
 		public override string StuffTabla(string nombreTabla){
 			return '"'+nombreTabla+'"';
 		}
@@ -55,10 +56,11 @@ namespace TodoASql
 			Controlar.Definido("SinPostgre");
 		}
 		#else
+		[Test]
 		public void SinPostgre(){
 		}
 		[Test]
-		public void ConexionPostgre(){
+		public void Conexion(){
 			System.Windows.Forms.Application.OleRequired();
 			PostgreSql db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 			ProbarBaseDatos.ObjEnTodasLasBases(db);

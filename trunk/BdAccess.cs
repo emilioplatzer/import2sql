@@ -38,7 +38,8 @@ namespace TodoASql
 			ConexionABase.Open();
 			return new BdAccess(ConexionABase);
 		}
-		public override int ErrorCode_NoExisteTabla{ get{ return -2147217865;}}
+		public override string ErrorCode_NoExisteTabla{ get{ return "La tabla";}}
+		public override string ErrorCode_NoExisteVista{ get{ return "No se puede encontrar";}}
 		public override string StuffTabla(string nombreTabla){
 			return "["+nombreTabla+"]";
 		}

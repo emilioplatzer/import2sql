@@ -49,9 +49,6 @@ namespace Indices
 				);
 			");
 			db.ExecuteNonQuery(@"
-				CREATE VIEW grupos_2 AS SELECT * FROM grupos;
-			");
-			db.ExecuteNonQuery(@"
 				CREATE TABLE auxgrupos(
 				    agrupacion varchar(9),
 				    grupo varchar(9),
@@ -137,24 +134,13 @@ namespace Indices
 		                        AND nivel={nivel}
 		                        AND ponderador IS NULL
 						").Arg("nivel",i));
-					}else if(db.GetType()==typeof(SqLite)){
-						ej.ExecuteNonQuery(new SentenciaSql(db,@"
-							UPDATE grupos SET ponderador=
-							    (SELECT sum(ponderador)
-							       FROM grupos_2 h
-							       WHERE h.grupopadre=grupos.grupo
-							         AND h.agrupacion=grupos.agrupacion)
-							  WHERE agrupacion={agrupacion} 
-		                        AND nivel={nivel}
-		                        AND ponderador IS NULL
-						").Arg("nivel",i));
 					}else{
 						ej.ExecuteNonQuery(new SentenciaSql(db,@"
-							UPDATE grupos p SET p.ponderador=
+							UPDATE grupos SET ponderador=
 							    (SELECT sum(h.ponderador)
 							       FROM grupos h
-							       WHERE h.grupopadre=p.grupo
-							         AND h.agrupacion=p.agrupacion)
+							       WHERE h.grupopadre=grupos.grupo
+							         AND h.agrupacion=grupos.agrupacion)
 							  WHERE agrupacion={agrupacion} 
 		                        AND nivel={nivel}
 		                        AND ponderador IS NULL
@@ -357,15 +343,25 @@ namespace Indices
 		Repositorio repo;
 		public ProbarIndiceD3(){
 			BaseDatos db;
-			if(1==1){ // probar con access
-				string archivoMDB="indices_canastaD3.mdb";
-				Archivo.Borrar(archivoMDB);
-				BdAccess.Crear(archivoMDB);
-				db=BdAccess.Abrir(archivoMDB);
-			}else{
-				string archivoSqLite="prueba_sqlite.db";
-				Archivo.Borrar(archivoSqLite);
-				db=SqLite.Abrir(archivoSqLite);
+			switch(1){
+				case 1: // probar con postgre
+					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
+					db.EliminarTablaSiExiste("grupos");
+					db.EliminarTablaSiExiste("productos");
+					db.EliminarTablaSiExiste("numeros");
+					db.EliminarTablaSiExiste("auxgrupos");
+					break;
+				case 2: // probar con sqlite
+					string archivoSqLite="prueba_sqlite.db";
+					Archivo.Borrar(archivoSqLite);
+					db=SqLite.Abrir(archivoSqLite);
+					break;
+				case 3: // probar con access
+					string archivoMDB="indices_canastaD3.mdb";
+					Archivo.Borrar(archivoMDB);
+					BdAccess.Crear(archivoMDB);
+					db=BdAccess.Abrir(archivoMDB);
+					break;
 			}
 			repo=Repositorio.Crear(db);
 			Producto P100=repo.CrearProducto("P100");
