@@ -61,7 +61,10 @@ namespace Indices
 				CREATE TABLE periodos(
 				    ano integer,
 				    mes integer,
-				    primary key(ano,mes)
+				    anoant integer,
+				    mesant integer,
+				    primary key(ano,mes),
+				    foreign key (anoant,mesant) references periodos (ano,mes)
 				);
 			");
 			db.ExecuteNonQuery(@"
@@ -70,7 +73,9 @@ namespace Indices
 				    mes integer,
 				    producto varchar(9),
 				    promedio double precision,
-				    primary key(ano,mes,producto)
+				    primary key(ano,mes,producto),
+				    foreign key (ano,mes) references periodos (ano,mes),
+				    foreign key (producto) references productos (producto)
 				);
 			");
 			db.ExecuteNonQuery(@"
@@ -81,7 +86,9 @@ namespace Indices
 				    grupo varchar(9),
 				    indice double precision,
 				    factor double precision,
-				    primary key(ano,mes,agrupacion,grupo)
+				    primary key(ano,mes,agrupacion,grupo),
+				    foreign key (ano,mes) references periodos (ano,mes),
+				    foreign key (agrupacion,grupo) references grupos (agrupacion,grupo)
 				);
 			");
 			for(int i=0; i<=20; i++){
@@ -213,14 +220,85 @@ namespace Indices
 				}
 			}
 		}
-		public void CalcularMesBase(Periodo per,Grupo grupo){
-			using(EjecutadorSql ej=db.Ejecutador("ano",per.Ano,"mes",per.Mes,"agrupacion",grupo.Agrupacion)){
+		public void CalcularMesBase(Periodo per,Agrupacion agrupacion){
+			using(EjecutadorSql ej=db.Ejecutador("ano",per.Ano,"mes",per.Mes,"agrupacion",agrupacion.Agrupacion)){
 				ej.ExecuteNonQuery(@"
 					insert into calgru (ano,mes,agrupacion,grupo,indice,factor)
 					  select {ano},{mes},agrupacion,grupo,100,1
 					    from grupos
 					    where agrupacion={agrupacion};
 				");
+			}
+		}
+		public void CalcularCalGru(Periodo periodo,Agrupacion agrupacion){
+			using(EjecutadorSql ej=db.Ejecutador("ano",periodo.Ano,"mes",periodo.Mes,"agrupacion",agrupacion.Agrupacion)){
+				/*
+				ej.ExecuteNonQuery(@"
+					insert into calgru (ano,mes,agrupacion,grupo,indice,factor)
+					  select per.ano,per.mes,g.agrupacion,g.grupo,cg0.indice*cp1.promedio/cp0.promedio,cg0.factor
+					    from ((((grupos as g 
+							 inner join productos as p on g.grupo=p.producto)
+					         inner join calgru as cg0 on g.grupo=cg0.grupo and g.agrupacion=cg0.agrupacion)
+					         inner join periodos as per on per.anoant=cg0.ano and per.mesant=cg0.mes)
+					         inner join calpro as cp0 on cp0.ano=per.anoant and cp0.mes=per.mesant and cp0.producto=p.producto)
+					         inner join calpro as cp1 on cp1.ano=per.ano and cp1.mes=per.mes and cp1.producto=p.producto
+					    where g.agrupacion={agrupacion}
+					      and per.ano={ano}
+					      and per.mes={mes}
+				");
+				*/
+				ej.ExecuteNonQuery(@"
+					insert into calgru (ano,mes,agrupacion,grupo,indice,factor)
+					  select per.ano,per.mes,g.agrupacion,g.grupo,cg0.indice*cp1.promedio/cp0.promedio,cg0.factor
+					    from grupos as g, 
+							 productos as p,
+					         calgru as cg0,
+					         periodos as per, 
+					         calpro as cp0, 
+					         calpro as cp1
+					    where g.agrupacion={agrupacion}
+					      and per.ano={ano}
+					      and per.mes={mes}
+					      and g.grupo=p.producto
+					      and g.grupo=cg0.grupo and g.agrupacion=cg0.agrupacion
+					      and per.anoant=cg0.ano and per.mesant=cg0.mes
+					      and cp0.ano=per.anoant and cp0.mes=per.mesant and cp0.producto=p.producto
+					      and cp1.ano=per.ano and cp1.mes=per.mes and cp1.producto=p.producto
+				");
+				for(int i=9;i>=0;i--){
+					/*
+					ej.ExecuteNonQuery(new SentenciaSql(db,@"
+						insert into calgru (ano,mes,agrupacion,grupo,indice,factor)
+						  select cg.ano,cg.mes,gp.agrupacion,gp.grupo
+								,sum(cg.indice*gh.ponderador)/sum(gh.ponderador)
+								,sum(cg.factor*gh.ponderador)/sum(gh.ponderador)
+						    from (grupos gh
+						         inner join calgru as cg on gh.grupo=cg.grupo and gh.agrupacion=cg.agrupacion)
+						         inner join grupos gp on gp.agrupacion=gh.agrupacion and gp.grupo=gh.grupopadre
+						    where cg.agrupacion={agrupacion}
+						      and cg.ano={ano}
+						      and cg.mes={mes}
+						      and gh.nivel={nivel}
+						    group by cg.ano,cg.mes,gp.agrupacion,gp.grupo;
+					").Arg("nivel",i));
+					*/
+					ej.ExecuteNonQuery(new SentenciaSql(db,@"
+						insert into calgru (ano,mes,agrupacion,grupo,indice,factor)
+						  select cg.ano,cg.mes,gp.agrupacion,gp.grupo
+								,sum(cg.indice*gh.ponderador)/sum(gh.ponderador)
+								,sum(cg.factor*gh.ponderador)/sum(gh.ponderador)
+						    from grupos gh,
+						         calgru as cg,
+						         grupos gp 
+						    where cg.agrupacion={agrupacion}
+						      and cg.ano={ano}
+						      and cg.mes={mes}
+						      and gh.nivel={nivel}
+						      and gh.grupo=cg.grupo and gh.agrupacion=cg.agrupacion
+						      and gp.agrupacion=gh.agrupacion and gp.grupo=gh.grupopadre
+						    group by cg.ano,cg.mes,gp.agrupacion,gp.grupo;
+					").Arg("nivel",i));
+				}
 			}
 		}
 		public void ReglasDeIntegridad(){
@@ -342,7 +420,7 @@ namespace Indices
 				if(parametro.GetType()==typeof(string)){
 					AgregarClave((string)parametro,clavesPlanas[i+1]);
 					i++; 
-				}else if(parametro.GetType().IsInstanceOfType(typeof(Tabla))){
+				}else if(parametro.GetType().IsSubclassOf(typeof(Tabla))){
 					Tabla t=(Tabla)parametro;
 					foreach(Clave c in t.Claves){
 						AgregarClave(c.Campo,c.Valor);
@@ -352,6 +430,11 @@ namespace Indices
 			}
 			this.Registro=repo.db.ExecuteReader(Sentencia.ToString());
 			this.Registro.Read();
+		}
+		public object this[string campo]{ 
+			get{
+				return Registro[campo];
+			}
 		}
 		public void Dispose(){
 			Registro.Close();
@@ -384,6 +467,11 @@ namespace Indices
 				Ponderador=(double)Registro["ponderador"];
 			}
 		}
+	}
+	public class Agrupacion:Grupo{
+		public Agrupacion(Repositorio repo,string agrupacion)
+			:base(repo,agrupacion,agrupacion)
+		{}
 	}
 	public class Producto:Tabla{
 		public new string Clave;
@@ -419,13 +507,22 @@ namespace Indices
 			Ano=(int)Registro["ano"];
 			Mes=(int)Registro["mes"];
 		}
-		public static Periodo Crear(Repositorio repo,int ano,int mes){
+		public static Periodo Crear(Repositorio repo,int ano,int mes,object anoant,object mesant){
 			using(InsertadorSql ins=new InsertadorSql(repo.db,"periodos")){
 				ins["ano"]=ano;
 				ins["mes"]=mes;
+				ins["anoant"]=anoant;
+				ins["mesant"]=mesant;
 				ins.InsertarSiHayCampos();
 			}
 			return new Periodo(repo,ano,mes);
+		}
+		public static Periodo Crear(Repositorio repo,int ano,int mes){
+			return Crear(repo,ano,mes,null,null);
+		}
+		public static Periodo CrearProximo(Repositorio repo,Periodo anterior){
+			return Crear(repo,(anterior.Mes==12?anterior.Ano+1:anterior.Ano)
+			             ,(anterior.Mes==12?1:anterior.Mes+1),anterior.Ano,anterior.Mes);
 		}
 	}
 	public class CalGru:Tabla{
@@ -497,12 +594,24 @@ namespace Indices
 			Producto P100=new Producto(repo,"P100");
 			Producto P101=new Producto(repo,"P101");
 			Producto P102=new Producto(repo,"P102");
-			Grupo A=repo.AbrirGrupo("A","A");
+			Agrupacion A=new Agrupacion(repo,"A");
 			repo.RegistrarPromedio(pAnt,P100,2.0);
 			repo.RegistrarPromedio(pAnt,P101,10.0);
 			repo.RegistrarPromedio(pAnt,P102,20.0);
 			repo.CalcularMesBase(pAnt,A);
 			Assert.AreEqual(100.0,new CalGru(repo,pAnt,A).Indice);
+			Periodo Per1=Periodo.CrearProximo(repo,pAnt);
+			Assert.AreEqual(2001,Per1["anoant"]);
+			Assert.AreEqual(2002,Per1.Ano);
+			Assert.AreEqual(1,Per1.Mes);
+			Grupo A1=repo.AbrirGrupo("A","A1");
+			Grupo A2=repo.AbrirGrupo("A","A2");
+			repo.RegistrarPromedio(Per1,P100,2.0);
+			repo.RegistrarPromedio(Per1,P101,10.0);
+			repo.RegistrarPromedio(Per1,P102,22.0);
+			repo.CalcularCalGru(Per1,A);
+			Assert.AreEqual(110.0,new CalGru(repo,Per1,A2).Indice);
+			Assert.AreEqual(104.0,new CalGru(repo,Per1,A).Indice);
 		}
 		[Test]
 		public void zReglasDeIntegridad(){
