@@ -612,6 +612,13 @@ namespace Indices
 			repo.CalcularCalGru(Per1,A);
 			Assert.AreEqual(110.0,new CalGru(repo,Per1,A2).Indice);
 			Assert.AreEqual(104.0,new CalGru(repo,Per1,A).Indice);
+			Periodo Per2=Periodo.CrearProximo(repo,Per1);
+			repo.RegistrarPromedio(Per2,P100,2.2);
+			repo.RegistrarPromedio(Per2,P101,11.0);
+			repo.RegistrarPromedio(Per2,P102,22.0);
+			repo.CalcularCalGru(Per2,A);
+			Assert.AreEqual(110.0,new CalGru(repo,Per2,A2).Indice);
+			Assert.AreEqual(110.0,new CalGru(repo,Per2,A).Indice);
 		}
 		[Test]
 		public void zReglasDeIntegridad(){
