@@ -421,9 +421,17 @@ namespace TodoASql
 				etiquetas=";";
 			}
 		}
+		public static bool EstaDefinido(string etiqueta){
+			return etiquetas.IndexOf(";"+etiqueta+";")>=0;
+		}
 		public static void Definido(string etiqueta){
-			if(etiquetas.IndexOf(";"+etiqueta+";")<0){
+			if(!EstaDefinido(etiqueta)){
 				Assert.Fail("Sobra la etiqueta "+etiqueta);
+			}
+		}
+		public static void NoDefinido(string etiqueta){
+			if(EstaDefinido(etiqueta)){
+				Assert.Fail("Falta la etiqueta "+etiqueta);
 			}
 		}
 	}

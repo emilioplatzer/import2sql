@@ -115,7 +115,7 @@ namespace TodoASql
 		public void revisar(){
 			LibroExcel libro=LibroExcel.Abrir(nombreArchivoXLS);
 			Assert.AreEqual("120",libro.TextoCelda("E4"));
-			libro.Close();
+			libro.CerrarNoHayCambios();
 		}
 		[Test]
 		public void crearReceptor(){
@@ -167,7 +167,7 @@ namespace TodoASql
 					{"America","Uruguay","Montevideo","2002","2","140"}
 				};
 			Assert.AreEqual(dumpEsperado,dumpObtenido);
-			libro.Close();
+			libro.CerrarNoHayCambios();
 		}
 		[Test]
 		public void trasvasarConParametros(){
@@ -246,7 +246,7 @@ namespace TodoASql
 		public void revisar(){
 			LibroExcel libro=LibroExcel.Abrir(nombreArchivoXLS);
 			Assert.AreEqual(120.22,libro.ValorCelda("E4"));
-			libro.Close();
+			libro.CerrarNoHayCambios();
 		}
 		[Test]
 		public void crearReceptor(){
@@ -303,7 +303,7 @@ namespace TodoASql
 					{"único",111,"11102",new DateTime(2007,6,5),"Montevideo",2002,2,140.23}
 				};
 			Assert.AreEqual(dumpEsperado,dumpObtenido);
-			libro.Close();
+			libro.CerrarNoHayCambios();
 		}
 	}
 }

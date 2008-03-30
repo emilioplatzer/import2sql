@@ -63,6 +63,29 @@ namespace TodoASql
 			SqLite db=SqLite.Abrir(nombreArchivo);
 			ProbarBaseDatos.ObjEnTodasLasBases(db);
 		}
+		[Test]
+		public void ElUpdate(){
+			SqLite db=SqLite.Abrir(nombreArchivo);
+			db.ExecuteNonQuery(@"
+				CREATE TABLE nodes(
+				  id integer primary key,
+				  father_id integer,
+				  depth integer);
+			");
+			db.ExecuteNonQuery(@"
+			    INSERT into nodes (id,father_id,depth) VALUES (1,null,1);
+			");
+			db.ExecuteNonQuery(@"
+			    INSERT into nodes (id,father_id,depth) VALUES (11,1,null);
+			");
+			db.ExecuteNonQuery(@"
+			  update nodes set depth=
+			    (select f.depth+1
+			       from nodes as f
+			       where f.id = father_id)
+			    where depth is null;
+			");
+		}
 		#endif
 	}
 }

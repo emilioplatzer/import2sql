@@ -60,10 +60,15 @@ namespace TodoASql
 		public void GuardarYCerrar(string nombreArchivo){
 			libro.Close(true,nombreArchivo,___);
 		}
+		public void DescartarYCerrar(){
+			libro.Saved=true;
+			libro.Close(false,___,___);
+		}
 		public void GuardarYCerrar(){
 			libro.Close(true,___,___);
 		}
-		public void Close(){
+		public void CerrarNoHayCambios(){
+			Assert.IsTrue(libro.Saved,"Error hay cambios inesperados en la hoja de datos "+libro.Name);
 			libro.Close(___,___,___);
 			abierto=false;
 		}
@@ -214,7 +219,7 @@ namespace TodoASql
 			Assert.AreEqual("uno",hoja.TextoCelda("A1"));
 			Assert.AreEqual("dos",hoja.TextoCelda(2,2));
 			Assert.AreEqual("pi",hoja.TextoCelda("N3"));
-			libro.Close();
+			libro.CerrarNoHayCambios();
 		}
 		[Test]
 		public void Rango(){
@@ -233,7 +238,7 @@ namespace TodoASql
 			Assert.AreEqual(null,hoja.ValorCelda("F1"));
 			Assert.AreEqual(null,hoja.ValorCelda("G1"));
 			Assert.AreEqual(" ",hoja.ValorCelda("H1"));
-			libro.Close();
+			libro.CerrarNoHayCambios();
 		}
 		[Test]
 		public void UltimoFilasyColumnas(){
@@ -244,7 +249,7 @@ namespace TodoASql
 			Assert.AreEqual(2,columnafinal.CantidadFilas);
 			Assert.AreEqual("pi",columnafinal.ValorCelda("A2"));
 			Assert.AreEqual("pi",columnafinal.ValorCelda(2,1));
-			libro.Close();
+			libro.CerrarNoHayCambios();
 		}
 		[Test]
 		public void TipoFecha(){
@@ -253,8 +258,9 @@ namespace TodoASql
 			libro.PonerValor(2,2,new DateTime(2008,3,2));
 			Assert.AreEqual(new DateTime(2008,3,2),libro.ValorCelda(2,2));
 			Assert.AreEqual("02/03/2008",libro.TextoCelda("B2"));
-			Archivo.Borrar(nombreArchivo);
-			libro.GuardarYCerrar(nombreArchivo);
+			//Archivo.Borrar(nombreArchivo);
+			//libro.GuardarYCerrar(nombreArchivo);
+			libro.DescartarYCerrar();
 		}
 	}
 	[TestFixture]

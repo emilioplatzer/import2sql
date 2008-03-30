@@ -45,7 +45,7 @@ namespace TodoASql
 					"informante","complemento_informante"
 				}
 			);
-			libro.Close();
+			libro.CerrarNoHayCambios();
 		}
 		public static void Ahora(){
 			string[] nombreMeses={
@@ -67,7 +67,7 @@ namespace TodoASql
 			for(int i=0;i<12;i++){
 				ProcesarUno(nombreMeses[i],2006,numeroMeses[i]);
 			}
-			codigos.Close();
+			codigos.CerrarNoHayCambios();
 		}
 	}
 }

@@ -52,12 +52,13 @@ namespace TodoASql
 	public class ProbarPostgreSql{
 		#if SinPostgre
 		[Test]
-		public void SinPostgre(){
+		public void A_SinPostgre(){
 			Controlar.Definido("SinPostgre");
 		}
 		#else
 		[Test]
-		public void SinPostgre(){
+		public void A_SinPostgre(){
+			Controlar.NoDefinido("SinPostgre");
 		}
 		[Test]
 		public void Conexion(){
