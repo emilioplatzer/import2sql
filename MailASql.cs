@@ -37,11 +37,6 @@ namespace TodoASql
 			string rta=m.Groups[1].ToString();
 			return rta.Trim(" \t\r\n.:-,=;".ToCharArray());
 		}
-		/*
-		void LeerMail(string nombreArchivo){
-			ContenidoPlano=Cadena.ExpandirSignoIgual(Archivo.Leer(nombreArchivo));
-		}
-		*/
 		bool GuardarMailEnBase(){
 			InsertadorSql insert=new InsertadorSql(Receptor);
 			for(int i=1;i<Receptor.FieldCount;i++){
@@ -56,35 +51,14 @@ namespace TodoASql
 				}
 			}
 			return insert.InsertarSiHayCampos();
-		}/*
-		void Uno(string nombreArchivo){
-			System.Console.Write("Mail:"+nombreArchivo);
-			LeerMail(nombreArchivo);
-			System.Console.Write(" leido");
-			if (GuardarMailEnBase()){
-				System.Console.WriteLine(" procesado");
-				File.Delete(nombreArchivo+".procesado");
-				File.Move(nombreArchivo,nombreArchivo+".procesado");
-			}else{
-				System.Console.WriteLine(" ERROR, NO CONTIENE CAMPOS VALIDOS");
-			}
 		}
-		public void LoQueSeaNecesario(){
-			DirectoryInfo dir=new DirectoryInfo(DirectorioMails);
-			FileInfo[] archivos=dir.GetFiles("*.eml");
-			foreach(FileInfo archivo in archivos){
-				Uno(archivo.FullName);
-			}
-		}
- 		*/
- 		public bool ProcesarMail(string contenidoPlano){
+ 		bool ProcesarMail(string contenidoPlano){
  			ContenidoPlano=Cadena.ExpandirSignoIgual(contenidoPlano);
  			return GuardarMailEnBase();
- 			
  		}
-		public void LoQueSeaNecesario(){
+		public void Procesar(){
  			Carpeta dir=new Carpeta(DirectorioMails);
- 			dir.ProcesarArchivos("*.eml",ProcesarMail,".procesado");
+ 			dir.ProcesarArchivos("*.eml",".procesado",ProcesarMail);
  		}
 	}
 	[TestFixture]
@@ -139,7 +113,7 @@ namespace TodoASql
 			ParametrosMailASql parametros=new ParametrosMailASql(nombreArchivo,"receptor",directorio);
 			ReceptorSql receptor=new ReceptorSql(parametros);
 			MailASql procesador=new MailASql(parametros,receptor);
-			procesador.LoQueSeaNecesario();
+			procesador.Procesar();
 			receptor.Close();
 			db=BdAccess.Abrir(nombreArchivo);
 			string cantidadRegistros=db.ExecuteScalar("SELECT count(*) FROM Receptor").ToString();

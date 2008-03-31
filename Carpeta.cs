@@ -1,6 +1,6 @@
 /*
  * Creado por SharpDevelop.
- * Usuario: Andrea
+ * Usuario: Emilio
  * Fecha: 30/03/2008
  * Hora: 20:24
  * 
@@ -23,7 +23,7 @@ namespace TodoASql
 		public Carpeta(string Directorio){
 			this.Directorio=Directorio;
 		}
-		public void ProcesarArchivos(string nombres,ProcesadorPlanoContestaSiPudo procesar,string nuevaExtension){
+		public void ProcesarArchivos(string nombres,string nuevaExtension,ProcesadorPlanoContestaSiPudo procesar){
 			DirectoryInfo dir=new DirectoryInfo(Directorio);
 			FileInfo[] archivos=dir.GetFiles(nombres);
 			foreach(FileInfo archivo in archivos){

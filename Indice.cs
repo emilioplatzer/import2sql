@@ -1,6 +1,6 @@
 /*
  * Creado por SharpDevelop.
- * Usuario: Andrea
+ * Usuario: Emilio
  * Fecha: 21/03/2008
  * Hora: 19:42
  * 
