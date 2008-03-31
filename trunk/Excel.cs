@@ -92,6 +92,15 @@ namespace TodoASql
 		public int CantidadColumnas{
 			get{ return rango.Columns.Count;}
 		}
+		public string[] TextoRango1D(){
+			string[] rta=new string[CantidadFilas*CantidadColumnas];
+			for(int i=1;i<=CantidadFilas;i++){
+				for(int j=1;j<=CantidadColumnas;j++){
+					rta[(i-1)*CantidadFilas+j-1]=this.TextoCelda(i,j);
+				}
+			}
+			return rta;
+		}
 	}
 	public class AccesoExcel{
 		internal Excel.Worksheet hoja;
@@ -249,7 +258,14 @@ namespace TodoASql
 			Assert.AreEqual(2,columnafinal.CantidadFilas);
 			Assert.AreEqual("pi",columnafinal.ValorCelda("A2"));
 			Assert.AreEqual("pi",columnafinal.ValorCelda(2,1));
-			libro.CerrarNoHayCambios();
+			RangoExcel r2=rango.Rango("A2", "B3");
+			rango.PonerValor(2,1,21);
+			rango.PonerValor(2,2,22);
+			rango.PonerValor(3,1,"po");
+			rango.PonerValor(3,2,"pu");
+			string[] contenido=r2.TextoRango1D();
+			Assert.AreEqual(new string[]{"21","22","po","pu"},contenido);
+			libro.GuardarYCerrar();
 		}
 		[Test]
 		public void TipoFecha(){

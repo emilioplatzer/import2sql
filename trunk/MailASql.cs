@@ -37,9 +37,11 @@ namespace TodoASql
 			string rta=m.Groups[1].ToString();
 			return rta.Trim(" \t\r\n.:-,=;".ToCharArray());
 		}
+		/*
 		void LeerMail(string nombreArchivo){
 			ContenidoPlano=Cadena.ExpandirSignoIgual(Archivo.Leer(nombreArchivo));
 		}
+		*/
 		bool GuardarMailEnBase(){
 			InsertadorSql insert=new InsertadorSql(Receptor);
 			for(int i=1;i<Receptor.FieldCount;i++){
@@ -54,7 +56,7 @@ namespace TodoASql
 				}
 			}
 			return insert.InsertarSiHayCampos();
-		}
+		}/*
 		void Uno(string nombreArchivo){
 			System.Console.Write("Mail:"+nombreArchivo);
 			LeerMail(nombreArchivo);
@@ -73,7 +75,17 @@ namespace TodoASql
 			foreach(FileInfo archivo in archivos){
 				Uno(archivo.FullName);
 			}
-		} 
+		}
+ 		*/
+ 		public bool ProcesarMail(string contenidoPlano){
+ 			ContenidoPlano=Cadena.ExpandirSignoIgual(contenidoPlano);
+ 			return GuardarMailEnBase();
+ 			
+ 		}
+		public void LoQueSeaNecesario(){
+ 			Carpeta dir=new Carpeta(DirectorioMails);
+ 			dir.ProcesarArchivos("*.eml",ProcesarMail,".procesado");
+ 		}
 	}
 	[TestFixture]
 	public class ProbarMailASql

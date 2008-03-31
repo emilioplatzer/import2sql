@@ -48,6 +48,7 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="BaseDatos.cs" />
     <Compile Include="BdAccess.cs" />
+    <Compile Include="Carpeta.cs" />
     <Compile Include="Excel.cs" />
     <Compile Include="Formulario.cs" />
     <Compile Include="Indice.cs" />
