@@ -58,7 +58,7 @@ namespace TodoASql
  		}
 		public void Procesar(){
  			Carpeta dir=new Carpeta(DirectorioMails);
- 			dir.ProcesarArchivos("*.eml",".procesado",ProcesarMail);
+ 			dir.ProcesarArchivosPlanos("*.eml",".procesado",ProcesarMail);
  		}
 	}
 	[TestFixture]

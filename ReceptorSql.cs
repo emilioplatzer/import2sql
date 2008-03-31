@@ -94,6 +94,7 @@ namespace TodoASql
 		StringBuilder campos=new StringBuilder();
 		StringBuilder valores=new StringBuilder();
 		Separador coma=new Separador(",");
+		public string Sentencia;
 		UnSoloUso controlar=new UnSoloUso();
 		public InsertadorSql(ReceptorSql receptor)
 			:this(receptor.db,receptor.NombreTabla)
@@ -112,9 +113,9 @@ namespace TodoASql
 		public bool InsertarSiHayCampos(){
 			controlar.Uso();
 			if(campos.Length>0){
-				string sentencia="INSERT INTO "+db.StuffTabla(NombreTabla)
+				Sentencia="INSERT INTO "+db.StuffTabla(NombreTabla)
 					+@" ("+campos.ToString()+") VALUES ("+valores.ToString()+")";
-				db.ExecuteNonQuery(sentencia);
+				db.ExecuteNonQuery(Sentencia);
 				return true;
 			}else{
 				return false;

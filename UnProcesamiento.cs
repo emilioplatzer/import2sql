@@ -70,4 +70,58 @@ namespace TodoASql
 			codigos.CerrarNoHayCambios();
 		}
 	}
+	public class ProcesoLevantarPlanillas{
+		BaseDatos db;
+		ReceptorSql receptor;
+		public bool LevantarPlanilla(string nombreArchivo){
+			receptor=new ReceptorSql(db,"PreciosImportados");
+			MatrizExcelASql matriz=new MatrizExcelASql(receptor);
+			LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
+			if(libro.TextoCelda("A1")!="PLAN PREC"){
+				System.Console.Write(" no es PLAN PREC");
+				return false;
+			}
+			string[] camposFijos=new string[]{"formato","origen","fecha_importacion","","",""};
+			object[] valoresFijos=new object[]{libro.TextoCelda("A1"),nombreArchivo,DateTime.Now,null,null,null};
+			libro.Rango("A3:A5").TextoRango1D().CopyTo(camposFijos,3);
+			libro.Rango("B3:B5").ValorRango1D().CopyTo(valoresFijos,3);
+			matriz.CamposFijos=Objeto.Paratodo(camposFijos,Cadena.Simplificar);
+			matriz.ValoresFijos=valoresFijos;
+			matriz.PasarHoja(libro.Rango("H8:Z172")
+			                 ,libro.Rango("A8:F172")
+			                 ,libro.Rango("H4:Z6")
+			                 ,"precio"
+			                 ,Objeto.Paratodo(libro.Rango("A7:F7").TextoRango1D(),Cadena.Simplificar)
+			                 ,Objeto.Paratodo(libro.Rango("G4:G6").TextoRango1D(),Cadena.Simplificar));
+			libro.CerrarNoHayCambios();
+			return true;
+		}
+		public void TraerPlanillasRecepcion(){
+			Carpeta dir=new Carpeta(@"c:\temp\indice\Campo\RecepcionPura\");
+			db=BdAccess.Abrir(@"c:\temp\indice\Campo\Bases\PreciosRecibidos.mdb");
+			// CrearUnaTabla231(db);
+			dir.ProcesarArchivos("*.xls","procesado",LevantarPlanilla);
+		}
+		public static void CrearUnaTabla231(BaseDatos db){
+			db.EjecutrarSecuencia(@"
+				create table PreciosImportados(
+				Ano integer,
+				Mes integer,
+				Semana integer,
+				Cod_Info integer,
+				Informante varchar(100),
+				Fecha date,
+				Cod_Prod varchar(10),
+				Nombre varchar(100),
+				Especificacion varchar(250),
+				Variedad varchar(250),
+				Tamano varchar(100),
+				Unidad varchar(100),
+				Precio double precision,
+				Formato varchar(100),
+				Origen varchar(250),
+				Fecha_Importacion date)
+			");
+		}
+	}
 }
