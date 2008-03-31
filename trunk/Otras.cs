@@ -18,6 +18,7 @@ using NUnit.Framework;
 
 namespace TodoASql
 {
+	public delegate string DelegateString_String(string que);
 	/// <summary>
 	/// Description of Otras.
 	/// </summary>
@@ -57,6 +58,13 @@ namespace TodoASql
 		}
 		public static string ExpandirMiembros(Object o){
 			return ExpandirMiembros(o,0);
+		}
+		public static string[] Paratodo(string[] vector,DelegateString_String f){
+			string[] rta=new string[vector.Length];
+			for(int i=0;i<vector.Length;i++){
+				rta[i]=f(vector[i]);
+			}
+			return rta;
 		}
 	}
 	[TestFixture]
@@ -165,6 +173,7 @@ namespace TodoASql
 				.Replace('\n',' ')
 				.Replace('\r',' ')
 				.Replace('\t',' ')
+				.Replace('ñ','n')
 				.Substring(0,Otras.Min(250,valor.Length)).Trim();
 		}
 		public static string BuscarYReemplazar(string fuente, string queBuscar, string porQueReemplazar){

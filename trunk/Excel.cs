@@ -96,7 +96,16 @@ namespace TodoASql
 			string[] rta=new string[CantidadFilas*CantidadColumnas];
 			for(int i=1;i<=CantidadFilas;i++){
 				for(int j=1;j<=CantidadColumnas;j++){
-					rta[(i-1)*CantidadFilas+j-1]=this.TextoCelda(i,j);
+					rta[(i-1)*CantidadColumnas+j-1]=this.TextoCelda(i,j);
+				}
+			}
+			return rta;
+		}
+		public object[] ValorRango1D(){
+			object[] rta=new object[CantidadFilas*CantidadColumnas];
+			for(int i=1;i<=CantidadFilas;i++){
+				for(int j=1;j<=CantidadColumnas;j++){
+					rta[(i-1)*CantidadColumnas+j-1]=this.ValorCelda(i,j);
 				}
 			}
 			return rta;

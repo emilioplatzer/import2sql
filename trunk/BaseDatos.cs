@@ -87,7 +87,6 @@ namespace TodoASql
 			Archivo.Escribir(System.Environment.GetEnvironmentVariable("TEMP")
 			                      + @"\query.sql"
 			                      ,sentencia.ToString());
-			System.Console.WriteLine(sentencia.ToString());
 			return sentencia.ToString();
 		}
 		public class SentenciaSql{

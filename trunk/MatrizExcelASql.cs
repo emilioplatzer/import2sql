@@ -55,7 +55,11 @@ namespace TodoASql
 							insert[camposColumnas[i]]=encabezadosColumnas[i].ValorCelda(1,columna);
 						}
 						insert[campoValor]=valor;
-						insert.InsertarSiHayCampos();
+						try{
+							insert.InsertarSiHayCampos();
+						}catch(OleDbException ex){
+							System.Console.WriteLine("No pudo importar "+insert.Sentencia);
+						}
 					}
 				}
 			}
