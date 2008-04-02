@@ -176,9 +176,11 @@ namespace TodoASql
 				.Replace('ñ','n')
 				.Substring(0,Otras.Min(250,valor.Length)).Trim();
 		}
+		/*
 		public static string BuscarYReemplazar(string fuente, string queBuscar, string porQueReemplazar){
-			return fuente;
+			return fuente.Replace(queBuscar,porQueReemplazar);
 		}
+		*/
 	}
 	[TestFixture]
 	public class ProbarCadena{
@@ -220,6 +222,17 @@ namespace TodoASql
 			pi+=1002000; // un millón dos mil
 			Assert.AreEqual("1002003.14",pi.ToString(Cadena.FormatoPuntoDecimal));
 		}
+		/*
+		[Test]
+		public void Reemplazos(){
+			Assert.AreEqual("hola",Cadena.BuscarYReemplazar("hola","e","a"));
+			Assert.AreEqual("hala",Cadena.BuscarYReemplazar("hola","o","a"));
+			Assert.AreEqual("taataa",Cadena.BuscarYReemplazar("tata","a","aa"));
+			Assert.AreEqual("tatatatatata",Cadena.BuscarYReemplazar("tata","ta","tatata"));
+			Assert.AreEqual("tet",Cadena.BuscarYReemplazar("ttt","tt","te"));
+			Assert.AreEqual("tett",Cadena.BuscarYReemplazar("ttt","tt","tet"));
+		}
+		*/
 	}
 	public class ConjuntosString{
 		public static int Cardinal(string conjunto,string separador){
