@@ -152,7 +152,7 @@ namespace TodoASql
 				return "null";
 			}
 			if(valor.GetType()==typeof(String)){
-				return "'"+Cadena.BuscarYReemplazar((string) valor,"'","''")+"'";
+				return "'"+((string) valor).Replace("'","''")+"'";
 			}else if(valor.GetType()==typeof(double)){
 				return ((double) valor).ToString(Cadena.FormatoPuntoDecimal);
 			}else if(valor.GetType()==typeof(DateTime)){
@@ -267,6 +267,7 @@ namespace TodoASql
 			rdr.Close();
 		}
 		public static void ObjUsarReceptor(BaseDatos db){
+			string nombreComplejo="zoilo's (el mejor, \"sí\"\\[no]/de este {año})\t¿Zeus&Poseidón?$pesos$ @algo #más";
 			ReceptorSql receptor=new ReceptorSql(db,"nueva_tabla_prueba");
 			using(InsertadorSql insertador=new InsertadorSql(receptor)){
 				insertador["nombre"]="toto";
@@ -282,6 +283,13 @@ namespace TodoASql
 				insertador["fecha"]=new DateTime(1969,5,6);
 				insertador.InsertarSiHayCampos();
 			}
+			using(InsertadorSql insertador=new InsertadorSql(receptor)){
+				insertador["nombre"]=nombreComplejo;
+				insertador["numero"]=-3;
+				insertador["monto"]=Math.PI;
+				insertador["fecha"]=new DateTime(2000,1,1);
+				insertador.InsertarSiHayCampos();
+			}
 			IDataReader rdr=db.ExecuteReader("SELECT * FROM nueva_tabla_prueba ORDER BY nombre");
 			rdr.Read();
 			rdr.Read();
@@ -292,6 +300,9 @@ namespace TodoASql
 			Assert.AreEqual(new DateTime(1969,5,6),rdr["fecha"]);
 			Assert.AreEqual(3,db.ExecuteScalar("SELECT 3"));
 			Assert.AreEqual(3.1416,db.ExecuteScalar("SELECT 3.1416"));
+			rdr.Read();
+			Assert.AreEqual(nombreComplejo,rdr["nombre"]);
+			Assert.AreEqual(-3,rdr["numero"]);
 			Assert.IsFalse(db.SinRegistros("SELECT * FROM nueva_tabla_prueba ORDER BY nombre"));
 			Assert.IsTrue(db.SinRegistros("SELECT * FROM nueva_tabla_prueba WHERE nombre='nadie'"));
 			db.AssertSinRegistros("no debe fallar","SELECT * FROM nueva_tabla_prueba WHERE nombre='nadie'");
