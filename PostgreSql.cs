@@ -46,9 +46,9 @@ namespace TodoASql
 		public override string StuffFecha(DateTime fecha){
 			return "'"+fecha.Year+"/"+fecha.Month+"/"+fecha.Day+"'";
 		}
-		public override string StuffValor(object valor){
-			if(valor.GetType()==typeof(String)){
-				return base.StuffValor(((string) valor).Replace(@"\",@"\\"));
+		public override string StuffValor<T>(T valor){
+			if(valor is String){
+				return base.StuffValor((valor as string).Replace(@"\",@"\\"));
 			}else{
 				return base.StuffValor(valor);
 			}

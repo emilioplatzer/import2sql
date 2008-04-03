@@ -147,16 +147,19 @@ namespace TodoASql
 		public EjecutadorSql Ejecutador(params object[] p){
 			return new EjecutadorSql(this,p);
 		}
-		public virtual string StuffValor(object valor){
+		public virtual string StuffValor<T>(T valor){
 			if(valor==null){
 				return "null";
 			}
-			if(valor.GetType()==typeof(String)){
-				return "'"+((string) valor).Replace("'","''")+"'";
-			}else if(valor.GetType()==typeof(double)){
-				return ((double) valor).ToString(Cadena.FormatoPuntoDecimal);
-			}else if(valor.GetType()==typeof(DateTime)){
-				return StuffFecha((DateTime) valor);
+			if(valor is String){
+				string s=valor as string;
+				return "'"+s.Replace("'","''")+"'";
+			}else if(valor is DateTime){
+				DateTime d=((DateTime)(object) valor);
+				return StuffFecha(d);
+			}else if(valor is double){
+				double d=((double)(object) valor);
+				return d.ToString(Cadena.FormatoPuntoDecimal);
 			}else{
 				return valor.ToString();
 			}
