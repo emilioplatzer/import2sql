@@ -16,7 +16,7 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
-			new PruebasReflexion().NombresMiembros();
+			// new PruebasReflexion().NombresMiembros();
 		    // new ProbarSqLite().ConexionSqLite();
 		    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
 		    /*
@@ -24,7 +24,7 @@ namespace TodoASql
 		    p.A01CalculosBase();
 		    p.VerCanasta();
 		    */
-			// new ProbarPostgreSql().Conexion();
+			new ProbarPostgreSql().Conexion();
 			// new ProbarBdAccess().Creacion();
 			// new ProbarMatrizExcelASqlGenerica().trasvasar();
 			// new probarLibroExcel().Rango();
