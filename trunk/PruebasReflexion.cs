@@ -23,8 +23,6 @@ namespace TodoASql
 		public int campo2;
 		public ClaseReflexiva()
 		{
-			campo1="hola";
-			campo2=3;
 		}
 		public override string ToString(){
 			return campo1+campo2;
@@ -48,6 +46,28 @@ namespace TodoASql
 			}
 			return rta.ToString();
 		}
+		public string ValoresCampos(){
+			StringBuilder rta=new StringBuilder();
+			System.Reflection.FieldInfo[] ms=this.GetType().GetFields();
+			Separador coma=new Separador(",");
+			foreach(FieldInfo m in ms){
+				object o=m.GetValue(this);
+				rta.Append(coma+(o==null?"null":o.ToString()));
+			}
+			return rta.ToString();
+		}
+		public void PonerValoresPorDefecto(){
+			StringBuilder rta=new StringBuilder();
+			campo1="pepe";
+			System.Reflection.FieldInfo[] ms=this.GetType().GetFields();
+			foreach(FieldInfo m in ms){
+				if(m.FieldType==typeof(string)){
+					m.SetValue(this,m.Name);
+				}else{
+					m.SetValue(this,m.Name.Length);
+				}
+			}
+		}
 	}
 	
 	[TestFixture]
@@ -57,8 +77,10 @@ namespace TodoASql
 		[Test]
 		public void NombresMiembros(){
 			ClaseReflexiva r=new ClaseReflexiva();
-			Assert.AreEqual("campo1,campo2"
-			                ,r.NombresCampos());
+			Assert.AreEqual("null,0",r.ValoresCampos());
+			Assert.AreEqual("campo1,campo2",r.NombresCampos());
+			r.PonerValoresPorDefecto();
+			Assert.AreEqual("campo1,6",r.ValoresCampos());
 		}
 	}
 }
