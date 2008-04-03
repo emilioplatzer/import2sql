@@ -16,14 +16,15 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
+			new PruebasReflexion().NombresMiembros();
 		    // new ProbarSqLite().ConexionSqLite();
-		    //new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
+		    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
 		    /*
 		    ProbarIndiceD3 p=new ProbarIndiceD3();
 		    p.A01CalculosBase();
 		    p.VerCanasta();
 		    */
-			new ProbarPostgreSql().Conexion();
+			// new ProbarPostgreSql().Conexion();
 			// new ProbarBdAccess().Creacion();
 			// new ProbarMatrizExcelASqlGenerica().trasvasar();
 			// new probarLibroExcel().Rango();
