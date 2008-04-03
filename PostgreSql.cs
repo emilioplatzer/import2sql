@@ -46,7 +46,13 @@ namespace TodoASql
 		public override string StuffFecha(DateTime fecha){
 			return "'"+fecha.Year+"/"+fecha.Month+"/"+fecha.Day+"'";
 		}
-
+		public override string StuffValor(object valor){
+			if(valor.GetType()==typeof(String)){
+				return base.StuffValor(((string) valor).Replace(@"\",@"\\"));
+			}else{
+				return base.StuffValor(valor);
+			}
+		}
 	}
 	[TestFixture]
 	public class ProbarPostgreSql{

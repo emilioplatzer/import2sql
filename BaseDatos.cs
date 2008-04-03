@@ -147,7 +147,7 @@ namespace TodoASql
 		public EjecutadorSql Ejecutador(params object[] p){
 			return new EjecutadorSql(this,p);
 		}
-		public string StuffValor(object valor){
+		public virtual string StuffValor(object valor){
 			if(valor==null){
 				return "null";
 			}
