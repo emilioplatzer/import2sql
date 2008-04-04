@@ -9,6 +9,8 @@
  
 using System;
 using Indices;
+using Modelador;
+using PrModelador;
 
 namespace TodoASql
 {
@@ -16,6 +18,7 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
+			new prTabla().PrPeriodo();
 			// new PruebasReflexion().NombresMiembros();
 		    // new ProbarSqLite().ConexionSqLite();
 		    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
