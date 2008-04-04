@@ -62,6 +62,7 @@
     <Compile Include="PruebasReflexion.cs" />
     <Compile Include="ReceptorSql.cs" />
     <Compile Include="SqLite.cs" />
+    <Compile Include="Tabla.cs" />
     <Compile Include="UnProcesamiento.cs" />
   </ItemGroup>
   <ItemGroup>
