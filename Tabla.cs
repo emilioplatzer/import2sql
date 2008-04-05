@@ -11,10 +11,12 @@ using System;
 using System.Reflection;
 using System.Text;
 using NUnit.Framework;
-using CampoEntero=Modelador.CampoTipo<int>;
-using CampoPkEntero=Modelador.CampoPkTipo<int>;
+// using CampoEntero=Modelador.CampoTipo<int>;
+// using CampoPkEntero=Modelador.CampoPkTipo<int>;
+// using CampoPkChar=Modelador.CampoPkTipo<string>;
 using TodoASql;
 using Modelador;
+using Indices;
 
 namespace Modelador
 {
@@ -31,13 +33,19 @@ namespace Modelador
 		}
 		protected virtual void ConstruirCampos(){
       		Assembly assem = Assembly.GetExecutingAssembly();
-      		System.Reflection.FieldInfo[] ms=this.GetType().GetFields(/*System.Reflection.BindingFlags.NonPublic*/);
+      		System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
       				Campo c=(Campo)assem.CreateInstance(m.FieldType.FullName);
-      				c.Nombre=m.Name;
+      				c.Nombre=m.Name.Substring(1);
       				c.NombreCampo=c.Nombre.ToLowerInvariant();
       				m.SetValue(this,c);
+      				foreach (System.Attribute attr in m.GetCustomAttributes(true)){
+      					if(attr is AplicadorCampo){
+      						AplicadorCampo apl=attr as AplicadorCampo;
+      						apl.Aplicar(ref c);
+      					}
+      				}
 				}
 			}
 		}
@@ -47,7 +55,7 @@ namespace Modelador
 		public string SentenciaCreateTable(){
 			StringBuilder rta=new StringBuilder();
 			StringBuilder pk=new StringBuilder("primary key (");
-      		System.Reflection.FieldInfo[] ms=this.GetType().GetFields(/*System.Reflection.BindingFlags.NonPublic*/);
+      		System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			rta.AppendLine("create table "+this.NombreTabla+"(");
       		Separador comapk=new Separador(",");
 			foreach(FieldInfo m in ms){
@@ -97,13 +105,42 @@ namespace Modelador
 			EsPk=true;
 		}
 	}
+	public class CampoEntero:Modelador.CampoTipo<int>{};
+	// public class CampoPkEntero:Modelador.CampoPkTipo<int>{};
+	public class CampoChar:Modelador.CampoTipo<string>{
+		public int Largo;
+		protected CampoChar(int largo){
+			this.Largo=largo;	
+		}
+		public override string TipoCampo{ 
+			get { return "varchar("+Largo.ToString()+")"; }
+		}
+	};
+	/*
+	public class CampoPkChar:Modelador.CampoPkTipo<string>{};
+	public class CampoPk:Campo{
+		public CampoPk(){
+			this.EsPk=true;	
+		}
+		public override string TipoCampo {
+			get { Assert.Fail("CampoPk no es real"); return null; }
+		}
+	}
+	*/
+	public abstract class AplicadorCampo:System.Attribute{
+	   	public abstract void Aplicar(ref Campo campo);
+	}
+	public class Pk:AplicadorCampo{
+	   	public override void Aplicar(ref Campo campo){
+	   		campo.EsPk=true;
+	    }
+	}
 }
 namespace PrModelador
 {
-
 	public class Periodos:Tabla{
-		public CampoPkEntero cAno;
-		public CampoPkEntero cMes;
+		[Pk] public CampoEntero cAno;
+		[Pk] public CampoEntero cMes;
 		public CampoEntero cAnoAnt;
 		public CampoEntero cMesAnt;
 	}
@@ -111,13 +148,20 @@ namespace PrModelador
 	public class prTabla{
 		public prTabla(){
 		}
+		class Productos:Tabla{
+			[Pk] CampoProducto cProducto;
+			CampoNombre	cNombreProducto;
+		}
 		[Test]
 		public void Periodos(){
 			Periodos p=new Periodos();
 			Assert.AreEqual(0,p.cAno.valor);
-			Assert.AreEqual("cAno",p.cAno.Nombre);
-			Assert.AreEqual("create table periodos(cano integer,cmes integer,canoant integer,cmesant integer,primary key(cano,cmes));", 
-			                Cadena.Simplificar(p.SentenciaCreateTable()));
+			Assert.AreEqual("Ano",p.cAno.Nombre);
+			Assert.AreEqual("create table periodos(ano integer,mes integer,anoant integer,mesant integer,primary key(ano,mes));"
+			                ,Cadena.Simplificar(p.SentenciaCreateTable()));
+			Productos pr=new Productos();
+			Assert.AreEqual("create table productos(producto varchar(4),nombreproducto varchar(250),primary key(producto));"
+			                ,Cadena.Simplificar(pr.SentenciaCreateTable()));
 		}
 	}
 }

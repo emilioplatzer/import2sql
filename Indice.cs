@@ -12,25 +12,32 @@ using System.Data;
 using System.Text;
 using NUnit.Framework;
 using TodoASql;
+using Modelador;
 
 namespace Indices
 {
-	/// <summary>
-	/// Description of Indice.
-	/// </summary>
-	public class Repositorio
+	public class CampoProducto:CampoChar{ public CampoProducto():base(4){} };
+	public class CampoNombre:CampoChar{ public CampoNombre():base(250){} };
+	public class RepositorioIndice:Repositorio
 	{
-		internal BaseDatos db;
-		Repositorio(BaseDatos db){
-			this.db=db;
+		class Productos:Tabla{
+			[Pk] CampoProducto cProducto;
+			CampoNombre	cNombreProducto;
 		}
-		public static Repositorio Crear(BaseDatos db){
+		RepositorioIndice(BaseDatos db)
+			:base(db)
+		{
+		}
+		public static RepositorioIndice Crear(BaseDatos db){
+			db.ExecuteNonQuery(new Productos().SentenciaCreateTable());
+			/*
 			db.ExecuteNonQuery(@"
 				create table productos(
 					producto varchar(4) primary key,
 					nombre varchar(250)
 				);
 			");
+			*/
 			db.ExecuteNonQuery(@"
 				create table grupos(
 					agrupacion varchar(9),
@@ -94,10 +101,10 @@ namespace Indices
 			for(int i=0; i<=20; i++){
 				db.ExecuteNonQuery("insert into numeros (numero) values ("+i.ToString()+")");
 			}
-			return new Repositorio(db);
+			return new RepositorioIndice(db);
 		}
-		public static Repositorio Abrir(BaseDatos db){
-			return new Repositorio(db);			
+		public static RepositorioIndice Abrir(BaseDatos db){
+			return new RepositorioIndice(db);			
 		}
 		public Producto AbrirProducto(string codigo){
 			return new Producto(this,codigo);
@@ -364,14 +371,14 @@ namespace Indices
 			db.AssertSinRegistros(
 				"Solo deben ser hojas los productos",
 			@"
-				SELECT g.grupo, g.nombre, p.producto, p.nombre as nombreproducto
+				SELECT g.grupo, g.nombre, p.producto, p.nombreproducto
 				  FROM grupos g inner join productos p ON g.grupo=p.producto
 				  WHERE g.esproducto='N'
 			");
 			db.AssertSinRegistros(
 				"Si esta marcado como producto debe existir el producto",
 			@"
-				SELECT g.grupo, g.nombre, p.producto, p.nombre as nombreproducto
+				SELECT g.grupo, g.nombre, p.producto, p.nombreproducto
 				  FROM grupos g left join productos p ON g.grupo=p.producto
 				  WHERE g.esproducto='S' AND p.producto is null
 			");
@@ -402,13 +409,13 @@ namespace Indices
 			");
 		}
 	}
-	public class Tabla:IDisposable{
-		protected Repositorio Repo;
+	public class TablaDB:IDisposable{
+		protected RepositorioIndice Repo;
 		string NombreTabla;
 		protected IDataReader Registro;
 		public System.Collections.Generic.List<Clave> Claves;
 		StringBuilder Sentencia;
-		protected Tabla(Repositorio repo,string nombreTabla,params object[] clavesPlanas){
+		protected TablaDB(RepositorioIndice repo,string nombreTabla,params object[] clavesPlanas){
 			this.Repo=repo;	
 			this.NombreTabla=nombreTabla;
 			this.Claves=new System.Collections.Generic.List<Clave>();
@@ -420,8 +427,8 @@ namespace Indices
 				if(parametro.GetType()==typeof(string)){
 					AgregarClave((string)parametro,clavesPlanas[i+1]);
 					i++; 
-				}else if(parametro.GetType().IsSubclassOf(typeof(Tabla))){
-					Tabla t=(Tabla)parametro;
+				}else if(parametro.GetType().IsSubclassOf(typeof(TablaDB))){
+					TablaDB t=(TablaDB)parametro;
 					foreach(Clave c in t.Claves){
 						AgregarClave(c.Campo,c.Valor);
 					}
@@ -450,11 +457,11 @@ namespace Indices
 			public Clave(string campo, object valor){ this.Campo=campo; this.Valor=valor; } 
 		}
 	}
-	public class Grupo:Tabla{
+	public class Grupo:TablaDB{
 		public double Ponderador;
 		public string Agrupacion;
 		public new string Clave;
-		public Grupo(Repositorio repo,string agrupacion,string grupo)
+		public Grupo(RepositorioIndice repo,string agrupacion,string grupo)
 			:base(repo,"grupos","agrupacion",agrupacion,"grupo",grupo)
 		{
 			Clave=(string)Registro["grupo"];
@@ -469,13 +476,13 @@ namespace Indices
 		}
 	}
 	public class Agrupacion:Grupo{
-		public Agrupacion(Repositorio repo,string agrupacion)
+		public Agrupacion(RepositorioIndice repo,string agrupacion)
 			:base(repo,agrupacion,agrupacion)
 		{}
 	}
-	public class Producto:Tabla{
+	public class Producto:TablaDB{
 		public new string Clave;
-		public Producto(Repositorio repo,string codigo)
+		public Producto(RepositorioIndice repo,string codigo)
 			:base(repo,"productos","producto",codigo)
 		{
 			Clave=(string)Registro["producto"];
@@ -498,16 +505,16 @@ namespace Indices
 			return wP/wG;
 		}
 	}
-	public class Periodo:Tabla{
+	public class Periodo:TablaDB{
 		public int Ano;
 		public int Mes;
-		public Periodo(Repositorio repo,int ano,int mes)
+		public Periodo(RepositorioIndice repo,int ano,int mes)
 			:base(repo,"periodos","ano",ano,"mes",mes)
 		{
 			Ano=(int)Registro["ano"];
 			Mes=(int)Registro["mes"];
 		}
-		public static Periodo Crear(Repositorio repo,int ano,int mes,object anoant,object mesant){
+		public static Periodo Crear(RepositorioIndice repo,int ano,int mes,object anoant,object mesant){
 			using(InsertadorSql ins=new InsertadorSql(repo.db,"periodos")){
 				ins["ano"]=ano;
 				ins["mes"]=mes;
@@ -517,17 +524,17 @@ namespace Indices
 			}
 			return new Periodo(repo,ano,mes);
 		}
-		public static Periodo Crear(Repositorio repo,int ano,int mes){
+		public static Periodo Crear(RepositorioIndice repo,int ano,int mes){
 			return Crear(repo,ano,mes,null,null);
 		}
-		public static Periodo CrearProximo(Repositorio repo,Periodo anterior){
+		public static Periodo CrearProximo(RepositorioIndice repo,Periodo anterior){
 			return Crear(repo,(anterior.Mes==12?anterior.Ano+1:anterior.Ano)
 			             ,(anterior.Mes==12?1:anterior.Mes+1),anterior.Ano,anterior.Mes);
 		}
 	}
-	public class CalGru:Tabla{
+	public class CalGru:TablaDB{
 		public double Indice;
-		public CalGru(Repositorio repo,Periodo per,Grupo grupo)
+		public CalGru(RepositorioIndice repo,Periodo per,Grupo grupo)
 			:base(repo,"calgru",per,grupo)
 		{
 			Indice=(double)Registro["indice"];
@@ -535,10 +542,10 @@ namespace Indices
 	}
 	[TestFixture]
 	public class ProbarIndiceD3{
-		Repositorio repo;
+		RepositorioIndice repo;
 		public ProbarIndiceD3(){
 			BaseDatos db;
-			switch(3){
+			switch(1){
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					db.EliminarTablaSiExiste("calgru");
@@ -561,7 +568,7 @@ namespace Indices
 					db=BdAccess.Abrir(archivoMDB);
 					break;
 			}
-			repo=Repositorio.Crear(db);
+			repo=RepositorioIndice.Crear(db);
 			Producto P100=repo.CrearProducto("P100");
 			Producto P101=repo.CrearProducto("P101");
 			Producto P102=repo.CrearProducto("P102");
