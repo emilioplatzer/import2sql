@@ -106,7 +106,6 @@ namespace Modelador
 		}
 	}
 	public class CampoEntero:Modelador.CampoTipo<int>{};
-	// public class CampoPkEntero:Modelador.CampoPkTipo<int>{};
 	public class CampoChar:Modelador.CampoTipo<string>{
 		public int Largo;
 		protected CampoChar(int largo){
@@ -116,17 +115,6 @@ namespace Modelador
 			get { return "varchar("+Largo.ToString()+")"; }
 		}
 	};
-	/*
-	public class CampoPkChar:Modelador.CampoPkTipo<string>{};
-	public class CampoPk:Campo{
-		public CampoPk(){
-			this.EsPk=true;	
-		}
-		public override string TipoCampo {
-			get { Assert.Fail("CampoPk no es real"); return null; }
-		}
-	}
-	*/
 	public abstract class AplicadorCampo:System.Attribute{
 	   	public abstract void Aplicar(ref Campo campo);
 	}
