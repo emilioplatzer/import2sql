@@ -61,6 +61,7 @@
     <Compile Include="PruebaFormularios.cs" />
     <Compile Include="PruebasReflexion.cs" />
     <Compile Include="ReceptorSql.cs" />
+    <Compile Include="Repositorio.cs" />
     <Compile Include="SqLite.cs" />
     <Compile Include="Tabla.cs" />
     <Compile Include="UnProcesamiento.cs" />
