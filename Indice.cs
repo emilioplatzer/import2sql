@@ -30,14 +30,6 @@ namespace Indices
 		}
 		public static RepositorioIndice Crear(BaseDatos db){
 			db.ExecuteNonQuery(new Productos().SentenciaCreateTable());
-			/*
-			db.ExecuteNonQuery(@"
-				create table productos(
-					producto varchar(4) primary key,
-					nombre varchar(250)
-				);
-			");
-			*/
 			db.ExecuteNonQuery(@"
 				create table grupos(
 					agrupacion varchar(9),
