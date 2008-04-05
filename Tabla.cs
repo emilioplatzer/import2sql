@@ -9,9 +9,11 @@
 
 using System;
 using System.Reflection;
-// using System.Text;
+using System.Text;
 using NUnit.Framework;
 using CampoEntero=Modelador.CampoTipo<int>;
+using CampoPkEntero=Modelador.CampoPkTipo<int>;
+using TodoASql;
 using Modelador;
 
 namespace Modelador
@@ -21,9 +23,11 @@ namespace Modelador
 	/// </summary>
 	public abstract class Tabla
 	{
+		public string NombreTabla;
 		public Tabla()
 		{
 			Construir();
+			NombreTabla=this.GetType().Name.ToLowerInvariant();
 		}
 		protected virtual void ConstruirCampos(){
       		Assembly assem = Assembly.GetExecutingAssembly();
@@ -31,66 +35,89 @@ namespace Modelador
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
       				Campo c=(Campo)assem.CreateInstance(m.FieldType.FullName);
-      				/*
-      				Campo c=assem.CreateInstance(m.FieldType.FullName,false,BindingFlags.ExactBinding, null,
-      				                             new Object[] { m.Name }, null, null);
-      				*/
       				c.Nombre=m.Name;
+      				c.NombreCampo=c.Nombre.ToLowerInvariant();
       				m.SetValue(this,c);
 				}
 			}
 		}
-		protected abstract void ConstruirPk();
-		protected void ConstruirPk();
-		protected virtual void ConstruirResto(){}
 		protected void Construir(){
 			ConstruirCampos();
-			ConstruirPk();
-			ConstruirResto();
+		}
+		public string SentenciaCreateTable(){
+			StringBuilder rta=new StringBuilder();
+			StringBuilder pk=new StringBuilder("primary key (");
+      		System.Reflection.FieldInfo[] ms=this.GetType().GetFields(/*System.Reflection.BindingFlags.NonPublic*/);
+			rta.AppendLine("create table "+this.NombreTabla+"(");
+      		Separador comapk=new Separador(",");
+			foreach(FieldInfo m in ms){
+				if(m.FieldType.IsSubclassOf(typeof(Campo))){
+					Campo c=(Campo)m.GetValue(this);
+					rta.AppendLine("\t"+c.NombreCampo+" "+c.TipoCampo+",");
+					if(c.EsPk){
+						pk.Append(comapk+c.NombreCampo);
+					}
+				}
+			}
+      		pk.AppendLine(")");
+      		rta.Append(pk);
+			rta.AppendLine(");");
+			return rta.ToString();
 		}
 	}
-	public class Campo
+	public abstract class Campo 
 	{
 		public string Nombre;
+		public string NombreCampo;
+		public abstract string TipoCampo{ get; }
+		public bool EsPk;
 		public Campo(){
 		}
-		public void SeaPk(){}
 	}
 	public class CampoTipo<T>:Campo{
 		public T valor;
+		public override string TipoCampo{ 
+			get {
+				if(valor is int){
+					return "integer";
+				}else if(valor is string){
+					return "varchar";
+				}else{
+					return typeof(T).Name; 
+				}
+			} 
+		}
 		public CampoTipo()
 		{	
-			valor=default(T);
 		}
-		
+	}
+	public class CampoPkTipo<T>:CampoTipo<T>{
+		public CampoPkTipo()
+		{	
+			EsPk=true;
+		}
 	}
 }
 namespace PrModelador
 {
 
-	public class Periodo:Tabla{
-		public CampoEntero cAno;
-		public CampoEntero cMes;
+	public class Periodos:Tabla{
+		public CampoPkEntero cAno;
+		public CampoPkEntero cMes;
 		public CampoEntero cAnoAnt;
 		public CampoEntero cMesAnt;
-		protected override void ConstruirPk(){
-			base.ConstruirPk(cAno,cMes);
-		}
-		protected override void ConstruirCampos()
-		{
-			base.ConstruirCampos();
-			return;
-		}
 	}
 	[TestFixture]
 	public class prTabla{
 		public prTabla(){
 		}
 		[Test]
-		public void PrPeriodo(){
-			Periodo p=new Periodo();
+		public void Periodos(){
+			Periodos p=new Periodos();
 			Assert.AreEqual(0,p.cAno.valor);
 			Assert.AreEqual("cAno",p.cAno.Nombre);
+			Assert.AreEqual("create table periodos(cano integer,cmes integer,canoant integer,cmesant integer,primary key(cano,cmes));", 
+			                Cadena.Simplificar(p.SentenciaCreateTable()));
 		}
 	}
 }

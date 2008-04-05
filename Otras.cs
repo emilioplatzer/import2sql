@@ -168,13 +168,20 @@ namespace TodoASql
 			return s;
 		}		
 		public static string Simplificar(string valor){
+			return Regex.Replace(Regex.Replace(
+				valor.Replace('ñ','n')
+				,"[\n\t\r\' ]+"," ")
+				," ?(?<signo>[][,(){};.]) ?","${signo}");
+			/*
 			return valor.Replace('"',' ')
 				.Replace('\'',' ')
 				.Replace('\n',' ')
 				.Replace('\r',' ')
 				.Replace('\t',' ')
 				.Replace('ñ','n')
+				.Replace(
 				.Substring(0,Otras.Min(250,valor.Length)).Trim();
+				*/
 		}
 		/*
 		public static string BuscarYReemplazar(string fuente, string queBuscar, string porQueReemplazar){

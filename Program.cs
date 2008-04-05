@@ -18,7 +18,7 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
-			new prTabla().PrPeriodo();
+			new prTabla().Periodos();
 			// new PruebasReflexion().NombresMiembros();
 		    // new ProbarSqLite().ConexionSqLite();
 		    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
