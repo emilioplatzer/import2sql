@@ -277,21 +277,21 @@ namespace TodoASql
 				insertador["numero"]=2;
 				insertador["monto"]=3.1416;
 				insertador["fecha"]=new DateTime(2001,12,20);
-				insertador.InsertarSiHayCampos();
+				// insertador.InsertarSiHayCampos();
 			}
 			using(InsertadorSql insertador=new InsertadorSql(receptor)){
 				insertador["nombre"]="tute";
 				insertador["numero"]=3;
 				insertador["monto"]=Math.Exp(1);
 				insertador["fecha"]=new DateTime(1969,5,6);
-				insertador.InsertarSiHayCampos();
+				// insertador.InsertarSiHayCampos();
 			}
 			using(InsertadorSql insertador=new InsertadorSql(receptor)){
 				insertador["nombre"]=nombreComplejo;
 				insertador["numero"]=-3;
 				insertador["monto"]=Math.PI;
 				insertador["fecha"]=new DateTime(2000,1,1);
-				insertador.InsertarSiHayCampos();
+				// insertador.InsertarSiHayCampos();
 			}
 			IDataReader rdr=db.ExecuteReader("SELECT * FROM nueva_tabla_prueba ORDER BY nombre");
 			rdr.Read();

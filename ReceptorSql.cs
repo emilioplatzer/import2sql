@@ -11,7 +11,7 @@ using System;
 using System.Text;
 using System.Data;
 using System.Data.Common;
-// using System.Data.OleDb;
+using System.Data.OleDb;
 
 namespace TodoASql
 {
@@ -19,9 +19,6 @@ namespace TodoASql
 		string TablaReceptora{ get; }
 		string BaseReceptora{ get; }
 	}
-	/// <summary>
-	/// Description of ReceptorSql.
-	/// </summary>
 	public class ReceptorSql
 	{
 		internal BaseDatos db;
@@ -95,6 +92,7 @@ namespace TodoASql
 		StringBuilder valores=new StringBuilder();
 		Separador coma=new Separador(",");
 		public string Sentencia;
+		bool ignorarErrores;
 		UnSoloUso controlar=new UnSoloUso();
 		public InsertadorSql(ReceptorSql receptor)
 			:this(receptor.db,receptor.NombreTabla)
@@ -110,7 +108,7 @@ namespace TodoASql
 				valores.Append(coma.mismo()+db.StuffValor(value));
 			}
 		}
-		public bool InsertarSiHayCampos(){
+		bool InsertarSiHayCampos(){
 			controlar.Uso();
 			if(campos.Length>0){
 				Sentencia="INSERT INTO "+db.StuffTabla(NombreTabla)
@@ -121,8 +119,22 @@ namespace TodoASql
 				return false;
 			}
 		}
+		public bool HayCampos{
+			get{ return campos.Length>0; }
+		}
+		public void IgnorarErrores(){
+			ignorarErrores=true;
+		}
 		public void Dispose(){
-			
+			if(ignorarErrores){
+				try{
+					InsertarSiHayCampos();
+				}catch(OleDbException ex){
+					System.Console.WriteLine("No pudo importar "+Sentencia);
+				}
+			}else{
+				InsertarSiHayCampos();
+			}
 		}
 	}
 }

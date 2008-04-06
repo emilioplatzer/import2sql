@@ -38,19 +38,22 @@ namespace TodoASql
 			return rta.Trim(" \t\r\n.:-,=;".ToCharArray());
 		}
 		bool GuardarMailEnBase(){
-			InsertadorSql insert=new InsertadorSql(Receptor);
-			for(int i=1;i<Receptor.FieldCount;i++){
-				string nombreCampo=Receptor.GetName(i);
-				// 
-				string proximoCampo=i<Receptor.FieldCount-1
-									?Receptor.GetName(i+1)
-									:"----";
-				string valorCampo=ObtenerCampo(nombreCampo,proximoCampo);
-				if(valorCampo.Length>0){
-					insert[nombreCampo]=valorCampo;
+			using(InsertadorSql insert=new InsertadorSql(Receptor)){
+				for(int i=1;i<Receptor.FieldCount;i++){
+					string nombreCampo=Receptor.GetName(i);
+					// 
+					string proximoCampo=i<Receptor.FieldCount-1
+										?Receptor.GetName(i+1)
+										:"----";
+					string valorCampo=ObtenerCampo(nombreCampo,proximoCampo);
+					if(valorCampo.Length>0){
+						insert[nombreCampo]=valorCampo;
+					}
 				}
+				if(!insert.HayCampos) return false;
 			}
-			return insert.InsertarSiHayCampos();
+			//return insert.InsertarSiHayCampos();
+			return true;
 		}
  		bool ProcesarMail(string contenidoPlano){
  			ContenidoPlano=Cadena.ExpandirSignoIgual(contenidoPlano);

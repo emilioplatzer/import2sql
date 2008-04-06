@@ -28,8 +28,16 @@ namespace Modelador
 			foreach(Type t in ts){
 				if(t.IsSubclassOf(typeof(Tabla))){
 					System.Console.WriteLine(t.FullName);
-					Tabla tabla=(Tabla)assem.CreateInstance(t.FullName);
-					db.ExecuteNonQuery(tabla.SentenciaCreateTable());
+					bool crear=true;
+					foreach(System.Attribute attr in t.GetCustomAttributes(true)){
+						if(attr is Vista){
+							crear=false;
+						}
+					}
+					if(crear){
+						Tabla tabla=(Tabla)assem.CreateInstance(t.FullName);
+						db.ExecuteNonQuery(tabla.SentenciaCreateTable());
+					}
 				}
 			}
 		}
