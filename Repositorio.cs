@@ -8,6 +8,7 @@
  */
 
 using System;
+using System.Reflection;
 using TodoASql;
 
 namespace Modelador
@@ -20,6 +21,16 @@ namespace Modelador
 		internal BaseDatos db;
 		public Repositorio(BaseDatos db){
 			this.db=db;
+		}
+		public virtual void CrearTablas(){
+      		Assembly assem = Assembly.GetExecutingAssembly();
+			System.Type[] ts=this.GetType().GetNestedTypes();
+			foreach(Type t in ts){
+				if(t.IsSubclassOf(typeof(Tabla))){
+					Tabla tabla=(Tabla)assem.CreateInstance(t.FullName);
+					db.ExecuteNonQuery(tabla.SentenciaCreateTable());
+				}
+			}
 		}
 	}
 }
