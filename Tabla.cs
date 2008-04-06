@@ -88,6 +88,7 @@ namespace Modelador
 						Campo c=(Campo)m.GetValue(this);
 						ins[c.Nombre]=Valores[i];
 					}
+					i++;
       			}
       			// ins.InsertarSiHayCampos();
 			}
@@ -98,7 +99,7 @@ namespace Modelador
 		public virtual Tabla Leer(BaseDatos db,params object[] Codigos){
 			this.db=db;
 			int i=0;
-			object[] parametros=new object[CantidadCamposPk];
+			object[] parametros=new object[CantidadCamposPk*2];
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 			if(i>=Codigos.Length) break;
@@ -109,6 +110,7 @@ namespace Modelador
 						parametros[i*2+1]=Codigos[i];
 					}
 				}
+				i++;
   			}
   			return LeerNoPk(db,parametros);
 		}
@@ -117,13 +119,20 @@ namespace Modelador
 			Separador whereAnd=new Separador(" WHERE "," AND ");
 			StringBuilder clausulaWhere=new StringBuilder();
 			for(int i=0;i<parametros.Length;i+=2){
-				clausulaWhere.Append(whereAnd+parametros[i]+"="+db.StuffValor(parametros[i+1]));
+				object valor=parametros[i+1];
+				if(valor is Campo){
+					valor=(valor as Campo).ValorSinTipo;
+				}
+				clausulaWhere.Append(whereAnd+parametros[i]+"="+db.StuffValor(valor));
   			}
 			IDataReader SelectAbierto=db.ExecuteReader("SELECT * FROM "+db.StuffTabla(NombreTabla)+clausulaWhere);
+			SelectAbierto.Read();
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
 					Campo c=(Campo)m.GetValue(this);
+					System.Console.WriteLine("ver "+c.NombreCampo);
+					System.Console.WriteLine("valor "+SelectAbierto[c.NombreCampo]);
 					c.AsignarValor(SelectAbierto[c.NombreCampo]);
 				}
   			}
@@ -156,7 +165,7 @@ namespace Modelador
 		public override object ValorSinTipo{ get{ return valor;} }
 		public override string TipoCampo{ 
 			get {
-				if(valor is int){
+				if(valor is int || valor is int?){
 					return "integer";
 				}else if(valor is string){
 					return "varchar";
@@ -171,6 +180,9 @@ namespace Modelador
 		{	
 		}
 		public override void AsignarValor(object valor){
+			if(valor is DBNull){
+				valor=null;
+			}
 			this.valor=(T)valor;
 		}
 	}
@@ -180,7 +192,11 @@ namespace Modelador
 			EsPk=true;
 		}
 	}
-	public class CampoEntero:Modelador.CampoTipo<int>{};
+	public class CampoEntero:Modelador.CampoTipo<int?>{
+		public override string TipoCampo{ 
+			get { return "integer"; }
+		}
+	};
 	public class CampoChar:Modelador.CampoTipo<string>{
 		public int Largo;
 		protected CampoChar(int largo){
@@ -229,7 +245,9 @@ namespace PrModelador
 		[Test]
 		public void Periodos(){
 			Periodos p=new Periodos();
-			Assert.AreEqual(0,p.cAno.Valor);
+			Assert.AreEqual(null,p.cAno.Valor);
+			// antes decía 0. Depende de si es obligatorio!
+			// Assert.AreEqual(0,p.cAno.Valor);
 			Assert.AreEqual("Ano",p.cAno.Nombre);
 			Assert.AreEqual("create table periodos(ano integer,mes integer,anoant integer,mesant integer,primary key(ano,mes));"
 			                ,Cadena.Simplificar(p.SentenciaCreateTable()));
