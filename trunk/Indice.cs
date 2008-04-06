@@ -20,7 +20,7 @@ namespace Indices
 	public class CampoNombre:CampoChar{ public CampoNombre():base(250){} };
 	public class RepositorioIndice:Repositorio
 	{
-		class Productos:Tabla{
+		public class Productos:Tabla{
 			[Pk] CampoProducto cProducto;
 			CampoNombre	cNombreProducto;
 		}
@@ -29,7 +29,13 @@ namespace Indices
 		{
 		}
 		public static RepositorioIndice Crear(BaseDatos db){
-			db.ExecuteNonQuery(new Productos().SentenciaCreateTable());
+			RepositorioIndice rta=new RepositorioIndice(db);
+			rta.CrearTablas();
+			return rta;
+		}
+		public override void CrearTablas(){
+			base.CrearTablas();
+			//db.ExecuteNonQuery(new Productos().SentenciaCreateTable());
 			db.ExecuteNonQuery(@"
 				create table grupos(
 					agrupacion varchar(9),
@@ -93,7 +99,6 @@ namespace Indices
 			for(int i=0; i<=20; i++){
 				db.ExecuteNonQuery("insert into numeros (numero) values ("+i.ToString()+")");
 			}
-			return new RepositorioIndice(db);
 		}
 		public static RepositorioIndice Abrir(BaseDatos db){
 			return new RepositorioIndice(db);			
@@ -537,7 +542,7 @@ namespace Indices
 		RepositorioIndice repo;
 		public ProbarIndiceD3(){
 			BaseDatos db;
-			switch(1){
+			switch(3){
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					db.EliminarTablaSiExiste("calgru");
