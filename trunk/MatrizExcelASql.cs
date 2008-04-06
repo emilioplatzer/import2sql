@@ -47,18 +47,15 @@ namespace TodoASql
 				for(int columna=1;columna<=maxColumna;columna++){
 					object valor=matriz.ValorCelda(fila,columna);
 					if(valor!=null){
-						InsertadorSql insert=NuevoInsertador();
-						for(int i=0;i<encabezadosFilas.Length;i++){
-							insert[camposFilas[i]]=encabezadosFilas[i].ValorCelda(fila,1);
-						}
-						for(int i=0;i<encabezadosColumnas.Length;i++){
-							insert[camposColumnas[i]]=encabezadosColumnas[i].ValorCelda(1,columna);
-						}
-						insert[campoValor]=valor;
-						try{
-							insert.InsertarSiHayCampos();
-						}catch(OleDbException ex){
-							System.Console.WriteLine("No pudo importar "+insert.Sentencia);
+						using(InsertadorSql insert=NuevoInsertador()){
+							for(int i=0;i<encabezadosFilas.Length;i++){
+								insert[camposFilas[i]]=encabezadosFilas[i].ValorCelda(fila,1);
+							}
+							for(int i=0;i<encabezadosColumnas.Length;i++){
+								insert[camposColumnas[i]]=encabezadosColumnas[i].ValorCelda(1,columna);
+							}
+							insert[campoValor]=valor;
+							insert.IgnorarErrores();
 						}
 					}
 				}
