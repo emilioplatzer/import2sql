@@ -36,20 +36,23 @@ namespace Indices
 			CampoNivel cNivel;
 			CampoLogico cEsProducto;
 		}
+		public class Numeros:Tabla{
+			[Pk] CampoEntero cNumero;
+		}
+		public class AuxGrupos:Tabla{
+			[Pk] CampoAgrupacion cAgrupacion;
+			[Pk] CampoGrupo cGrupo;
+			CampoPonderador cPonderadorOriginal;
+			CampoPonderador cSumaPonderadorHijos;	
+		}
 		/*
-			db.ExecuteNonQuery(@"
-				create table grupos(
-					agrupacion varchar(9),
-					grupo varchar(9),
-					nombre varchar(250),
-					grupopadre varchar(9),
-					ponderador double precision,
-					nivel integer,
-					esproducto char(1) default 'N',
-					primary key(agrupacion,grupo)
-				);
-			");
-		 * */
+		public class Periodos:Tabla{
+			[Pk] CampoPeriodo cPeriodo;
+			CampoPeriodo cPeriodoAntrr;
+			CampoEntero cAno;
+			CampoEntero cMes;
+		}
+		*/
 		RepositorioIndice(BaseDatos db)
 			:base(db)
 		{
@@ -61,20 +64,6 @@ namespace Indices
 		}
 		public override void CrearTablas(){
 			base.CrearTablas();
-			db.ExecuteNonQuery(@"
-				create table numeros(
-					numero integer primary key
-				);
-			");
-			db.ExecuteNonQuery(@"
-				CREATE TABLE auxgrupos(
-				    agrupacion varchar(9),
-				    grupo varchar(9),
-				    ponderadororiginal double precision,
-				    sumaponderadorhijos double precision,
-				    primary key(agrupacion,grupo)
-				);
-			");
 			db.ExecuteNonQuery(@"
 				CREATE TABLE periodos(
 				    ano integer,
