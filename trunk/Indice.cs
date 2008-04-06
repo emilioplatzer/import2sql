@@ -33,7 +33,7 @@ namespace Indices
 			public CampoNombre	cNombreProducto;
 			public double Ponderador(Grupos grupo){
 				Grupos hoja=new Grupos();
-				hoja.Leer(grupo.db,grupo.cAgrupacion,grupo.cGrupo);
+				hoja.Leer(grupo.db,grupo.cAgrupacion,cProducto);
 				return hoja.cPonderador.Valor/grupo.cPonderador.Valor;
 			}
 		}
@@ -555,7 +555,7 @@ namespace Indices
 		RepositorioIndice repo;
 		public ProbarIndiceD3(){
 			BaseDatos db;
-			switch(3){
+			switch(2){
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					db.EliminarTablaSiExiste("calgru");
