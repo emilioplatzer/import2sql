@@ -90,6 +90,8 @@ namespace Modelador
 					return "integer";
 				}else if(valor is string){
 					return "varchar";
+				}else if(valor is double){
+					return "double precision";
 				}else{
 					return typeof(T).Name; 
 				}
@@ -115,6 +117,13 @@ namespace Modelador
 			get { return "varchar("+Largo.ToString()+")"; }
 		}
 	};
+	public class CampoReal:Modelador.CampoTipo<double>{};
+	public class CampoLogico:Modelador.CampoChar{
+		public CampoLogico():base(1){}
+	}
+	public class CampoPonderador:CampoReal{}
+	public class CampoNivel:CampoEntero{}
+	/////////////
 	public abstract class AplicadorCampo:System.Attribute{
 	   	public abstract void Aplicar(ref Campo campo);
 	}

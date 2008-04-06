@@ -18,24 +18,25 @@ namespace Indices
 {
 	public class CampoProducto:CampoChar{ public CampoProducto():base(4){} };
 	public class CampoNombre:CampoChar{ public CampoNombre():base(250){} };
+	public class CampoAgrupacion:CampoChar{ public CampoAgrupacion():base(9){} };
+	public class CampoGrupo:CampoChar{ public CampoGrupo():base(9){} };
+	public class CampoPonderador:CampoReal{};
 	public class RepositorioIndice:Repositorio
 	{
 		public class Productos:Tabla{
 			[Pk] CampoProducto cProducto;
 			CampoNombre	cNombreProducto;
 		}
-		RepositorioIndice(BaseDatos db)
-			:base(db)
-		{
+		public class Grupos:Tabla{
+			[Pk] CampoAgrupacion cAgrupacion;
+			[Pk] CampoGrupo cGrupo;
+			CampoNombre cNombreGrupo;
+			CampoGrupo cGrupoPadre;
+			CampoPonderador cPonderador;
+			CampoNivel cNivel;
+			CampoLogico cEsProducto;
 		}
-		public static RepositorioIndice Crear(BaseDatos db){
-			RepositorioIndice rta=new RepositorioIndice(db);
-			rta.CrearTablas();
-			return rta;
-		}
-		public override void CrearTablas(){
-			base.CrearTablas();
-			//db.ExecuteNonQuery(new Productos().SentenciaCreateTable());
+		/*
 			db.ExecuteNonQuery(@"
 				create table grupos(
 					agrupacion varchar(9),
@@ -48,6 +49,18 @@ namespace Indices
 					primary key(agrupacion,grupo)
 				);
 			");
+		 * */
+		RepositorioIndice(BaseDatos db)
+			:base(db)
+		{
+		}
+		public static RepositorioIndice Crear(BaseDatos db){
+			RepositorioIndice rta=new RepositorioIndice(db);
+			rta.CrearTablas();
+			return rta;
+		}
+		public override void CrearTablas(){
+			base.CrearTablas();
 			db.ExecuteNonQuery(@"
 				create table numeros(
 					numero integer primary key
@@ -337,14 +350,14 @@ namespace Indices
 			db.AssertSinRegistros(
 				"Los niveles de los hijos deben ser exactamente 1 más que el padre",
 			@"
-				SELECT h.grupopadre, p.nivel as nivelpadre, h.grupo, h.nivel, p.nombre as nombrepadre, h.nombre, p.nivel+1-h.nivel
+				SELECT h.grupopadre, p.nivel as nivelpadre, h.grupo, h.nivel, p.nombregrupo as nombrepadre, h.nombregrupo, p.nivel+1-h.nivel
 				  FROM grupos p inner join grupos h on p.grupo=h.grupopadre and p.agrupacion=h.agrupacion
 				  WHERE p.nivel+1<>h.nivel
 			");
 			db.AssertSinRegistros(
 				"Todas las agrupaciones que no son productos deben tener hijos",
 			@"
-				SELECT p.grupo,p.nombre
+				SELECT p.grupo,p.nombregrupo
 				  FROM grupos p left join grupos h on p.grupo=h.grupopadre and p.agrupacion=h.agrupacion
 				  WHERE p.esproducto='N'
 				    AND h.grupo is null
@@ -352,7 +365,7 @@ namespace Indices
 			db.AssertSinRegistros(
 				"Todas las agrupaciones que son productos no deben tener hijos",
 			@"
-				SELECT p.grupo,p.nombre,h.grupo as grupohijo,h.nombre as nombrehijo
+				SELECT p.grupo,p.nombregrupo,h.grupo as grupohijo,h.nombregrupo as nombrehijo
 				  FROM grupos p left join grupos h on p.grupo=h.grupopadre and p.agrupacion=h.agrupacion
 				  WHERE p.esproducto='S'
 				    AND h.grupo is not null
@@ -360,22 +373,22 @@ namespace Indices
 			db.AssertSinRegistros(
 				"La suma de los ponderadores debe ser igual al poderador del padre",
 			@"
-				SELECT p.grupo,p.nombre,p.ponderador,sum(h.ponderador)
+				SELECT p.grupo,p.nombregrupo,p.ponderador,sum(h.ponderador)
 				  FROM grupos p left join grupos h on p.grupo=h.grupopadre and p.agrupacion=h.agrupacion
-				  GROUP BY p.grupo,p.nombre,p.ponderador
+				  GROUP BY p.grupo,p.nombregrupo,p.ponderador
 				  HAVING abs(p.ponderador)-sum(h.ponderador)>0.00000000000001
 			");
 			db.AssertSinRegistros(
 				"Solo deben ser hojas los productos",
 			@"
-				SELECT g.grupo, g.nombre, p.producto, p.nombreproducto
+				SELECT g.grupo, g.nombregrupo, p.producto, p.nombreproducto
 				  FROM grupos g inner join productos p ON g.grupo=p.producto
 				  WHERE g.esproducto='N'
 			");
 			db.AssertSinRegistros(
 				"Si esta marcado como producto debe existir el producto",
 			@"
-				SELECT g.grupo, g.nombre, p.producto, p.nombreproducto
+				SELECT g.grupo, g.nombregrupo, p.producto, p.nombreproducto
 				  FROM grupos g left join productos p ON g.grupo=p.producto
 				  WHERE g.esproducto='S' AND p.producto is null
 			");
@@ -400,7 +413,7 @@ namespace Indices
 			db.AssertSinRegistros(
 				"No debe haber hijos sin padre",
 			@"
-				SELECT h.grupopadre,h.grupo,h.nombre
+				SELECT h.grupopadre,h.grupo,h.nombregrupo
 				  FROM grupos h left join grupos p on p.grupo=h.grupopadre and p.agrupacion=h.agrupacion
 				  WHERE p.grupo IS NULL and h.grupopadre IS NOT NULL;
 			");

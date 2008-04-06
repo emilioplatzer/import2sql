@@ -27,6 +27,7 @@ namespace Modelador
 			System.Type[] ts=this.GetType().GetNestedTypes();
 			foreach(Type t in ts){
 				if(t.IsSubclassOf(typeof(Tabla))){
+					System.Console.WriteLine(t.FullName);
 					Tabla tabla=(Tabla)assem.CreateInstance(t.FullName);
 					db.ExecuteNonQuery(tabla.SentenciaCreateTable());
 				}
