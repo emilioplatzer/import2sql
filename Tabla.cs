@@ -192,7 +192,12 @@ namespace Modelador
 			EsPk=true;
 		}
 	}
-	public class CampoEntero:Modelador.CampoTipo<int?>{
+	public class CampoEntero:Modelador.CampoTipo<int>{
+		public override string TipoCampo{ 
+			get { return "integer"; }
+		}
+	};
+	public class CampoEnteroOpcional:Modelador.CampoTipo<int?>{
 		public override string TipoCampo{ 
 			get { return "integer"; }
 		}
@@ -245,9 +250,7 @@ namespace PrModelador
 		[Test]
 		public void Periodos(){
 			Periodos p=new Periodos();
-			Assert.AreEqual(null,p.cAno.Valor);
-			// antes decía 0. Depende de si es obligatorio!
-			// Assert.AreEqual(0,p.cAno.Valor);
+			Assert.AreEqual(0,p.cAno.Valor);
 			Assert.AreEqual("Ano",p.cAno.Nombre);
 			Assert.AreEqual("create table periodos(ano integer,mes integer,anoant integer,mesant integer,primary key(ano,mes));"
 			                ,Cadena.Simplificar(p.SentenciaCreateTable()));
