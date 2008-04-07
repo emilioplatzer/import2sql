@@ -202,7 +202,15 @@ namespace Indices
 		}
 		public void CalcularPonderadores(Grupos grupo){
 			using(EjecutadorSql ej=db.Ejecutador("agrupacion",grupo.cAgrupacion.Valor)){
-				// ej.Update(Grupos).Where(Grupos.
+				Grupos grupos=new Grupos();
+				/*
+				ej.Update(grupos)
+					.Set(grupos.cNivel.Set(0))
+					.Set(grupos.cPonderador.Set(1.0))
+					.Where(grupos.cGrupoPadre.isNull())
+					.and(grupos.cAgrupacion.igual(grupo.cAgrupacion))
+					.execute();
+					*/
 				ej.ExecuteNonQuery(@"
 					UPDATE grupos SET nivel=0,ponderador=1
 					  WHERE grupopadre is null 
