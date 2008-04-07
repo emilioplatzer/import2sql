@@ -21,7 +21,7 @@ namespace Indices
 	public class CampoAgrupacion:CampoChar{ public CampoAgrupacion():base(9){} };
 	public class CampoGrupo:CampoChar{ public CampoGrupo():base(9){} };
 	public class CampoPonderador:CampoReal{};
-	public class CampoNivel:CampoEntero{}
+	public class CampoNivel:CampoEnteroOpcional{}
 	public class CampoPrecio:CampoReal{};
 	public class CampoIndice:CampoReal{};
 	public class CampoFactor:CampoReal{};
@@ -48,7 +48,9 @@ namespace Indices
 		}
 		[Vista]
 		public class Agrupaciones:Grupos{
-			
+			public Agrupaciones(){
+				NombreTabla="grupos";
+			}
 		}
 		public class Numeros:Tabla{
 			[Pk] public CampoEntero cNumero;
@@ -61,9 +63,29 @@ namespace Indices
 		}
 		public class Periodos:Tabla{
 			[Pk] public CampoPeriodo cPeriodo;
-			public CampoPeriodo cPeriodoAntrr;
+			public CampoPeriodo cPeriodoAnterior;
 			public CampoEntero cAno;
 			public CampoEntero cMes;
+			public Periodos(BaseDatos db,int ano, int mes){
+				LeerNoPk(db,"ano",ano,"mes",mes);
+			}
+			public Periodos(){}
+			public Periodos CrearProximo(){
+				int ano=cAno.Valor;
+				int mes=cMes.Valor+1;
+				if(mes==13){
+					mes=1; 
+					ano++;
+				}
+				Periodos p=new Periodos();
+				using(Insertador ins=p.Insertar(db)){
+					p.cPeriodo[ins]=ano.ToString()+((int)mes).ToString("00");
+					p.cAno[ins]=ano;
+					p.cMes[ins]=mes;
+					p.cPeriodoAnterior[ins]=cPeriodo;
+				}
+				return new Periodos(db,ano,mes);
+			}
 		}
 		public class CalPro:Tabla{
 			[Pk] public CampoPeriodo cPeriodo;
@@ -73,9 +95,13 @@ namespace Indices
 		public class CalGru:Tabla{
 			[Pk] public CampoPeriodo cPeriodo;
 			[Pk] public CampoAgrupacion cAgrupacion;
-			public CampoGrupo cGrupo;
+			[Pk] public CampoGrupo cGrupo;
 			public CampoIndice cIndice;
 			public CampoFactor cFactor;
+			public CalGru(){}
+			public CalGru(BaseDatos db,Periodos p,Grupos g){
+				Leer(db,p.cPeriodo,g.cAgrupacion,g.cGrupo);
+			}
 		}
 		RepositorioIndice(BaseDatos db)
 			:base(db)
@@ -112,6 +138,11 @@ namespace Indices
 			g.Leer(db,agrupacion,codigo);
 			return g;
 		}
+		public Agrupaciones AbrirAgrupacion(string agrupacion){
+			Agrupaciones a=new Agrupaciones();
+			a.Leer(db,agrupacion,agrupacion);
+			return a;
+		}
 		public Grupos CrearGrupo(string codigo){
 			return CrearGrupo(codigo,null,1);
 		}
@@ -143,14 +174,17 @@ namespace Indices
 				// ins.InsertarSiHayCampos();
 			}			
 		}
-		public Periodos CrearPeriodo(int ano, int mes){
+		public static Periodos CrearPeriodo(BaseDatos db,int ano, int mes){
 			Periodos p=new Periodos();
 			using(Insertador ins=p.Insertar(db)){
 				p.cPeriodo[ins]=ano.ToString()+mes.ToString("00");
 				p.cAno[ins]=ano;
 				p.cMes[ins]=mes;
 			}
-			return AbrirPeriodo(ano,mes);
+			return new Periodos(db,ano,mes);
+		}
+		public Periodos CrearPeriodo(int ano, int mes){
+			return CrearPeriodo(db,ano,mes);
 		}
 		public Periodos AbrirPeriodo(int ano, int mes){
 			Periodos p=new Periodos();
@@ -239,8 +273,8 @@ namespace Indices
 		public void CalcularMesBase(Periodos per,Agrupaciones agrupacion){
 			using(EjecutadorSql ej=db.Ejecutador("periodo",per.cPeriodo.Valor,"agrupacion",agrupacion.cAgrupacion.Valor)){
 				ej.ExecuteNonQuery(@"
-					insert into calgru (ano,mes,agrupacion,grupo,indice,factor)
-					  select {ano},{mes},agrupacion,grupo,100,1
+					insert into calgru (periodo,agrupacion,grupo,indice,factor)
+					  select {periodo},agrupacion,grupo,100,1
 					    from grupos
 					    where agrupacion={agrupacion};
 				");
@@ -264,8 +298,8 @@ namespace Indices
 				");
 				*/
 				ej.ExecuteNonQuery(@"
-					insert into calgru (ano,mes,agrupacion,grupo,indice,factor)
-					  select per.ano,per.mes,g.agrupacion,g.grupo,cg0.indice*cp1.promedio/cp0.promedio,cg0.factor
+					insert into calgru (periodo,agrupacion,grupo,indice,factor)
+					  select per.periodo,g.agrupacion,g.grupo,cg0.indice*cp1.promedio/cp0.promedio,cg0.factor
 					    from grupos as g, 
 							 productos as p,
 					         calgru as cg0,
@@ -273,13 +307,12 @@ namespace Indices
 					         calpro as cp0, 
 					         calpro as cp1
 					    where g.agrupacion={agrupacion}
-					      and per.ano={ano}
-					      and per.mes={mes}
+					      and per.periodo={periodo}
 					      and g.grupo=p.producto
 					      and g.grupo=cg0.grupo and g.agrupacion=cg0.agrupacion
-					      and per.anoant=cg0.ano and per.mesant=cg0.mes
-					      and cp0.ano=per.anoant and cp0.mes=per.mesant and cp0.producto=p.producto
-					      and cp1.ano=per.ano and cp1.mes=per.mes and cp1.producto=p.producto
+					      and per.periodoanterior=cg0.periodo 
+					      and cp0.periodo=per.periodoanterior and cp0.producto=p.producto
+					      and cp1.periodo=per.periodo and cp1.producto=p.producto
 				");
 				for(int i=9;i>=0;i--){
 					/*
@@ -299,20 +332,19 @@ namespace Indices
 					").Arg("nivel",i));
 					*/
 					ej.ExecuteNonQuery(new SentenciaSql(db,@"
-						insert into calgru (ano,mes,agrupacion,grupo,indice,factor)
-						  select cg.ano,cg.mes,gp.agrupacion,gp.grupo
+						insert into calgru (periodo,agrupacion,grupo,indice,factor)
+						  select cg.periodo,gp.agrupacion,gp.grupo
 								,sum(cg.indice*gh.ponderador)/sum(gh.ponderador)
 								,sum(cg.factor*gh.ponderador)/sum(gh.ponderador)
 						    from grupos gh,
 						         calgru as cg,
 						         grupos gp 
 						    where cg.agrupacion={agrupacion}
-						      and cg.ano={ano}
-						      and cg.mes={mes}
+						      and cg.periodo={periodo}
 						      and gh.nivel={nivel}
 						      and gh.grupo=cg.grupo and gh.agrupacion=cg.agrupacion
 						      and gp.agrupacion=gh.agrupacion and gp.grupo=gh.grupopadre
-						    group by cg.ano,cg.mes,gp.agrupacion,gp.grupo;
+						    group by cg.periodo,gp.agrupacion,gp.grupo;
 					").Arg("nivel",i));
 				}
 			}
@@ -418,138 +450,6 @@ namespace Indices
 			");
 		}
 	}
-	/*
-	public class TablaDB:IDisposable{
-		protected RepositorioIndice Repo;
-		string NombreTabla;
-		protected IDataReader Registro;
-		public System.Collections.Generic.List<Clave> Claves;
-		StringBuilder Sentencia;
-		protected TablaDB(RepositorioIndice repo,string nombreTabla,params object[] clavesPlanas){
-			this.Repo=repo;	
-			this.NombreTabla=nombreTabla;
-			this.Claves=new System.Collections.Generic.List<Clave>();
-			Sentencia=new StringBuilder("SELECT * FROM "+repo.db.StuffTabla(nombreTabla));
-			int i=0;
-			while(i<clavesPlanas.Length){
-				object parametro=clavesPlanas[i];
-				if(parametro.GetType()==typeof(string)){
-					AgregarClave((string)parametro,clavesPlanas[i+1]);
-					i++; 
-				}else if(parametro.GetType().IsSubclassOf(typeof(TablaDB))){
-					TablaDB t=(TablaDB)parametro;
-					foreach(Clave c in t.Claves){
-						AgregarClave(c.Campo,c.Valor);
-					}
-				}
-				i++;
-			}
-			this.Registro=repo.db.ExecuteReader(Sentencia.ToString());
-			this.Registro.Read();
-		}
-		public object this[string campo]{ 
-			get{
-				return Registro[campo];
-			}
-		}
-		public void Dispose(){
-			Registro.Close();
-		}
-		protected void AgregarClave(string Campo, object Valor){
-			string and=(Claves.Count==0?" WHERE ":" AND ");
-			Claves.Add(new Clave(Campo,Valor));
-			Sentencia.Append(and+Repo.db.StuffCampo(Campo)+"="+Repo.db.StuffValor(Valor));
-		}
-		public struct Clave{
-			public string Campo;
-			public object Valor;
-			public Clave(string campo, object valor){ this.Campo=campo; this.Valor=valor; } 
-		}
-	}
-	public class Grupo:TablaDB{
-		public double Ponderador;
-		public string Agrupacion;
-		public new string Clave;
-		public Grupo(RepositorioIndice repo,string agrupacion,string grupo)
-			:base(repo,"grupos","agrupacion",agrupacion,"grupo",grupo)
-		{
-			Clave=(string)Registro["grupo"];
-			if(Registro["agrupacion"]!=null){
-				Agrupacion=(string)Registro["agrupacion"];
-			}
-			if(Registro["ponderador"].GetType()!=typeof(DBNull)){
-				object valor=Registro["ponderador"];
-				System.Console.WriteLine("tipo = "+valor.GetType().Name);
-				Ponderador=(double)Registro["ponderador"];
-			}
-		}
-	}
-	public class Agrupacion:Grupo{
-		public Agrupacion(RepositorioIndice repo,string agrupacion)
-			:base(repo,agrupacion,agrupacion)
-		{}
-	}
-	public class Producto:TablaDB{
-		public new string Clave;
-		public Producto(RepositorioIndice repo,string codigo)
-			:base(repo,"productos","producto",codigo)
-		{
-			Clave=(string)Registro["producto"];
-		}
-		public double Ponderador(Grupo grupo){
-			double wP=(double)
-				Repo.db.ExecuteScalar(@"
-					SELECT ponderador
-					  FROM grupos 
-					  WHERE agrupacion="+Repo.db.StuffValor(grupo.Agrupacion)+@"
-					    AND grupo="+Repo.db.StuffValor(Clave)
-				);
-			double wG=(double)
-				Repo.db.ExecuteScalar(@"
-					SELECT ponderador
-					  FROM grupos 
-					  WHERE agrupacion="+Repo.db.StuffValor(grupo.Agrupacion)+@"
-					    AND grupo="+Repo.db.StuffValor(grupo.Clave)
-				);
-			return wP/wG;
-		}
-	}
-	public class Periodo:TablaDB{
-		public int Ano;
-		public int Mes;
-		public Periodo(RepositorioIndice repo,int ano,int mes)
-			:base(repo,"periodos","ano",ano,"mes",mes)
-		{
-			Ano=(int)Registro["ano"];
-			Mes=(int)Registro["mes"];
-		}
-		public static Periodo Crear(RepositorioIndice repo,int ano,int mes,object anoant,object mesant){
-			using(InsertadorSql ins=new InsertadorSql(repo.db,"periodos")){
-				ins["ano"]=ano;
-				ins["mes"]=mes;
-				ins["anoant"]=anoant;
-				ins["mesant"]=mesant;
-				// ins.InsertarSiHayCampos();
-			}
-			return new Periodo(repo,ano,mes);
-		}
-		public static Periodo Crear(RepositorioIndice repo,int ano,int mes){
-			return Crear(repo,ano,mes,null,null);
-		}
-		public static Periodo CrearProximo(RepositorioIndice repo,Periodo anterior){
-			return Crear(repo,(anterior.Mes==12?anterior.Ano+1:anterior.Ano)
-			             ,(anterior.Mes==12?1:anterior.Mes+1),anterior.Ano,anterior.Mes);
-		}
-	}
-	public class CalGru:TablaDB{
-		public double Indice;
-		public CalGru(RepositorioIndice repo,Periodo per,Grupo grupo)
-			:base(repo,"calgru",per,grupo)
-		{
-			Indice=(double)Registro["indice"];
-		}
-	}
-	*/
 	[TestFixture]
 	public class ProbarIndiceD3{
 		RepositorioIndice repo;
@@ -607,7 +507,6 @@ namespace Indices
 		}
 		[Test]
 		public void A01CalculosBase(){
-			/*
 			RepositorioIndice.Periodos pAnt=repo.CrearPeriodo(2001,12);
 			RepositorioIndice.Productos P100=repo.AbrirProducto("P100");
 			RepositorioIndice.Productos P101=repo.AbrirProducto("P101");
@@ -617,27 +516,27 @@ namespace Indices
 			repo.RegistrarPromedio(pAnt,P101,10.0);
 			repo.RegistrarPromedio(pAnt,P102,20.0);
 			repo.CalcularMesBase(pAnt,A);
-			Assert.AreEqual(100.0,new CalGru(repo,pAnt,A).Indice);
-			Periodo Per1=Periodo.CrearProximo(repo,pAnt);
-			Assert.AreEqual(2001,Per1["anoant"]);
-			Assert.AreEqual(2002,Per1.Ano);
-			Assert.AreEqual(1,Per1.Mes);
-			Grupo A1=repo.AbrirGrupo("A","A1");
-			Grupo A2=repo.AbrirGrupo("A","A2");
+			Assert.AreEqual(100.0,new RepositorioIndice.CalGru(repo.db,pAnt,A).cIndice.Valor);
+			RepositorioIndice.Periodos Per1=pAnt.CrearProximo();
+			Assert.AreEqual("200112",Per1.cPeriodoAnterior.Valor);
+			Assert.AreEqual("200201",Per1.cPeriodo.Valor);
+			Assert.AreEqual(2002,Per1.cAno.Valor);
+			Assert.AreEqual(1,Per1.cMes.Valor);
+			RepositorioIndice.Grupos A1=repo.AbrirGrupo("A","A1");
+			RepositorioIndice.Grupos A2=repo.AbrirGrupo("A","A2");
 			repo.RegistrarPromedio(Per1,P100,2.0);
 			repo.RegistrarPromedio(Per1,P101,10.0);
 			repo.RegistrarPromedio(Per1,P102,22.0);
 			repo.CalcularCalGru(Per1,A);
-			Assert.AreEqual(110.0,new CalGru(repo,Per1,A2).Indice);
-			Assert.AreEqual(104.0,new CalGru(repo,Per1,A).Indice);
-			Periodo Per2=Periodo.CrearProximo(repo,Per1);
+			Assert.AreEqual(110.0,new RepositorioIndice.CalGru(repo.db,Per1,A2).cIndice.Valor);
+			Assert.AreEqual(104.0,new RepositorioIndice.CalGru(repo.db,Per1,A).cIndice.Valor);
+			RepositorioIndice.Periodos Per2=Per1.CrearProximo();
 			repo.RegistrarPromedio(Per2,P100,2.2);
 			repo.RegistrarPromedio(Per2,P101,11.0);
 			repo.RegistrarPromedio(Per2,P102,22.0);
 			repo.CalcularCalGru(Per2,A);
-			Assert.AreEqual(110.0,new CalGru(repo,Per2,A2).Indice);
-			Assert.AreEqual(110.0,new CalGru(repo,Per2,A).Indice);
-			*/
+			Assert.AreEqual(110.0,new RepositorioIndice.CalGru(repo.db,Per2,A2).cIndice.Valor);
+			Assert.AreEqual(110.0,new RepositorioIndice.CalGru(repo.db,Per2,A).cIndice.Valor);
 		}
 		[Test]
 		public void zReglasDeIntegridad(){
