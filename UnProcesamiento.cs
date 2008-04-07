@@ -9,6 +9,8 @@
 
 using System;
 
+#if SinOffice
+#else
 namespace TodoASql
 {
 	public class UnProcesamiento
@@ -146,3 +148,4 @@ namespace TodoASql
 		}
 	}
 }
+#endif
