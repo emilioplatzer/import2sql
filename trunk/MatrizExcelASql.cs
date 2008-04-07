@@ -15,14 +15,12 @@ using NUnit.Framework;
 
 namespace TodoASql
 {
-	/// <summary>
-	/// Description of MatrizExcelASql.
-	/// </summary>
 	public class MatrizExcelASql
 	{
 		ReceptorSql Receptor;
 		public string[] CamposFijos;
 		public object[] ValoresFijos;
+		public string GuardarErroresEn;
 		public MatrizExcelASql(ReceptorSql receptor){
 			this.Receptor=receptor;
 		}
@@ -55,7 +53,7 @@ namespace TodoASql
 								insert[camposColumnas[i]]=encabezadosColumnas[i].ValorCelda(1,columna);
 							}
 							insert[campoValor]=valor;
-							insert.IgnorarErrores();
+							insert.GuardarErroresEn=GuardarErroresEn;
 						}
 					}
 				}
@@ -191,7 +189,6 @@ namespace TodoASql
 			};
 			ReceptorSql receptor=new ReceptorSql(parametros);
 			MatrizExcelASql matriz=new MatrizExcelASql(receptor);
-			// LibroExcel libro=LibroExcel.Abrir(nombreArchivoXLS);
 			matriz.PasarHoja(parametros);
 			string[,] dumpObtenido=receptor.DumpString();
 			string[,] dumpEsperado=
@@ -203,7 +200,6 @@ namespace TodoASql
 					{"America","Uruguay","Montevideo","2002","2","140"}
 				};
 			Assert.AreEqual(dumpEsperado,dumpObtenido);
-			//libro.Close();
 		}
 	}
 	public struct ExcelDefinicionRango{

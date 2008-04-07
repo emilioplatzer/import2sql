@@ -202,7 +202,7 @@ namespace Indices
 		}
 		public void CalcularPonderadores(Grupos grupo){
 			using(EjecutadorSql ej=db.Ejecutador("agrupacion",grupo.cAgrupacion.Valor)){
-				ej.Update(Grupos).Where(Grupos.
+				// ej.Update(Grupos).Where(Grupos.
 				ej.ExecuteNonQuery(@"
 					UPDATE grupos SET nivel=0,ponderador=1
 					  WHERE grupopadre is null 
@@ -456,7 +456,7 @@ namespace Indices
 		RepositorioIndice repo;
 		public ProbarIndiceD3(){
 			BaseDatos db;
-			switch(2){
+			switch(3){
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					db.EliminarTablaSiExiste("calgru");

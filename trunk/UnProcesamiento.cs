@@ -11,9 +11,6 @@ using System;
 
 namespace TodoASql
 {
-	/// <summary>
-	/// Description of UnProcesamiento.
-	/// </summary>
 	public class UnProcesamiento
 	{
 		static LibroExcel codigos;
@@ -87,6 +84,7 @@ namespace TodoASql
 			libro.Rango("B3:B5").ValorRango1D().CopyTo(valoresFijos,3);
 			matriz.CamposFijos=Objeto.Paratodo(camposFijos,Cadena.Simplificar);
 			matriz.ValoresFijos=valoresFijos;
+			matriz.GuardarErroresEn=@"c:\temp\indice\Campo\Bases\ErroresDeImportacion.sql";
 			matriz.PasarHoja(libro.Rango("H8:Z172")
 			                 ,libro.Rango("A8:F172")
 			                 ,libro.Rango("H4:Z6")
@@ -117,7 +115,7 @@ namespace TodoASql
 				Variedad varchar(250),
 				Tamano varchar(100),
 				Unidad varchar(100),
-				Precio double precision,
+				Precio varchar(200),
 				Formato varchar(100),
 				Origen varchar(250),
 				Fecha_Importacion date)
