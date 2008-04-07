@@ -74,23 +74,46 @@ namespace TodoASql
 			receptor=new ReceptorSql(db,"PreciosImportados");
 			MatrizExcelASql matriz=new MatrizExcelASql(receptor);
 			LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
-			if(libro.TextoCelda("A1")!="PLAN PREC"){
-				System.Console.Write(" no es PLAN PREC");
+			matriz.GuardarErroresEn=@"c:\temp\indice\Campo\Bases\ErroresDeImportacion.sql";
+			if(libro.TextoCelda("A1")=="PLAN PREC"){
+				string[] camposFijos=new string[]{"formato","origen","fecha_importacion","","",""};
+				object[] valoresFijos=new object[]{libro.TextoCelda("A1"),nombreArchivo,DateTime.Now,null,null,null};
+				libro.Rango("A3:A5").TextoRango1D().CopyTo(camposFijos,3);
+				libro.Rango("B3:B5").ValorRango1D().CopyTo(valoresFijos,3);
+				matriz.CamposFijos=Objeto.Paratodo(camposFijos,Cadena.Simplificar);
+				matriz.ValoresFijos=valoresFijos;
+				matriz.PasarHoja(libro.Rango("H8:Z172")
+				                 ,libro.Rango("A8:F172")
+				                 ,libro.Rango("H4:Z6")
+				                 ,"precio"
+				                 ,Objeto.Paratodo(libro.Rango("A7:F7").TextoRango1D(),Cadena.Simplificar)
+				                 ,Objeto.Paratodo(libro.Rango("G4:G6").TextoRango1D(),Cadena.Simplificar));
+			}else if(libro.TextoCelda("A1")=="PLAN PROD.INF/PER"){
+				string[] camposFijos=new string[]{"formato","origen","fecha_importacion"};
+				object[] valoresFijos=new object[]{libro.TextoCelda("A1"),nombreArchivo,DateTime.Now};
+				matriz.CamposFijos=Objeto.Paratodo(camposFijos,Cadena.Simplificar);
+				matriz.ValoresFijos=valoresFijos;
+				matriz.PasarHoja(libro.Rango("J8:Q100")
+				                 ,libro.Rango("A8:H100")
+				                 ,libro.Rango("J3:Q6")
+				                 ,"precio"
+				                 ,Objeto.Paratodo(libro.Rango("A7:H7").TextoRango1D(),Cadena.Simplificar)
+				                 ,Objeto.Paratodo(libro.Rango("I3:I6").TextoRango1D(),Cadena.Simplificar));
+			}else if(libro.TextoCelda("A1")=="PLAN PROD/PER.INF"){
+				string[] camposFijos=new string[]{"formato","origen","fecha_importacion"};
+				object[] valoresFijos=new object[]{libro.TextoCelda("A1"),nombreArchivo,DateTime.Now};
+				matriz.CamposFijos=Objeto.Paratodo(camposFijos,Cadena.Simplificar);
+				matriz.ValoresFijos=valoresFijos;
+				matriz.PasarHoja(libro.Rango("H10:Q100")
+				                 ,libro.Rango("A10:F100")
+				                 ,libro.Rango("H3:Q8")
+				                 ,"precio"
+				                 ,Objeto.Paratodo(libro.Rango("A9:F9").TextoRango1D(),Cadena.Simplificar)
+				                 ,Objeto.Paratodo(libro.Rango("G3:G8").TextoRango1D(),Cadena.Simplificar));
+			}else{
+				System.Console.Write(" no es un formato valido reconocido");
 				return false;
 			}
-			string[] camposFijos=new string[]{"formato","origen","fecha_importacion","","",""};
-			object[] valoresFijos=new object[]{libro.TextoCelda("A1"),nombreArchivo,DateTime.Now,null,null,null};
-			libro.Rango("A3:A5").TextoRango1D().CopyTo(camposFijos,3);
-			libro.Rango("B3:B5").ValorRango1D().CopyTo(valoresFijos,3);
-			matriz.CamposFijos=Objeto.Paratodo(camposFijos,Cadena.Simplificar);
-			matriz.ValoresFijos=valoresFijos;
-			matriz.GuardarErroresEn=@"c:\temp\indice\Campo\Bases\ErroresDeImportacion.sql";
-			matriz.PasarHoja(libro.Rango("H8:Z172")
-			                 ,libro.Rango("A8:F172")
-			                 ,libro.Rango("H4:Z6")
-			                 ,"precio"
-			                 ,Objeto.Paratodo(libro.Rango("A7:F7").TextoRango1D(),Cadena.Simplificar)
-			                 ,Objeto.Paratodo(libro.Rango("G4:G6").TextoRango1D(),Cadena.Simplificar));
 			libro.CerrarNoHayCambios();
 			return true;
 		}

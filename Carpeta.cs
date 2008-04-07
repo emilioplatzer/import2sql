@@ -32,7 +32,12 @@ namespace TodoASql
 				if(procesar(archivo.FullName)){
 					System.Console.WriteLine(" procesado");
 					File.Delete(archivo.FullName+"."+nuevaExtension);
-					File.Move(archivo.FullName,archivo.FullName+"."+nuevaExtension);
+					try{
+						File.Move(archivo.FullName,archivo.FullName+"."+nuevaExtension);
+					}catch(Exception ex){
+						System.Console.WriteLine("No pude cambiarle el nombre a {0}, segurmente está abierto",archivo.FullName);
+						System.Console.WriteLine("Codigo de error {0}",ex.Message);
+					}
 				}else{
 					System.Console.WriteLine(" ERROR NO SE PUEDE PROCESAR");
 				}
