@@ -24,10 +24,6 @@ namespace TodoASql
 		internal BaseDatos db;
 		IDataReader SelectAbierto;
 		internal string NombreTabla;
-		/*
-		public ReceptorSql():this(new ParametrosMailASql(Parametros.LeerPorDefecto.SI)){
-		}
-		*/
 		public ReceptorSql(BaseDatos db,string nombreTablaReceptora){
 			this.db=db;
 			this.NombreTabla=nombreTablaReceptora;
@@ -61,8 +57,6 @@ namespace TodoASql
 			for(int i=0; i<registros; i++){
 				sel.Read();
 				for(int j=0; j<campos; j++){
-					// string valor=(string) sel.GetValue(j+1);
-					// matriz[i,j]=valor;
 					matriz[i,j]=sel.GetString(j);
 				}
 			}
@@ -76,8 +70,6 @@ namespace TodoASql
 			for(int i=0; i<registros; i++){
 				sel.Read();
 				for(int j=0; j<campos; j++){
-					// string valor=(string) sel.GetValue(j+1);
-					// matriz[i,j]=valor;
 					matriz[i,j]=sel.GetValue(j);
 				}
 			}
@@ -92,7 +84,7 @@ namespace TodoASql
 		StringBuilder valores=new StringBuilder();
 		Separador coma=new Separador(",");
 		public string Sentencia;
-		bool ignorarErrores;
+		public string GuardarErroresEn;
 		UnSoloUso controlar=new UnSoloUso();
 		public InsertadorSql(ReceptorSql receptor)
 			:this(receptor.db,receptor.NombreTabla)
@@ -122,14 +114,12 @@ namespace TodoASql
 		public bool HayCampos{
 			get{ return campos.Length>0; }
 		}
-		public void IgnorarErrores(){
-			ignorarErrores=true;
-		}
 		public void Dispose(){
-			if(ignorarErrores){
+			if(GuardarErroresEn!=null){
 				try{
 					InsertarSiHayCampos();
 				}catch(OleDbException ex){
+					Archivo.Agregar(GuardarErroresEn,Sentencia+";\n");
 					System.Console.WriteLine("No pudo importar "+Sentencia);
 				}
 			}else{

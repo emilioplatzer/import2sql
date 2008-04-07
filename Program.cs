@@ -21,8 +21,8 @@ namespace TodoASql
 			// new prTabla().Periodos();
 			// new PruebasReflexion().NombresMiembros();
 		    // new ProbarSqLite().ConexionSqLite();
-		    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
-		    // /*
+		    new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
+		    /*
 		    ProbarIndiceD3 p=new ProbarIndiceD3();
 		    p.A01CalculosBase();
 		    p.VerCanasta();
