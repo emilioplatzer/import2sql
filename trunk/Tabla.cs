@@ -230,6 +230,25 @@ namespace Modelador
 			:base(db,tabla.NombreTabla)
 		{}
 	}
+	public class SentenciaUpdate{
+		string parteUpdate;
+		string parteSet;
+		public SentenciaUpdate(Tabla tabla){
+			parteUpdate="update "+tabla.NombreTabla;
+		}
+		public SentenciaUpdate Set(Campo campo){
+			return this;
+		}
+	}
+	public class Ejecutador:EjecutadorSql{
+		Ejecutador(BaseDatos db)
+			:base(db)
+		{
+		}
+		public SentenciaUpdate Update(Tabla tabla){
+			return new SentenciaUpdate(tabla);
+		}
+	}
 }
 namespace PrModelador
 {
