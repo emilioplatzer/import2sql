@@ -72,8 +72,8 @@ namespace TodoASql
 			} // */
 			
 			Console.WriteLine("Listo!");
-			// Console.Write("Press any key to continue . . . ");
-			// Console.ReadKey(true);
+			Console.Write("presione cualquier tecla . . . ");
+			Console.ReadKey(true);
 		}
 	}
 }
