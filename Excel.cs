@@ -11,13 +11,13 @@ using System;
 #if SinOffice
 #else
 using Excel = Microsoft.Office.Interop.Excel;
+#endif
 using NUnit.Framework;
 
 namespace TodoASql
 {
-	/// <summary>
-	/// Description of Excel.
-	/// </summary>
+#if SinOffice
+#else
 	public class LibroExcel:HojaExcel //:AccesoExcel
 	{
 		Excel.Workbook libro;
@@ -288,8 +288,15 @@ namespace TodoASql
 			libro.DescartarYCerrar();
 		}
 	}
+#endif
 	[TestFixture]
 	public class probarExcel{
+	#if SinOffice
+		[Test]
+		public void A_SinOffice(){
+			Controlar.Definido("SinOffice");
+		}
+	#else
 		Excel.Application ApExcel;
 		object ___ = Type.Missing; 
 		string nombreArchivo=Archivo.CarpetaActual()+"\\borrar_prueba.xls";
@@ -298,6 +305,10 @@ namespace TodoASql
 		}
 		~probarExcel(){
 			ApExcel.Quit();
+		}
+		[Test]
+		public void A_SinOffice(){
+			Controlar.NoDefinido("SinOffice");
 		}
 		[Test]
 		public void CrearArchivo(){
@@ -396,6 +407,6 @@ namespace TodoASql
 			libro.Close(false,___,___);
 			*/
 		}
+	#endif
 	}
 }
-#endif
