@@ -119,7 +119,7 @@ namespace TodoASql
 				try{
 					InsertarSiHayCampos();
 				}catch(OleDbException ex){
-					Archivo.Agregar(GuardarErroresEn,Sentencia+";\n");
+					Archivo.Agregar(GuardarErroresEn,Sentencia+";\n/*"+ex.Message+"\n*/\n");
 					System.Console.WriteLine("No pudo importar "+Sentencia);
 				}
 			}else{

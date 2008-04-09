@@ -18,9 +18,11 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
+			new ProcesoLevantarPlanillasCVP().TraerPlanillasRecepcion();
+			// new CVP().CreacionTablas();
 			// new prTabla().Periodos();
 			// new PruebasReflexion().NombresMiembros();
-		    new ProbarSqLite().ConexionSqLite();
+		    // new ProbarSqLite().ConexionSqLite();
 		    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
 		    /*
 		    ProbarIndiceD3 p=new ProbarIndiceD3();
