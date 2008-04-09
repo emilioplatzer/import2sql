@@ -17,7 +17,7 @@
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <DefineConstants>DEBUG;TRACE;SinOffice;SinPostgre</DefineConstants>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -49,6 +49,7 @@
     <Compile Include="BaseDatos.cs" />
     <Compile Include="BdAccess.cs" />
     <Compile Include="Carpeta.cs" />
+    <Compile Include="CVP.cs" />
     <Compile Include="Excel.cs" />
     <Compile Include="Formulario.cs" />
     <Compile Include="Indice.cs" />
