@@ -18,6 +18,7 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
+			// new probarLibroExcel().UltimoFilasyColumnas();
 			new ProcesoLevantarPlanillasCVP().TraerPlanillasRecepcion();
 			// new CVP().CreacionTablas();
 			// new prTabla().Periodos();
@@ -74,8 +75,10 @@ namespace TodoASql
 			} // */
 			
 			Console.WriteLine("Listo!");
+			/*
 			Console.Write("presione cualquier tecla . . . ");
 			Console.ReadKey(true);
+			*/
 		}
 	}
 }

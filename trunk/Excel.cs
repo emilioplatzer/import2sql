@@ -110,6 +110,17 @@ namespace TodoASql
 			}
 			return rta;
 		}
+		public int NumeroFila{
+			get{ return rango.Row; }
+		}
+		public int NumeroColumna{
+			get{ return rango.Column; }
+		}
+		/*
+		public string LetraColumna{
+			get{ return "!"; }
+		}
+		*/
 	}
 	public class AccesoExcel{
 		internal Excel.Worksheet hoja;
@@ -185,6 +196,22 @@ namespace TodoASql
 		public RangoExcel Rango(string definicionRango){
 			return new RangoExcel(rango.get_Range(definicionRango,___),hoja);
 		}
+		public RangoExcel Rango(string esquina,int filaFin,int columnaFin){
+			return new RangoExcel(
+				rango.get_Range(
+					esquina,
+					hoja.Cells[filaFin,columnaFin]
+				),hoja
+			);
+		}
+		public RangoExcel Rango(int fila, int columna,int filaFin,int columnaFin){
+			return new RangoExcel(
+				rango.get_Range(
+					hoja.Cells[fila,columna],
+					hoja.Cells[filaFin,columnaFin]
+				),hoja
+			);
+		}
 		public RangoExcel Columna(int columna){
 			return new RangoExcel(
 				rango.get_Range(
@@ -200,6 +227,15 @@ namespace TodoASql
 					hoja.Cells[fila,rango.Columns.Count]
 				),hoja
 			);
+		}
+		public RangoExcel BuscarPor(string contenido,Excel.XlSearchOrder por){
+			return new RangoExcel(rango.Find(contenido,___,Excel.XlFindLookIn.xlValues,Excel.XlLookAt.xlWhole,por,Excel.XlSearchDirection.xlNext,false,___,___),hoja);
+		}
+		public RangoExcel BuscarPorColumnas(string contenido){
+			return BuscarPor(contenido,Excel.XlSearchOrder.xlByColumns);
+		}
+		public RangoExcel BuscarPorFilas(string contenido){
+			return BuscarPor(contenido,Excel.XlSearchOrder.xlByRows);
 		}
 	}
 	public class ColeccionExcel{
@@ -272,8 +308,19 @@ namespace TodoASql
 			rango.PonerValor(2,2,22);
 			rango.PonerValor(3,1,"po");
 			rango.PonerValor(3,2,"pu");
+			libro.PonerTexto(4,1,"FIN!");
+			libro.PonerTexto(1,7,"FIN!");
 			string[] contenido=r2.TextoRango1D();
 			Assert.AreEqual(new string[]{"21","22","po","pu"},contenido);
+			RangoExcel encontre=libro.BuscarPorFilas("pi");
+			Assert.AreEqual(14,encontre.NumeroColumna);
+			Assert.AreEqual(3,encontre.NumeroFila);
+			Assert.AreEqual(4,libro.BuscarPorColumnas("FIN!").NumeroFila);
+			Assert.AreEqual(7,libro.BuscarPorFilas("FIN!").NumeroColumna);
+			RangoExcel r3=rango.Rango("B2",3,4);
+			Assert.AreEqual(3,r3.CantidadColumnas);
+			Assert.AreEqual(2,r3.CantidadFilas);
+			// Assert.AreEqual("G",libro.BuscarPorFilas("FIN!").LetraColumna);
 			libro.GuardarYCerrar();
 		}
 		[Test]
@@ -318,7 +365,7 @@ namespace TodoASql
 			libro = ApExcel.Workbooks.Add(___);
 			ApExcel.Visible = true;
 			// libro = ApExcel.Workbooks.Add(___);
-			Excel.Worksheet hoja1 = new Excel.Worksheet();
+			Excel.Worksheet hoja1;// = new Excel.Worksheet();
 			hoja1 = (Excel.Worksheet)libro.Sheets.Add(___, ___, ___, ___);
 			// hoja1.Activate();
 			hoja1.Name="LaHoja1";

@@ -53,18 +53,22 @@ namespace Indices
 			LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
 			matriz.GuardarErroresEn=@"c:\cvp\temp\ErroresDeImportacion.sql";
 			if(libro.TextoCelda("A1")=="FORM.PREC"){
+				int fila=7;
+				int columna=6;
+				int filaFin=libro.BuscarPorColumnas("FIN!").NumeroFila;
+				int columnaFin=libro.BuscarPorFilas("FIN!").NumeroColumna;
 				string[] camposFijos=new string[]{"formato","origen","fecha_importacion",""};
 				object[] valoresFijos=new object[]{libro.TextoCelda("A1"),nombreArchivo,DateTime.Now,null};
 				libro.Rango("A3:A3").TextoRango1D().CopyTo(camposFijos,3);
 				libro.Rango("B3:B3").ValorRango1D().CopyTo(valoresFijos,3);
 				matriz.CamposFijos=Objeto.Paratodo(camposFijos,Cadena.Simplificar);
 				matriz.ValoresFijos=valoresFijos;
-				matriz.PasarHoja(libro.Rango("F7:Z100")
-				                 ,libro.Rango("A7:D100")
-				                 ,libro.Rango("F3:Z5")
+				matriz.PasarHoja(libro.Rango(fila,columna,filaFin,columnaFin)
+				                 ,libro.Rango(fila,1,filaFin,columna-2)
+				                 ,libro.Rango(3,columna,fila-2,columnaFin)
 				                 ,"valor"
-				                 ,Objeto.Paratodo(libro.Rango("A6:D6").TextoRango1D(),Cadena.Simplificar)
-				                 ,Objeto.Paratodo(libro.Rango("E3:E5").TextoRango1D(),Cadena.Simplificar));
+				                 ,Objeto.Paratodo(libro.Rango(fila-1,1,fila-1,columna-2).TextoRango1D(),Cadena.Simplificar)
+				                 ,Objeto.Paratodo(libro.Rango(3,columna-1,fila-2,columna-1).TextoRango1D(),Cadena.Simplificar));
 			}else{
 				System.Console.Write(" no es un formato valido reconocido");
 				return false;
