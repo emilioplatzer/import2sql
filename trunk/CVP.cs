@@ -55,14 +55,15 @@ namespace Indices
 			if(libro.TextoCelda("A1")=="FORM.PREC"){
 				int fila=7;
 				int columna=6;
-				int filaFin=libro.BuscarPorColumnas("FIN!").NumeroFila;
-				int columnaFin=libro.BuscarPorFilas("FIN!").NumeroColumna;
+				int filaFin=libro.BuscarPorColumnas("FIN!").NumeroFila-1;
+				int columnaFin=libro.BuscarPorFilas("FIN!").NumeroColumna-1;
 				string[] camposFijos=new string[]{"formato","origen","fecha_importacion",""};
 				object[] valoresFijos=new object[]{libro.TextoCelda("A1"),nombreArchivo,DateTime.Now,null};
 				libro.Rango("A3:A3").TextoRango1D().CopyTo(camposFijos,3);
 				libro.Rango("B3:B3").ValorRango1D().CopyTo(valoresFijos,3);
 				matriz.CamposFijos=Objeto.Paratodo(camposFijos,Cadena.Simplificar);
 				matriz.ValoresFijos=valoresFijos;
+				matriz.BuscarFaltantes=true;
 				matriz.PasarHoja(libro.Rango(fila,columna,filaFin,columnaFin)
 				                 ,libro.Rango(fila,1,filaFin,columna-2)
 				                 ,libro.Rango(3,columna,fila-2,columnaFin)

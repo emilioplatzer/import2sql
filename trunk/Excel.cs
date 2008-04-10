@@ -176,6 +176,9 @@ namespace TodoASql
 		public void PonerValor(int fila,int col,object valor){
 			PonerValor((Excel.Range) rango.Cells[fila,col],valor);
 		}
+		public void PonerValor(string celda,object valor){
+			PonerValor((Excel.Range) rango.get_Range(celda,celda),valor);
+		}
 		public void Rellenar(string[,] matriz){
 			for(int fila=0;fila<matriz.GetLength(0);fila++){
 				for(int col=0;col<matriz.GetLength(1);col++){
@@ -237,6 +240,22 @@ namespace TodoASql
 		public RangoExcel BuscarPorFilas(string contenido){
 			return BuscarPor(contenido,Excel.XlSearchOrder.xlByRows);
 		}
+		object ValorNoNuloA(int fila,int columna,int deltaFila,int deltaColumna){
+			object rta=null;
+			while(fila>0 && columna>0){
+				rta=ValorCelda(fila,columna);
+			if(rta!=null) break;
+				fila+=deltaFila;
+				columna+=deltaColumna;
+			}
+			return rta;
+		}
+		public object ValorNoNuloIzquierda(int fila, int columna){
+			return ValorNoNuloA(fila,columna,0,-1);
+		}
+		public object ValorNoNuloArriba(int fila, int columna){
+			return ValorNoNuloA(fila,columna,-1,0);
+		}
 	}
 	public class ColeccionExcel{
 		System.Collections.Generic.Dictionary<string, LibroExcel> libros;
@@ -290,7 +309,6 @@ namespace TodoASql
 			Assert.AreNotEqual(hoja.ValorCelda("B1").GetType(),hoja.ValorCelda("C1").GetType());
 			Assert.AreEqual(0,hoja.ValorCelda("E1"));
 			Assert.AreEqual(null,hoja.ValorCelda("F1"));
-			Assert.AreEqual(null,hoja.ValorCelda("G1"));
 			Assert.AreEqual(" ",hoja.ValorCelda("H1"));
 			libro.CerrarNoHayCambios();
 		}
@@ -320,6 +338,9 @@ namespace TodoASql
 			RangoExcel r3=rango.Rango("B2",3,4);
 			Assert.AreEqual(3,r3.CantidadColumnas);
 			Assert.AreEqual(2,r3.CantidadFilas);
+			Assert.AreEqual(22,libro.ValorNoNuloIzquierda(3,9));
+			Assert.AreEqual("nada",rango.ValorNoNuloArriba(2,12));
+			Assert.AreEqual(null,rango.ValorNoNuloArriba(2,11));
 			// Assert.AreEqual("G",libro.BuscarPorFilas("FIN!").LetraColumna);
 			libro.GuardarYCerrar();
 		}
