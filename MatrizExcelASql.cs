@@ -21,6 +21,7 @@ namespace TodoASql
 		public string[] CamposFijos;
 		public object[] ValoresFijos;
 		public string GuardarErroresEn;
+		public bool BuscarFaltantes=false;
 		public MatrizExcelASql(ReceptorSql receptor){
 			this.Receptor=receptor;
 		}
@@ -44,13 +45,24 @@ namespace TodoASql
 			for(int fila=1;fila<=maxFila;fila++){
 				for(int columna=1;columna<=maxColumna;columna++){
 					object valor=matriz.ValorCelda(fila,columna);
+					if(valor==null && BuscarFaltantes){
+						valor=matriz.ValorNoNuloIzquierda(fila,columna);
+					}
 					if(valor!=null){
 						using(InsertadorSql insert=NuevoInsertador()){
 							for(int i=0;i<encabezadosFilas.Length;i++){
-								insert[camposFilas[i]]=encabezadosFilas[i].ValorCelda(fila,1);
+								object titulo=encabezadosFilas[i].ValorCelda(fila,1);
+								if(titulo==null && BuscarFaltantes){
+									titulo=encabezadosFilas[i].ValorNoNuloArriba(fila,1);
+								}
+								insert[camposFilas[i]]=titulo;
 							}
 							for(int i=0;i<encabezadosColumnas.Length;i++){
-								insert[camposColumnas[i]]=encabezadosColumnas[i].ValorCelda(1,columna);
+								object titulo=encabezadosColumnas[i].ValorCelda(1,columna);
+								if(titulo==null && BuscarFaltantes){
+									titulo=encabezadosColumnas[i].ValorNoNuloIzquierda(1,columna);
+								}
+								insert[camposColumnas[i]]=titulo;
 							}
 							insert[campoValor]=valor;
 							insert.GuardarErroresEn=GuardarErroresEn;
@@ -302,6 +314,137 @@ namespace TodoASql
 			Assert.AreEqual(dumpEsperado,dumpObtenido);
 			libro.CerrarNoHayCambios();
 		}
+		[Test]
+		public void trasvasarConAgujeros(){
+			BdAccess db=BdAccess.Abrir(nombreArchivoMDB);
+			db.ExecuteNonQuery("delete from receptor");
+			db.Close();
+			ParametrosMatrizExcelASql parametros=new ParametrosMatrizExcelASql(nombreArchivoMDB,"Receptor");
+			ReceptorSql receptor=new ReceptorSql(parametros);
+			MatrizExcelASql matriz=new MatrizExcelASql(receptor);
+			LibroExcel libro=LibroExcel.Abrir(nombreArchivoXLS);
+			libro.PonerValor("B4",null);
+			libro.PonerValor("F1",null);
+			libro.PonerValor("E3",null);
+			libro.PonerValor("F3",null);
+			libro.PonerValor("E4",null);
+			matriz.CamposFijos=new string[]{"lote","version"};
+			matriz.ValoresFijos=new object[]{"único",111};
+			matriz.BuscarFaltantes=true;
+			matriz.PasarHoja(
+				libro.Rango("D3","F4"),
+				new RangoExcel[]{
+					libro.Rango("A3","A4"),
+					libro.Rango("B3","B4"),
+					libro.Rango("C3","C4")
+				},new RangoExcel[]{
+					libro.Rango("D1","F1"),
+					libro.Rango("D2","F2")
+				},
+				"indice",
+				new string[]{
+					"codigo","cierre","ciudad"
+				},
+				new string[]{
+					"año","trimestre"
+				}
+			);
+			object[,] dumpObtenido=receptor.DumpObject();
+			object[,] dumpEsperado=
+				{
+					{"único",111,"11101",new DateTime(2001,12,20),"Buenos Aires",2001,4,100.1},
+					{"único",111,"11101",new DateTime(2001,12,20),"Buenos Aires",2002,1,100.1},
+					{"único",111,"11101",new DateTime(2001,12,20),"Buenos Aires",2002,2,100.1},
+					{"único",111,"11102",new DateTime(2001,12,20),"Montevideo",2001,4,100.21},
+					{"único",111,"11102",new DateTime(2001,12,20),"Montevideo",2002,1,100.21},
+					{"único",111,"11102",new DateTime(2001,12,20),"Montevideo",2002,2,140.23}
+				};
+			Assert.AreEqual(dumpEsperado,dumpObtenido);
+			libro.DescartarYCerrar();
+		}
 	}
+	/*
+	[TestFixture]
+	public class ProbarMatrizExcelASqlConAgujeros{
+		string nombreArchivoXLS=Archivo.CarpetaActual()+"\\borrar_prueba_matrizG.xls";
+		string nombreArchivoMDB=Archivo.CarpetaActual()+"\\temp_Access_Borrar_MatrizG.mdb";
+		object[,] matriz={
+			{"Indice","","año",2001,2002,2002},
+			{"codigo","cierre","ciudad/trimestremes",4,1,2},
+			{"11101",new DateTime(2001,12,20),"Buenos Aires",100.1,null,null},
+			{"11102",null,"Montevideo",100.21,120.22,140.23}
+		};
+		[Test]
+		public void crear(){
+			Archivo.Borrar(nombreArchivoXLS);
+			LibroExcel libro=LibroExcel.Nuevo();
+			libro.Rellenar(matriz);
+			libro.GuardarYCerrar(nombreArchivoXLS);
+		}
+		[Test]
+		public void revisar(){
+			LibroExcel libro=LibroExcel.Abrir(nombreArchivoXLS);
+			Assert.AreEqual(120.22,libro.ValorCelda("E4"));
+			libro.CerrarNoHayCambios();
+		}
+		[Test]
+		public void crearReceptor(){
+			Archivo.Borrar(nombreArchivoMDB);
+			BdAccess.Crear(nombreArchivoMDB);
+			BdAccess db=BdAccess.Abrir(nombreArchivoMDB);
+			db.ExecuteNonQuery(@"
+				CREATE TABLE Receptor(
+				   lote varchar(10),
+				   version integer,
+				   codigo varchar(250),
+				   cierre date,
+				   ciudad varchar(250),
+				   [año] integer,
+				   trimestre integer,
+				   indice double
+				   )");
+			db.Close();
+		}
+		[Test]
+		public void trasvasar(){
+			ParametrosMatrizExcelASql parametros=new ParametrosMatrizExcelASql(nombreArchivoMDB,"Receptor");
+			ReceptorSql receptor=new ReceptorSql(parametros);
+			MatrizExcelASql matriz=new MatrizExcelASql(receptor);
+			LibroExcel libro=LibroExcel.Abrir(nombreArchivoXLS);
+			matriz.CamposFijos=new string[]{"lote","version"};
+			matriz.ValoresFijos=new object[]{"único",111};
+			matriz.PasarHoja(
+				libro.Rango("D3","F4"),
+				new RangoExcel[]{
+					libro.Rango("A3","A4"),
+					libro.Rango("B3","B4"),
+					libro.Rango("C3","C4")
+				},new RangoExcel[]{
+					libro.Rango("D1","F1"),
+					libro.Rango("D2","F2")
+				},
+				"indice",
+				new string[]{
+					"codigo","cierre","ciudad"
+				},
+				new string[]{
+					"año","trimestre"
+				}
+			);
+			object[,] dumpObtenido=receptor.DumpObject();
+			object[,] dumpEsperado=
+				{
+					{"único",111,"11101",new DateTime(2001,12,20),"Buenos Aires",2001,4,100.1},
+					{"único",111,"11101",new DateTime(2001,12,20),"Buenos Aires",2002,1,200.2},
+					{"único",111,"11101",new DateTime(2001,12,20),"Buenos Aires",2002,2,210.3},
+					{"único",111,"11102",new DateTime(2007,6,5),"Montevideo",2001,4,100.21},
+					{"único",111,"11102",new DateTime(2007,6,5),"Montevideo",2002,1,120.22},
+					{"único",111,"11102",new DateTime(2007,6,5),"Montevideo",2002,2,140.23}
+				};
+			Assert.AreEqual(dumpEsperado,dumpObtenido);
+			libro.CerrarNoHayCambios();
+		}
+	}
+	*/
 }
 #endif
