@@ -185,6 +185,11 @@ namespace Modelador
 			}
 			this.valor=(T)valor;
 		}
+		#if SuperSql
+		public virtual SentenciaUpdate.Sets Set(T valor){
+			return new SentenciaUpdate.Sets(this.NombreCampo,valor);
+		}
+		#endif                   
 	}
 	public class CampoPkTipo<T>:CampoTipo<T>{
 		public CampoPkTipo()
@@ -230,25 +235,45 @@ namespace Modelador
 			:base(db,tabla.NombreTabla)
 		{}
 	}
+	#if SuperSql
+	public abstract class PartesSentencia{
+		public abstract string ToSql(BaseDatos db);
+	}
 	public class SentenciaUpdate{
+		BaseDatos db;
 		string parteUpdate;
-		string parteSet;
-		public SentenciaUpdate(Tabla tabla){
-			parteUpdate="update "+tabla.NombreTabla;
+		public SentenciaUpdate(BaseDatos db,Tabla tabla,Sets primerSet,params Sets[] sets){
+			this.db=db;
+			parteUpdate="UPDATE "+this.db.StuffTabla(tabla.NombreTabla)+" SET "+primerSet.ToSql(this.db);
+			foreach(Sets s in sets){
+				parteUpdate+=","+s.ToSql(this.db);
+			}
 		}
-		public SentenciaUpdate Set(Campo campo){
-			return this;
+		public class Sets:PartesSentencia{
+			string NombreCampo;
+			object Valor;
+			public Sets(string nombreCampo,object valor){
+				this.NombreCampo=nombreCampo;
+				this.Valor=valor;
+			}
+			public override string ToSql(BaseDatos db){
+				return db.StuffCampo(NombreCampo)+"="+db.StuffValor(Valor);
+			}
+		}
+		public string ToSql(){
+			return parteUpdate+";";
 		}
 	}
 	public class Ejecutador:EjecutadorSql{
-		Ejecutador(BaseDatos db)
+		public Ejecutador(BaseDatos db)
 			:base(db)
 		{
 		}
-		public SentenciaUpdate Update(Tabla tabla){
-			return new SentenciaUpdate(tabla);
+		public SentenciaUpdate Update(Tabla tabla,SentenciaUpdate.Sets primerSet,params SentenciaUpdate.Sets[] sets){
+			return new SentenciaUpdate(db,tabla,primerSet,sets);
 		}
 	}
+	#endif
 }
 namespace PrModelador
 {
@@ -263,8 +288,8 @@ namespace PrModelador
 		public prTabla(){
 		}
 		class Productos:Tabla{
-			[Pk] CampoProducto cProducto;
-			CampoNombre	cNombreProducto;
+			[Pk] public CampoProducto cProducto;
+			public CampoNombre cNombreProducto;
 		}
 		[Test]
 		public void Periodos(){
@@ -277,5 +302,15 @@ namespace PrModelador
 			Assert.AreEqual("create table productos(producto varchar(4),nombreproducto varchar(250),primary key(producto));"
 			                ,Cadena.Simplificar(pr.SentenciaCreateTable()));
 		}
+		#if SuperSql
+		[Test]
+		public void SentenciaUpdate(){
+			Productos p=new Productos();
+			BaseDatos dba=BdAccess.SinAbrir();
+			Assert.AreEqual("UPDATE [productos] SET [producto]='P1',[nombreproducto]='Producto 1';",
+			                new Ejecutador(dba).Update(p,p.cProducto.Set("P1"),p.cNombreProducto.Set("Producto 1")).ToSql());
+			
+		}
+		#endif
 	}
 }

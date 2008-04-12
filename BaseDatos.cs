@@ -24,9 +24,12 @@ namespace TodoASql
 		protected IDbCommand cmd;
 		protected EjecutadorBaseDatos(IDbConnection con)
 		{
-			Assert.IsNotNull(con);
 			this.con=con;
-			cmd=this.con.CreateCommand();
+			if(con!=null){
+				cmd=this.con.CreateCommand();
+			}
+		}
+		protected EjecutadorBaseDatos(){
 		}
 		public IDataReader ExecuteReader(SentenciaSql sentencia){
 			Assert.IsNotNull(con);
@@ -114,6 +117,10 @@ namespace TodoASql
 			:base(con)
 		{
 		}
+		protected BaseDatos()
+			:base()
+		{
+		}
 		public bool EliminarTablaSiExiste(string nombreTabla){
 			Assert.IsNotNull(cmd);
 			try{
@@ -141,12 +148,14 @@ namespace TodoASql
 				throw;
 			}
 		}
+		/*
 		public EjecutadorSql Ejecutador(EjecutadorSql.Parametros[] p){
 			return new EjecutadorSql(this,p);
 		}
 		public EjecutadorSql Ejecutador(params object[] p){
 			return new EjecutadorSql(this,p);
 		}
+		*/
 		public virtual string StuffValor<T>(T valor){
 			if(valor==null){
 				return "null";
@@ -204,7 +213,7 @@ namespace TodoASql
 		}
 	}
 	public class EjecutadorSql:EjecutadorBaseDatos,IDisposable{
-		BaseDatos db;
+		protected BaseDatos db;
 		Parametros[] param;
 		public class Parametros{
 			public string Parametro;
@@ -322,7 +331,7 @@ namespace TodoASql
 			
 		}
 		public static void ObjUsarEjectuador(BaseDatos db){
-			using(EjecutadorSql ej=db.Ejecutador(
+			using(EjecutadorSql ej=new EjecutadorSql(db,
 				new EjecutadorSql.Parametros[]{
 					new EjecutadorSql.Parametros("nombre","toto"),
 					new EjecutadorSql.Parametros("fecha",new DateTime(1969,5,6))
@@ -332,7 +341,7 @@ namespace TodoASql
                 Assert.AreEqual(1,ej.ExecuteScalar("SELECT count(*) FROM nueva_tabla_prueba WHERE nombre={nombre}"));
                 Assert.AreEqual(0,ej.ExecuteScalar("SELECT count(*) FROM nueva_tabla_prueba WHERE nombre={nombre} AND fecha={fecha}"));
 			}
-			using(EjecutadorSql ej=db.Ejecutador("nombre","tute","fecha",new DateTime(2001,12,20))){
+			using(EjecutadorSql ej=new EjecutadorSql(db,"nombre","tute","fecha",new DateTime(2001,12,20))){
 				Assert.AreEqual("toto",ej.ExecuteScalar("SELECT nombre FROM nueva_tabla_prueba WHERE fecha={fecha} ORDER BY nombre"));
                 Assert.AreEqual("tute",ej.ExecuteScalar("SELECT nombre FROM nueva_tabla_prueba WHERE nombre={nombre} ORDER BY nombre"));
                 Assert.AreEqual(0,ej.ExecuteScalar("SELECT count(*) FROM nueva_tabla_prueba WHERE nombre={nombre} AND fecha={fecha}"));
