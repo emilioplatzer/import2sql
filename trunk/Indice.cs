@@ -26,6 +26,25 @@ namespace Indices
 	public class CampoIndice:CampoReal{};
 	public class CampoFactor:CampoReal{};
 	public class CampoPeriodo:CampoChar{ public CampoPeriodo():base(4+2){} }
+	public class EjecutadorSql:TodoASql.EjecutadorSql{
+		public EjecutadorSql(BaseDatos db,Parametros[] param)
+			:base(db,param)
+		{
+		}
+		public EjecutadorSql(BaseDatos db,params object[] paramPlanos)
+			:base(db,paramPlanos)
+		{
+		}
+		/*
+		protected override string AdaptarSentecia(TodoASql.SentenciaSql sentencia)
+		{
+			return base.AdaptarSentecia(
+				sentencia.ToString()
+				.Replace("grupos#filtro","grupos.agrupacion={agrupacion}")
+			);
+		}
+		*/
+	}
 	public class RepositorioIndice:Repositorio
 	{
 		public class Productos:Tabla{
@@ -201,20 +220,22 @@ namespace Indices
 			}			
 		}
 		public void CalcularPonderadores(Grupos grupo){
-			using(EjecutadorSql ej=db.Ejecutador("agrupacion",grupo.cAgrupacion.Valor)){
+			#if SuperSql
+			using(Ejecutador ej=new Ejecutador(db)){
 				Grupos grupos=new Grupos();
+				ej.Update(grupos,grupos.cNivel.Set(0),grupos.cPonderador.Set(1.0));
 				/*
-				ej.Update(grupos)
-					.Set(grupos.cNivel.Set(0))
-					.Set(grupos.cPonderador.Set(1.0))
 					.Where(grupos.cGrupoPadre.isNull())
 					.and(grupos.cAgrupacion.igual(grupo.cAgrupacion))
 					.execute();
 					*/
+			}
+			#endif
+			using(EjecutadorSql ej=new EjecutadorSql(db,"agrupacion",grupo.cAgrupacion.Valor)){
 				ej.ExecuteNonQuery(@"
 					UPDATE grupos SET nivel=0,ponderador=1
 					  WHERE grupopadre is null 
-					    AND agrupacion={agrupacion};
+					    AND grupos#filtro;
 				");
 				for(int i=0;i<10;i++){
 				ej.ExecuteNonQuery(new SentenciaSql(db,@"
@@ -223,8 +244,8 @@ namespace Indices
 						IN (SELECT grupo 
                              FROM grupos 
                              WHERE nivel={nivel} 
-                               AND agrupacion={agrupacion})
-                        AND agrupacion={agrupacion}
+                               AND grupos#filtro)
+                        AND grupos#filtro
 				").Arg("nivel",i));
 				}
 				for(int i=9;i>=0;i--){ // Subir ponderadores nulos
@@ -280,7 +301,7 @@ namespace Indices
 			}
 		}
 		public void CalcularMesBase(Periodos per,Agrupaciones agrupacion){
-			using(EjecutadorSql ej=db.Ejecutador("periodo",per.cPeriodo.Valor,"agrupacion",agrupacion.cAgrupacion.Valor)){
+			using(EjecutadorSql ej=new EjecutadorSql(db,"periodo",per.cPeriodo.Valor,"agrupacion",agrupacion.cAgrupacion.Valor)){
 				ej.ExecuteNonQuery(@"
 					insert into calgru (periodo,agrupacion,grupo,indice,factor)
 					  select {periodo},agrupacion,grupo,100,1
@@ -290,7 +311,7 @@ namespace Indices
 			}
 		}
 		public void CalcularCalGru(Periodos periodo,Agrupaciones agrupacion){
-			using(EjecutadorSql ej=db.Ejecutador("periodo",periodo.cPeriodo.Valor,"agrupacion",agrupacion.cAgrupacion.Valor)){
+			using(EjecutadorSql ej=new EjecutadorSql(db,"periodo",periodo.cPeriodo.Valor,"agrupacion",agrupacion.cAgrupacion.Valor)){
 				/*
 				ej.ExecuteNonQuery(@"
 					insert into calgru (ano,mes,agrupacion,grupo,indice,factor)

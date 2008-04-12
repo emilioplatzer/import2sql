@@ -24,6 +24,7 @@ namespace TodoASql
 			:base(con)
 		{
 		}
+		BdAccess(){}
 		public static ADOX.CatalogClass Crear(string nombreArchivo){
 			ADOX.CatalogClass cat=new CatalogClass();
 			cat.Create("Provider=Microsoft.Jet.OLEDB.4.0;" +
@@ -37,6 +38,9 @@ namespace TodoASql
 				@"PROVIDER=Microsoft.Jet.OLEDB.4.0;Data Source="+nombreArchivo;
 			ConexionABase.Open();
 			return new BdAccess(ConexionABase);
+		}
+		public static BdAccess SinAbrir(){
+			return new BdAccess();
 		}
 		public override string ErrorCode_NoExisteTabla{ get{ return "La tabla";}}
 		public override string ErrorCode_NoExisteVista{ get{ return "No se puede encontrar";}}
