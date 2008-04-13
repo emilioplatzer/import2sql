@@ -330,7 +330,7 @@ namespace Modelador
 		{
 		}
 		public void Ejecutar(Sentencia s){
-			
+			base.ExecuteNonQuery(Dump(s));
 		}
 		public string Dump(Sentencia s){
 			StringBuilder rta=new StringBuilder();
