@@ -540,7 +540,13 @@ namespace PrModelador
 			Assert.AreEqual("create table productos(producto varchar(4),nombreproducto varchar(250),primary key(producto));"
 			                ,Cadena.Simplificar(pr.SentenciaCreateTable()));
 		}
-		#if SuperSql
+		[Test]
+		public void SentenciaInsert(){
+			Productos p=new Productos();
+			Assert.AreEqual("INSERT INTO [productos] ([producto], [nombreproducto]) SELECT [producto], [producto] as [nombreproducto] FROM [productos];",
+				new Ejecutador(db)
+				.Dump(new SentenciaInsert(p).Select(p.cProducto,p.cNombreProducto.Set(p.cProducto))));
+		}
 		[Test]
 		public void SentenciaUpdate(){
 			Productos p=new Productos();
@@ -572,6 +578,5 @@ namespace PrModelador
 				Assert.AreEqual(Esperado+";",ej.Dump(sentencia));
 			}
 		}	
-		#endif
 	}
 }

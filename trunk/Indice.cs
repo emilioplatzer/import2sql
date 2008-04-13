@@ -264,46 +264,6 @@ namespace Indices
 			}
 			#endif
 			using(EjecutadorSql ej=new EjecutadorSql(db,"agrupacion",agrupacion.cAgrupacion.Valor)){
-				/*
-				ej.ExecuteNonQuery(@"
-					UPDATE grupos SET nivel=0,ponderador=1
-					  WHERE grupopadre is null 
-					    AND grupos#filtro;
-				");
-				for(int i=0;i<10;i++){
-				ej.ExecuteNonQuery(new SentenciaSql(db,@"
-					UPDATE grupos SET nivel={nivel}+1
-					  WHERE (grupopadre) 
-						IN (SELECT grupo 
-                             FROM grupos 
-                             WHERE nivel={nivel} 
-                               AND agrupacion={agrupacion})
-                        AND agrupacion={agrupacion}
-				").Arg("nivel",i));
-				}
-				for(int i=9;i>=0;i--){ // Subir ponderadores nulos
-					if(db.GetType()==typeof(BdAccess)){
-						ej.ExecuteNonQuery(new SentenciaSql(db,@"
-							UPDATE grupos p SET p.ponderador=
-							    DSum('ponderador','grupos','grupopadre=''' & grupo & ''' and agrupacion=''' & agrupacion & '''')
-							  WHERE agrupacion={agrupacion} 
-		                        AND nivel={nivel}
-		                        AND ponderador IS NULL
-						").Arg("nivel",i));
-					}else{
-						ej.ExecuteNonQuery(new SentenciaSql(db,@"
-							UPDATE grupos SET ponderador=
-							    (SELECT sum(h.ponderador)
-							       FROM grupos h
-							       WHERE h.grupopadre=grupos.grupo
-							         AND h.agrupacion=grupos.agrupacion)
-							  WHERE agrupacion={agrupacion} 
-		                        AND nivel={nivel}
-		                        AND ponderador IS NULL
-						").Arg("nivel",i));
-					}
-				}
-				*/
 				for(int i=1;i<10;i++){
 					ej.ExecuteNonQuery(new SentenciaSql(db,@"
 						INSERT INTO auxgrupos (agrupacion,grupo,ponderadororiginal,sumaponderadorhijos)
