@@ -64,6 +64,15 @@ namespace Indices
 			public CampoPonderador cPonderador;
 			public CampoNivel cNivel;
 			public CampoLogico cEsProducto;
+			public ExpresionSql InPadresWhere(ExpresionSql e){
+				return new ExpresionSql(
+					this.cNombreGrupo,
+					new LiteralSql(" IN (SELECT "),
+					this.cGrupo,
+					new LiteralSql(" FROM grupos WHERE "),
+					e,
+					new LiteralSql(")"));
+			}
 		}
 		[Vista]
 		public class Agrupaciones:Grupos{
@@ -223,12 +232,14 @@ namespace Indices
 			#if SuperSql
 			using(Ejecutador ej=new Ejecutador(db)){
 				Grupos grupos=new Grupos();
-				/*
-				ej.Update(grupos,grupos.cNivel.Set(0),grupos.cPonderador.Set(1.0));
-					.Where(grupos.cGrupoPadre.EsNulo()
-				       .And(grupos.cAgrupacion.Igual(grupo.cAgrupacion)))
-					.Hacer();
-					*/
+				ej.Ejecutar(
+					new SentenciaUpdate(grupos,grupos.cNivel.Set(0),grupos.cPonderador.Set(1.0))
+					.Where(grupos.cGrupoPadre.EsNulo())); // .And(grupos.cAgrupacion.Igual(grupo.cAgrupacion))));
+				for(int i=0;i<10;i++){
+					ej.Ejecutar(
+						new SentenciaUpdate(grupos,grupos.cNivel.Set(i+1))
+						.Where(grupos.InPadresWhere(grupo.cNivel.Igual(i))));
+				}
 			}
 			#endif
 			using(EjecutadorSql ej=new EjecutadorSql(db,"agrupacion",grupo.cAgrupacion.Valor)){
@@ -246,8 +257,8 @@ namespace Indices
 						IN (SELECT grupo 
                              FROM grupos 
                              WHERE nivel={nivel} 
-                               AND grupos#filtro)
-                        AND grupos#filtro
+                               AND agrupacion={agrupacion})
+                        AND agrupacion={agrupacion}
 				").Arg("nivel",i));
 				}
 				for(int i=9;i>=0;i--){ // Subir ponderadores nulos
