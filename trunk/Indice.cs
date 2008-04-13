@@ -56,6 +56,10 @@ namespace Indices
 				return hoja.cPonderador.Valor/grupo.cPonderador.Valor;
 			}
 		}
+		public class Agrupaciones:Tabla{
+			[Pk] public CampoAgrupacion cAgrupacion;
+			public CampoNombre cNombreAgrupacion;
+		}
 		public class Grupos:Tabla{
 			[Pk] public CampoAgrupacion cAgrupacion;
 			[Pk] public CampoGrupo cGrupo;
@@ -66,18 +70,12 @@ namespace Indices
 			public CampoLogico cEsProducto;
 			public ExpresionSql InPadresWhere(ExpresionSql e){
 				return new ExpresionSql(
-					this.cNombreGrupo,
+					this.cGrupoPadre,
 					new LiteralSql(" IN (SELECT "),
 					this.cGrupo,
 					new LiteralSql(" FROM grupos WHERE "),
 					e,
 					new LiteralSql(")"));
-			}
-		}
-		[Vista]
-		public class Agrupaciones:Grupos{
-			public Agrupaciones(){
-				NombreTabla="grupos";
 			}
 		}
 		public class Numeros:Tabla{
@@ -130,6 +128,9 @@ namespace Indices
 			public CalGru(BaseDatos db,Periodos p,Grupos g){
 				Leer(db,p.cPeriodo,g.cAgrupacion,g.cGrupo);
 			}
+			public CalGru(BaseDatos db,Periodos p,Agrupaciones a){
+				Leer(db,p.cPeriodo,a.cAgrupacion,a.cAgrupacion);
+			}
 		}
 		RepositorioIndice(BaseDatos db)
 			:base(db)
@@ -168,28 +169,40 @@ namespace Indices
 		}
 		public Agrupaciones AbrirAgrupacion(string agrupacion){
 			Agrupaciones a=new Agrupaciones();
-			a.Leer(db,agrupacion,agrupacion);
+			a.Leer(db,agrupacion);
 			return a;
 		}
 		public Grupos CrearGrupo(string codigo){
-			return CrearGrupo(codigo,null,1);
+			return CrearGrupo(codigo,codigo,"",1);
 		}
-		public Grupos CrearGrupo(string codigo,Grupos padre,double ponderador){
+		public Grupos CrearGrupo(string agrupacion,string codigo,string codigopadre,double ponderador){
 			Grupos g=new Grupos();
-			string agrupacion;
 			using(Insertador ins=g.Insertar(db)){
 				g.cGrupo[ins]=codigo;
 				g.cPonderador[ins]=ponderador;
-				if(padre==null){
-					agrupacion=codigo;
+				if(codigopadre==""){
 				}else{
-					agrupacion=padre.cAgrupacion.Valor;
-					g.cGrupoPadre[ins]=padre.cGrupo;
+					g.cGrupoPadre[ins]=codigopadre;
 				}
 				g.cAgrupacion[ins]=agrupacion;
 				// ins.InsertarSiHayCampos();
 			}
 			return AbrirGrupo(agrupacion,codigo);
+		}
+		public Grupos CrearGrupo(string codigo,Grupos padre,double ponderador){
+			return CrearGrupo(padre.cAgrupacion.Valor,codigo,padre.cGrupo.Valor,ponderador);
+		}
+		public Grupos CrearGrupo(string codigo,Agrupaciones raiz,double ponderador){
+			return CrearGrupo(raiz.cAgrupacion.Valor,codigo,raiz.cAgrupacion.Valor,ponderador);
+		}
+		public Agrupaciones CrearAgrupacion(string codigo){
+			Agrupaciones a=new Agrupaciones();
+			using(Insertador ins=a.Insertar(db)){
+				a.cAgrupacion[ins]=codigo;
+				// ins.InsertarSiHayCampos();
+			}
+			CrearGrupo(codigo,codigo,null,1);
+			return AbrirAgrupacion(codigo);
 		}
 		public void CrearHoja(Productos producto,Grupos grupo,double ponderador){
 			Grupos g=new Grupos();
@@ -228,9 +241,9 @@ namespace Indices
 				// ins.InsertarSiHayCampos();
 			}			
 		}
-		public void CalcularPonderadores(Grupos grupo){
+		public void CalcularPonderadores(Agrupaciones agrupacion){
 			#if SuperSql
-			using(Ejecutador ej=new Ejecutador(db)){
+			using(Ejecutador ej=new Ejecutador(db,agrupacion)){
 				Grupos grupos=new Grupos();
 				ej.Ejecutar(
 					new SentenciaUpdate(grupos,grupos.cNivel.Set(0),grupos.cPonderador.Set(1.0))
@@ -238,18 +251,17 @@ namespace Indices
 				for(int i=0;i<10;i++){
 					ej.Ejecutar(
 						new SentenciaUpdate(grupos,grupos.cNivel.Set(i+1))
-						.Where(grupos.InPadresWhere(grupo.cNivel.Igual(i))));
+						.Where(grupos.InPadresWhere(grupos.cNivel.Igual(i))));
 				}
 			}
 			#endif
-			using(EjecutadorSql ej=new EjecutadorSql(db,"agrupacion",grupo.cAgrupacion.Valor)){
+			using(EjecutadorSql ej=new EjecutadorSql(db,"agrupacion",agrupacion.cAgrupacion.Valor)){
 				/*
 				ej.ExecuteNonQuery(@"
 					UPDATE grupos SET nivel=0,ponderador=1
 					  WHERE grupopadre is null 
 					    AND grupos#filtro;
 				");
-				*/
 				for(int i=0;i<10;i++){
 				ej.ExecuteNonQuery(new SentenciaSql(db,@"
 					UPDATE grupos SET nivel={nivel}+1
@@ -261,6 +273,7 @@ namespace Indices
                         AND agrupacion={agrupacion}
 				").Arg("nivel",i));
 				}
+				*/
 				for(int i=9;i>=0;i--){ // Subir ponderadores nulos
 					if(db.GetType()==typeof(BdAccess)){
 						ej.ExecuteNonQuery(new SentenciaSql(db,@"
@@ -525,16 +538,17 @@ namespace Indices
 			RepositorioIndice.Productos P100=repo.CrearProducto("P100");
 			RepositorioIndice.Productos P101=repo.CrearProducto("P101");
 			RepositorioIndice.Productos P102=repo.CrearProducto("P102");
-			RepositorioIndice.Grupos A=repo.CrearGrupo("A");
+			RepositorioIndice.Agrupaciones A=repo.CrearAgrupacion("A");
 			RepositorioIndice.Grupos A1=repo.CrearGrupo("A1",A,60);
 			RepositorioIndice.Grupos A2=repo.CrearGrupo("A2",A,40);
-			RepositorioIndice.Grupos T=repo.CrearGrupo("T");
+			RepositorioIndice.Agrupaciones T=repo.CrearAgrupacion("T");
+			RepositorioIndice.Grupos TU=repo.AbrirGrupo("T","T");
 			repo.CrearHoja(P100,A1,60);
 			repo.CrearHoja(P101,A1,40);
 			repo.CrearHoja(P102,A2,100);
-			repo.CrearHoja(P100,T,60);
-			repo.CrearHoja(P101,T,40);
-			repo.CrearHoja(P102,T,100);
+			repo.CrearHoja(P100,TU,60);
+			repo.CrearHoja(P101,TU,40);
+			repo.CrearHoja(P102,TU,100);
 			repo.CalcularPonderadores(A);
 			repo.CalcularPonderadores(T);
 		}
