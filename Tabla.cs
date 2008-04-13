@@ -44,6 +44,7 @@ namespace Modelador
       				Campo c=(Campo)assem.CreateInstance(m.FieldType.FullName);
       				c.Nombre=m.Name.Substring(1);
       				c.NombreCampo=c.Nombre.ToLowerInvariant();
+      				c.TablaContenedora=this;
       				m.SetValue(this,c);
       				foreach (System.Attribute attr in m.GetCustomAttributes(true)){
       					if(attr is AplicadorCampo){
@@ -184,6 +185,9 @@ namespace Modelador
 		{
 			return db.StuffTabla(this.NombreTabla);
 		}
+		public ExpresionSql SelectSuma(Campo CampoSumar,ExpresionSql ExpresionWhere){
+			return new ExpresionSql.SelectSuma(this,CampoSumar,ExpresionWhere);
+		}
 	}
 	public abstract class Campo:Sqlizable
 	{
@@ -191,7 +195,7 @@ namespace Modelador
 		public string NombreCampo;
 		public abstract string TipoCampo{ get; }
 		public bool EsPk;
-		Tabla TablaContenedora;
+		public Tabla TablaContenedora;
 		public Campo(){
 		}
 		public object this[InsertadorSql ins]{
@@ -256,6 +260,9 @@ namespace Modelador
 		#if SuperSql
 		public virtual SentenciaUpdate.Sets Set(T valor){
 			return new SentenciaUpdate.Sets(this,new ExpresionSql(new ValorSql<T>(valor)));
+		}
+		public virtual SentenciaUpdate.Sets Set(ExpresionSql expresion){
+			return new SentenciaUpdate.Sets(this,expresion);
 		}
 		#endif                   
 	}
@@ -421,7 +428,7 @@ namespace Modelador
 		}
 	}
 	public class ExpresionSql:Sqlizable{
-		PartesSql Partes=new PartesSql();
+		public PartesSql Partes=new PartesSql();
 		public ExpresionSql(params Sqlizable[] Partes){
 			this.Partes.AddRange(Partes);
 		}
@@ -451,6 +458,57 @@ namespace Modelador
 				rta.Append(s.ToSql(db));
 			}
 			return rta.ToString();
+		}
+		public class SelectSuma:Sqlizable{
+			Tabla TablaBase;
+			Campo CampoSumar;
+			ExpresionSql ExpresionWhere;
+			public SelectSuma(Tabla TablaBase,Campo CampoSumar,ExpresionSql ExpresionWhere){
+				this.TablaBase=TablaBase;
+				this.CampoSumar=CampoSumar;
+				this.ExpresionWhere=ExpresionWhere;
+			}
+			public override string ToSql(BaseDatos db)
+			{
+				// return "";
+				StringBuilder rta=new StringBuilder();
+				if(db is BdAccess){
+					rta.Append("DSum('"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
+					           +db.StuffTabla(TablaBase.NombreTabla)+"','");
+					foreach(Sqlizable s in ExpresionWhere.Partes){
+						if(s is Campo){
+							Campo c=s as Campo;
+							if(c.TablaContenedora!=TablaBase){
+								rta.Append("''' & "+c.ToSql(db)+" & '''");
+							}else{
+								rta.Append(db.StuffCampo(c.NombreCampo));
+							}
+						}else{
+							rta.Append(s.ToSql(db));
+						}
+					}
+					rta.Append("')");
+					return rta.ToString();
+				}else{
+					return "(SELECT sum("+CampoSumar.ToSql(db)+") FROM "+TablaBase.ToSql(db)+" WHERE "+ExpresionWhere.ToSql(db)+")";
+					/*
+					foreach(Sqlizable s in ExpresionWhere){
+						rta.Append(s.ToSql(db));
+					}
+					*/
+				}
+				/* 
+							    DSum('ponderador','grupos','grupopadre=''' & grupo & ''' and agrupacion=''' & agrupacion & '''')
+
+							    (SELECT sum(h.ponderador)
+							       FROM grupos h
+							       WHERE h.grupopadre=grupos.grupo
+							         AND h.agrupacion=grupos.agrupacion)
+				 */ 
+			}
+			public static implicit operator ExpresionSql(SelectSuma ss){
+				return new ExpresionSql(ss);
+			}
 		}
 	}
 	#endif

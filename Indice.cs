@@ -251,7 +251,15 @@ namespace Indices
 				for(int i=0;i<10;i++){
 					ej.Ejecutar(
 						new SentenciaUpdate(grupos,grupos.cNivel.Set(i+1))
-						.Where(grupos.InPadresWhere(grupos.cNivel.Igual(i))));
+						.Where(grupos.InPadresWhere(grupos.cNivel.Igual(i)))
+					);
+				}
+				for(int i=9;i>=0;i--){ // Subir ponderadores nulos
+					Grupos hijos=new Grupos();
+					ej.Ejecutar(
+						new SentenciaUpdate(grupos,grupos.cPonderador.Set(hijos.SelectSuma(hijos.cPonderador,hijos.cGrupoPadre.Igual(grupos.cGrupo))))
+						.Where(grupos.cNivel.Igual(i).And(grupos.cPonderador.EsNulo()))
+					);
 				}
 			}
 			#endif
@@ -273,7 +281,6 @@ namespace Indices
                         AND agrupacion={agrupacion}
 				").Arg("nivel",i));
 				}
-				*/
 				for(int i=9;i>=0;i--){ // Subir ponderadores nulos
 					if(db.GetType()==typeof(BdAccess)){
 						ej.ExecuteNonQuery(new SentenciaSql(db,@"
@@ -296,6 +303,7 @@ namespace Indices
 						").Arg("nivel",i));
 					}
 				}
+				*/
 				for(int i=1;i<10;i++){
 					ej.ExecuteNonQuery(new SentenciaSql(db,@"
 						INSERT INTO auxgrupos (agrupacion,grupo,ponderadororiginal,sumaponderadorhijos)
@@ -511,13 +519,14 @@ namespace Indices
 		RepositorioIndice repo;
 		public ProbarIndiceD3(){
 			BaseDatos db;
-			switch(3){
+			switch(1){
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					db.EliminarTablaSiExiste("calgru");
 					db.EliminarTablaSiExiste("calpro");
 					db.EliminarTablaSiExiste("periodos");
 					db.EliminarTablaSiExiste("grupos");
+					db.EliminarTablaSiExiste("agrupaciones");
 					db.EliminarTablaSiExiste("productos");
 					db.EliminarTablaSiExiste("numeros");
 					db.EliminarTablaSiExiste("auxgrupos");
