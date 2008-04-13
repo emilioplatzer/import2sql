@@ -245,6 +245,7 @@ namespace Indices
 			#if SuperSql
 			using(Ejecutador ej=new Ejecutador(db,agrupacion)){
 				Grupos grupos=new Grupos();
+				Grupos hijos=new Grupos();
 				ej.Ejecutar(
 					new SentenciaUpdate(grupos,grupos.cNivel.Set(0),grupos.cPonderador.Set(1.0))
 					.Where(grupos.cGrupoPadre.EsNulo())); // .And(grupos.cAgrupacion.Igual(grupo.cAgrupacion))));
@@ -255,12 +256,20 @@ namespace Indices
 					);
 				}
 				for(int i=9;i>=0;i--){ // Subir ponderadores nulos
-					Grupos hijos=new Grupos();
 					ej.Ejecutar(
 						new SentenciaUpdate(grupos,grupos.cPonderador.Set(hijos.SelectSuma(hijos.cPonderador,hijos.cGrupoPadre.Igual(grupos.cGrupo))))
 						.Where(grupos.cNivel.Igual(i).And(grupos.cPonderador.EsNulo()))
 					);
 				}
+				AuxGrupos auxgrupos=new AuxGrupos();
+				/*
+				for(int i=1;i<10;i++){
+					ej.Ejecutar(
+						new SentenciaInsert(auxgrupos)
+						.Select(grupos.cAgrupacion,grupos.cGrupo,grupos.cPonderador,auxgrupos.cSumaPonderadorHijos.EsSuma(hijos.cPonderador))
+					);
+				}
+				*/
 			}
 			#endif
 			using(EjecutadorSql ej=new EjecutadorSql(db,"agrupacion",agrupacion.cAgrupacion.Valor)){

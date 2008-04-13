@@ -241,7 +241,7 @@ namespace Modelador
 	}
 	public class CampoTipo<T>:Campo{
 		protected T valor;
-		public virtual T Valor{ get{ return valor;} }
+		public virtual T Valor{ get{ return valor;} set{ valor=value; } }
 		public override object ValorSinTipo{ get{ return valor;} }
 		public override string TipoCampo{ 
 			get {
@@ -465,6 +465,7 @@ namespace Modelador
 					coma.AgregarEn(todas,t);
 				}
 			}
+			todas.AddRange(PartesWhere());
 			return todas;
 		}
 	}
@@ -620,9 +621,21 @@ namespace PrModelador
 	public class prTabla{
 		public prTabla(){
 		}
+		class Empresas:Tabla{
+			[Pk] public CampoEntero cEmpresa;
+			public CampoNombre cNombreEmpresa;
+		}
 		class Productos:Tabla{
+			[Pk] public CampoEntero cEmpresa;
 			[Pk] public CampoProducto cProducto;
 			public CampoNombre cNombreProducto;
+		}
+		class PartesProductos:Tabla{
+			[Pk] public CampoEntero cEmpresa;
+			[Pk] public CampoProducto cProducto;
+			[Pk] public CampoEntero cParte;
+			public CampoNombre cNombreParte;
+			public CampoEntero cCantidad;
 		}
 		[Test]
 		public void Periodos(){
@@ -632,7 +645,7 @@ namespace PrModelador
 			Assert.AreEqual("create table periodos(ano integer,mes integer,anoant integer,mesant integer,primary key(ano,mes));"
 			                ,Cadena.Simplificar(p.SentenciaCreateTable()));
 			Productos pr=new Productos();
-			Assert.AreEqual("create table productos(producto varchar(4),nombreproducto varchar(250),primary key(producto));"
+			Assert.AreEqual("create table productos(empresa integer,producto varchar(4),nombreproducto varchar(250),primary key(empresa,producto));"
 			                ,Cadena.Simplificar(pr.SentenciaCreateTable()));
 		}
 		[Test]
@@ -667,12 +680,26 @@ namespace PrModelador
 			Esperado+=" AND [nombreproducto]<>'P0'";
 			Assert.AreEqual(Esperado+";",new Ejecutador(dba).Dump(sentencia));
 			Assert.AreEqual(Esperado+";",new Ejecutador(dba).Dump(sentencia));
-			Productos contexto=new Productos();
-			contexto.cProducto.AsignarValor("P_este");
+			Empresas contexto=new Empresas();
+			contexto.cEmpresa.AsignarValor(14);
 			using(Ejecutador ej=new Ejecutador(dba,contexto)){
-				Esperado+=" AND [producto]='P_este'";
+				Esperado+=" AND [empresa]=14";
 				Assert.AreEqual(Esperado+";",ej.Dump(sentencia));
 			}
 		}	
+		[Test]
+		public void SentenciaCompuesta(){
+			Productos p=new Productos();
+			BaseDatos dba=BdAccess.SinAbrir();
+			Empresas e=new Empresas();
+			e.cEmpresa.Valor=13;
+			using(Ejecutador ej=new Ejecutador(dba,e)){
+				Sentencia s=
+					new SentenciaSelect(e.cEmpresa,e.cNombreEmpresa)
+					.Where(e.cEmpresa.Distinto(13));
+				Assert.AreEqual("SELECT [empresa], [nombreempresa] FROM [empresas] WHERE [empresa]<>13;",
+				                ej.Dump(s));
+			}
+		}
 	}
 }
