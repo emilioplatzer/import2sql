@@ -18,6 +18,7 @@ using Modelador;
 using Indices;
 using PartesSql=System.Collections.Generic.List<Modelador.Sqlizable>;
 using TablasSql=System.Collections.Generic.List<Modelador.Tabla>;
+using CamposSql=System.Collections.Generic.List<Modelador.Campo>;
 
 namespace Modelador
 {
@@ -141,8 +142,8 @@ namespace Modelador
   			}
 			return this;
 		}
-		public virtual System.Collections.Generic.List<Campo> CamposPk(){
-			System.Collections.Generic.List<Campo> rta=new System.Collections.Generic.List<Campo>();
+		public virtual CamposSql CamposPk(){
+			CamposSql rta=new CamposSql();
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
@@ -155,7 +156,7 @@ namespace Modelador
   			return rta;
 		}
 		public virtual bool TieneElCampo(Campo campo){
-			System.Collections.Generic.List<Campo> rta=new System.Collections.Generic.List<Campo>();
+			CamposSql rta=new CamposSql();
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
@@ -168,7 +169,7 @@ namespace Modelador
   			return false;
 		}
 		public virtual Campo CampoIndirecto(Campo campo){
-			System.Collections.Generic.List<Campo> rta=new System.Collections.Generic.List<Campo>();
+			CamposSql rta=new CamposSql();
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
@@ -189,8 +190,7 @@ namespace Modelador
 			return new ExpresionSql.SelectSuma(this,CampoSumar,ExpresionWhere);
 		}
 	}
-	public abstract class Campo:Sqlizable
-	{
+	public abstract class Campo:Sqlizable{
 		public string Nombre;
 		public string NombreCampo;
 		public abstract string TipoCampo{ get; }
@@ -230,6 +230,14 @@ namespace Modelador
 		public ExpresionSql Distinto<T>(T expresion){
 			return Comparado<T>("<>",expresion);
 		}
+		public ExpresionSql ExpresionBase;
+		public Campo Es(ExpresionSql expresion){
+			ExpresionBase=expresion;
+			return this;
+		}
+		public Campo Es(Campo campo){
+			return Es(new ExpresionSql(campo));
+		}
 	}
 	public class CampoTipo<T>:Campo{
 		protected T valor;
@@ -263,6 +271,9 @@ namespace Modelador
 		}
 		public virtual SentenciaUpdate.Sets Set(ExpresionSql expresion){
 			return new SentenciaUpdate.Sets(this,expresion);
+		}
+		public virtual SentenciaUpdate.Sets Set(Campo campo){
+			return new SentenciaUpdate.Sets(this,new ExpresionSql(campo));
 		}
 		#endif                   
 	}
@@ -394,8 +405,93 @@ namespace Modelador
 			return todas;
 		}
 	}
+	public class ParteSeparadora{
+		string Comenzador;
+		string Separador;
+		bool esPrimero=true;
+		public ParteSeparadora(string Comenzador,string Separador){
+			this.Comenzador=Comenzador;
+			this.Separador=Separador;
+		}
+		public ParteSeparadora(string Separador){
+			this.Separador=Separador;
+		}
+		public void AgregarEn(PartesSql Partes,params Sqlizable[] Parte){
+			if(esPrimero){
+				if(Comenzador!=null){
+					Partes.Add(new LiteralSql(Comenzador));
+				}
+				esPrimero=false;
+			}else{
+				Partes.Add(new LiteralSql(Separador));
+			}
+			Partes.AddRange(Parte);
+		}
+	}
+	public class SentenciaSelect:Sentencia{
+		TablasSql TablasUsadas=new TablasSql();
+		protected CamposSql Campos=new CamposSql();
+		public SentenciaSelect(params Campo[] Campos){
+			ParteSeparadora coma=new ParteSeparadora(", ");
+			this.Campos.AddRange(Campos);
+		}
+		public override TablasSql Tablas(){
+			return TablasUsadas;
+		}
+		public override PartesSql Partes(){
+			PartesSql todas=new PartesSql();
+			todas.Add(new LiteralSql("SELECT "));
+			{
+				ParteSeparadora coma=new ParteSeparadora(", ");
+				foreach(Campo c in Campos){
+					ExpresionSql expresion=c.ExpresionBase;
+					if(expresion!=null){
+						coma.AgregarEn(todas,expresion,new LiteralSql(" AS "),c);
+					}else{
+						coma.AgregarEn(todas,c);
+					}
+					Tabla t=c.TablaContenedora;
+					if(t!=null){
+						if(TablasUsadas.IndexOf(t)<0){
+							TablasUsadas.Add(t);
+						}
+					}
+				}
+			}
+			{
+				ParteSeparadora coma=new ParteSeparadora(", ");
+				todas.Add(new LiteralSql(" FROM "));
+				foreach(Tabla t in TablasUsadas){
+					coma.AgregarEn(todas,t);
+				}
+			}
+			return todas;
+		}
+	}
+	public class SentenciaInsert:SentenciaSelect{
+		Tabla TablaBase;
+		public SentenciaInsert(Tabla TablaBase){
+			this.TablaBase=TablaBase;	
+		}
+		public SentenciaInsert Select(params Campo[] Campos){
+			this.Campos.AddRange(Campos);
+			return this;
+		}
+		public override PartesSql Partes(){
+			PartesSql todas=new PartesSql();
+			todas.Add(new LiteralSql("INSERT INTO "));
+			todas.Add(TablaBase);
+			ParteSeparadora coma=new ParteSeparadora(" (",", ");
+			foreach(Campo c in Campos){
+				coma.AgregarEn(todas,c);
+			}
+			todas.Add(new LiteralSql(") "));
+			todas.AddRange(base.Partes());
+			return todas;
+		}
+	}
 	public class Ejecutador:TodoASql.EjecutadorSql{
-		System.Collections.Generic.List<Campo> CamposContexto=new System.Collections.Generic.List<Campo>();
+		CamposSql CamposContexto=new CamposSql();
 		public Ejecutador(BaseDatos db,params Tabla[] TablasContexto)
 			:base(db)
 		{
@@ -451,8 +547,7 @@ namespace Modelador
 			nueva.Add(new LiteralSql(")"));
 			return new ExpresionSql(nueva);
 		}
-		public override string ToSql(BaseDatos db)
-		{
+		public override string ToSql(BaseDatos db){
 			StringBuilder rta=new StringBuilder();
 			foreach(Sqlizable s in Partes){
 				rta.Append(s.ToSql(db));
@@ -543,9 +638,10 @@ namespace PrModelador
 		[Test]
 		public void SentenciaInsert(){
 			Productos p=new Productos();
-			Assert.AreEqual("INSERT INTO [productos] ([producto], [nombreproducto]) SELECT [producto], [producto] as [nombreproducto] FROM [productos];",
-				new Ejecutador(db)
-				.Dump(new SentenciaInsert(p).Select(p.cProducto,p.cNombreProducto.Set(p.cProducto))));
+			BaseDatos dba=BdAccess.SinAbrir();
+			Assert.AreEqual("INSERT INTO [productos] ([producto], [nombreproducto]) SELECT [producto], [producto] AS [nombreproducto] FROM [productos];",
+				new Ejecutador(dba)
+				.Dump(new SentenciaInsert(p).Select(p.cProducto,p.cNombreProducto.Es(p.cProducto))));
 		}
 		[Test]
 		public void SentenciaUpdate(){
