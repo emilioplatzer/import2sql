@@ -16,10 +16,11 @@ using NUnit.Framework;
 using TodoASql;
 using Modelador;
 using Indices;
+using PartesSql=System.Collections.Generic.List<Modelador.Sqlizable>;
 
 namespace Modelador
 {
-	public abstract class Tabla
+	public abstract class Tabla:Sqlizable
 	{
 		public string NombreTabla;
 		public BaseDatos db;
@@ -138,13 +139,18 @@ namespace Modelador
   			}
 			return this;
 		}
+		public override string ToSql(BaseDatos db)
+		{
+			return db.StuffTabla(this.NombreTabla);
+		}
 	}
-	public abstract class Campo 
+	public abstract class Campo:Sqlizable
 	{
 		public string Nombre;
 		public string NombreCampo;
 		public abstract string TipoCampo{ get; }
 		public bool EsPk;
+		Tabla TablaContenedora;
 		public Campo(){
 		}
 		public object this[InsertadorSql ins]{
@@ -158,6 +164,27 @@ namespace Modelador
 		}
 		public abstract object ValorSinTipo{ get; }
 		public abstract void AsignarValor(object valor);
+		/*
+		public void Entablar(Tabla tabla){ // marcarlo como perteneciente a la tabla
+			TablaContenedora=tabla;
+		}
+		*/
+		public virtual ExpresionSql EsNulo(){
+			return new ExpresionSql(this,new LiteralSql(" IS NULL"));
+		}
+		public override string ToSql(BaseDatos db)
+		{
+			return db.StuffCampo(this.NombreCampo);
+		}
+		public ExpresionSql Comparado<T>(string OperadorTextual,T expresion){
+			return new ExpresionSql(this,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
+		}
+		public ExpresionSql Igual<T>(T expresion){
+			return Comparado<T>("=",expresion);
+		}
+		public ExpresionSql Distinto<T>(T expresion){
+			return Comparado<T>("<>",expresion);
+		}
 	}
 	public class CampoTipo<T>:Campo{
 		protected T valor;
@@ -187,7 +214,7 @@ namespace Modelador
 		}
 		#if SuperSql
 		public virtual SentenciaUpdate.Sets Set(T valor){
-			return new SentenciaUpdate.Sets(this.NombreCampo,valor);
+			return new SentenciaUpdate.Sets(this,new ExpresionSql(new ValorSql<T>(valor)));
 		}
 		#endif                   
 	}
@@ -236,41 +263,114 @@ namespace Modelador
 		{}
 	}
 	#if SuperSql
-	public abstract class PartesSentencia{
+	public abstract class Sqlizable{
 		public abstract string ToSql(BaseDatos db);
 	}
-	public class SentenciaUpdate{
-		BaseDatos db;
-		string parteUpdate;
-		public SentenciaUpdate(BaseDatos db,Tabla tabla,Sets primerSet,params Sets[] sets){
-			this.db=db;
-			parteUpdate="UPDATE "+this.db.StuffTabla(tabla.NombreTabla)+" SET "+primerSet.ToSql(this.db);
-			foreach(Sets s in sets){
-				parteUpdate+=","+s.ToSql(this.db);
-			}
+	public class LiteralSql:Sqlizable{
+		public string Literal;
+		public LiteralSql(string Literal){
+			this.Literal=Literal;
 		}
-		public class Sets:PartesSentencia{
-			string NombreCampo;
-			object Valor;
-			public Sets(string nombreCampo,object valor){
-				this.NombreCampo=nombreCampo;
-				this.Valor=valor;
-			}
-			public override string ToSql(BaseDatos db){
-				return db.StuffCampo(NombreCampo)+"="+db.StuffValor(Valor);
-			}
-		}
-		public string ToSql(){
-			return parteUpdate+";";
+		public override string ToSql(BaseDatos db){
+			return Literal;
 		}
 	}
-	public class Ejecutador:EjecutadorSql{
+	public class ValorSql<T>:Sqlizable{
+		public T Valor;
+		public ValorSql(T Valor){
+			this.Valor=Valor;
+		}
+		public override string ToSql(BaseDatos db){
+			if(Valor is Sqlizable){
+				Sqlizable s=Valor as Sqlizable;
+				return s.ToSql(db);
+			}
+			return db.StuffValor(Valor);
+		}
+	}
+	public abstract class Sentencia{
+		public abstract PartesSql Partes();
+	}
+	public class SentenciaUpdate:Sentencia{
+		PartesSql ParteSet=new PartesSql();
+		public SentenciaUpdate(Tabla tabla,Sets primerSet,params Sets[] sets){
+			ParteSet.Add(new LiteralSql("UPDATE "));
+			ParteSet.Add(tabla);
+			ParteSet.Add(new LiteralSql(" SET "));
+			ParteSet.Add(primerSet.CampoAsignado);
+			ParteSet.Add(new LiteralSql("="));
+			ParteSet.Add(primerSet.ValorAsignar);
+			foreach(Sets s in sets){
+				ParteSet.Add(new LiteralSql(", "));
+				ParteSet.Add(s.CampoAsignado);
+				ParteSet.Add(new LiteralSql("="));
+				ParteSet.Add(s.ValorAsignar);
+			}
+		}
+		public class Sets{
+			public Campo CampoAsignado;
+			public ExpresionSql ValorAsignar;
+			public Sets(Campo CampoAsignado,ExpresionSql ValorAsignar){
+				this.CampoAsignado=CampoAsignado;
+				this.ValorAsignar=ValorAsignar;
+			}
+		}
+		public SentenciaUpdate Where(ExpresionSql expresion){
+			ParteSet.Add(new LiteralSql(" WHERE "));
+			ParteSet.Add(expresion);
+			return this;
+		}
+		public override PartesSql Partes(){
+			return ParteSet;
+		}
+	}
+	public class Ejecutador:TodoASql.EjecutadorSql{
 		public Ejecutador(BaseDatos db)
 			:base(db)
 		{
 		}
-		public SentenciaUpdate Update(Tabla tabla,SentenciaUpdate.Sets primerSet,params SentenciaUpdate.Sets[] sets){
-			return new SentenciaUpdate(db,tabla,primerSet,sets);
+		public void Ejecutar(Sentencia s){
+			
+		}
+		public string Dump(Sentencia s){
+			StringBuilder rta=new StringBuilder();
+			foreach(Sqlizable p in s.Partes()){
+				rta.Append(p.ToSql(db));
+			}
+			rta.Append(";");
+			return rta.ToString();
+		}
+	}
+	public class ExpresionSql:Sqlizable{
+		PartesSql Partes=new PartesSql();
+		public ExpresionSql(params Sqlizable[] Partes){
+			this.Partes.AddRange(Partes);
+		}
+		ExpresionSql(PartesSql Partes){
+			this.Partes=Partes;
+		}
+		public virtual ExpresionSql And(ExpresionSql otra){
+			PartesSql nueva=Partes;
+			nueva.Add(new LiteralSql(" AND "));
+			nueva.AddRange(otra.Partes);
+			return new ExpresionSql(nueva);
+		}
+		public virtual ExpresionSql Or(ExpresionSql otra){
+			PartesSql nueva=new PartesSql();
+			nueva.Add(new LiteralSql("("));
+			nueva.AddRange(Partes);
+			nueva.Add(new LiteralSql(" OR "));
+			nueva.AddRange(otra.Partes);
+			nueva.Add(new LiteralSql(")"));
+			return new ExpresionSql(nueva);
+		}
+		public override string ToSql(BaseDatos db)
+		{
+			StringBuilder rta=new StringBuilder();
+			foreach(Sqlizable s in Partes){
+				rta.Append(s.ToSql(db));
+			}
+			return rta.ToString();
 		}
 	}
 	#endif
@@ -307,10 +407,15 @@ namespace PrModelador
 		public void SentenciaUpdate(){
 			Productos p=new Productos();
 			BaseDatos dba=BdAccess.SinAbrir();
-			Assert.AreEqual("UPDATE [productos] SET [producto]='P1',[nombreproducto]='Producto 1';",
-			                new Ejecutador(dba).Update(p,p.cProducto.Set("P1"),p.cNombreProducto.Set("Producto 1")).ToSql());
-			
-		}
+			Assert.AreEqual("UPDATE [productos] SET [producto]='P1', [nombreproducto]='Producto 1';",
+			                new Ejecutador(dba)
+			                .Dump(new SentenciaUpdate(p,p.cProducto.Set("P1"),p.cNombreProducto.Set("Producto 1"))));
+			Assert.AreEqual("UPDATE [productos] SET [producto]='P1', [nombreproducto]='Producto 1' WHERE [producto]='P3' AND ([nombreproducto] IS NULL OR [nombreproducto]<>[producto]);",
+			                new Ejecutador(dba)
+			                .Dump(new SentenciaUpdate(p,p.cProducto.Set("P1"),p.cNombreProducto.Set("Producto 1"))
+			                      .Where(p.cProducto.Igual("P3").And(
+			                      	p.cNombreProducto.EsNulo().Or(p.cNombreProducto.Distinto(p.cProducto))))));
+		}	
 		#endif
 	}
 }

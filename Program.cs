@@ -19,9 +19,9 @@ namespace TodoASql
 		public static void Main(string[] args)
 		{
 			// new probarLibroExcel().UltimoFilasyColumnas();
-			new ProcesoLevantarPlanillasCVP().TraerPlanillasRecepcion();
+			// new ProcesoLevantarPlanillasCVP().TraerPlanillasRecepcion();
 			// new CVP().CreacionTablas();
-			// new prTabla().Periodos();
+			new prTabla().SentenciaUpdate();
 			// new PruebasReflexion().NombresMiembros();
 		    // new ProbarSqLite().ConexionSqLite();
 		    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();

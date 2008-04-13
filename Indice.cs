@@ -223,20 +223,22 @@ namespace Indices
 			#if SuperSql
 			using(Ejecutador ej=new Ejecutador(db)){
 				Grupos grupos=new Grupos();
-				ej.Update(grupos,grupos.cNivel.Set(0),grupos.cPonderador.Set(1.0));
 				/*
-					.Where(grupos.cGrupoPadre.isNull())
-					.and(grupos.cAgrupacion.igual(grupo.cAgrupacion))
-					.execute();
+				ej.Update(grupos,grupos.cNivel.Set(0),grupos.cPonderador.Set(1.0));
+					.Where(grupos.cGrupoPadre.EsNulo()
+				       .And(grupos.cAgrupacion.Igual(grupo.cAgrupacion)))
+					.Hacer();
 					*/
 			}
 			#endif
 			using(EjecutadorSql ej=new EjecutadorSql(db,"agrupacion",grupo.cAgrupacion.Valor)){
+				/*
 				ej.ExecuteNonQuery(@"
 					UPDATE grupos SET nivel=0,ponderador=1
 					  WHERE grupopadre is null 
 					    AND grupos#filtro;
 				");
+				*/
 				for(int i=0;i<10;i++){
 				ej.ExecuteNonQuery(new SentenciaSql(db,@"
 					UPDATE grupos SET nivel={nivel}+1
