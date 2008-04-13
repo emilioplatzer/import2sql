@@ -464,4 +464,18 @@ namespace TodoASql
 			}
 		}
 	}
+	[TestFixture]
+	public class PrMiEntendimiento{
+		[Test]
+		public void Colecciones(){
+			System.Collections.Generic.List<string> Lista=new System.Collections.Generic.List<string>();
+			Lista.Add("Hola");
+			Lista.Add("Que");
+			System.Collections.Generic.List<string> OtraLista=new System.Collections.Generic.List<string>();
+			OtraLista.AddRange(Lista);
+			Lista.Add("Tal");
+			Assert.AreEqual(3,Lista.Count);
+			Assert.AreEqual(2,OtraLista.Count);
+		}
+	}
 }

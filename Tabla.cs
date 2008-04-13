@@ -17,6 +17,7 @@ using TodoASql;
 using Modelador;
 using Indices;
 using PartesSql=System.Collections.Generic.List<Modelador.Sqlizable>;
+using TablasSql=System.Collections.Generic.List<Modelador.Tabla>;
 
 namespace Modelador
 {
@@ -138,6 +139,46 @@ namespace Modelador
 				}
   			}
 			return this;
+		}
+		public virtual System.Collections.Generic.List<Campo> CamposPk(){
+			System.Collections.Generic.List<Campo> rta=new System.Collections.Generic.List<Campo>();
+  			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+			foreach(FieldInfo m in ms){
+				if(m.FieldType.IsSubclassOf(typeof(Campo))){
+					Campo c=(Campo)m.GetValue(this);
+					if(c.EsPk){
+						rta.Add(c);
+					}
+				}
+  			}
+  			return rta;
+		}
+		public virtual bool TieneElCampo(Campo campo){
+			System.Collections.Generic.List<Campo> rta=new System.Collections.Generic.List<Campo>();
+  			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+			foreach(FieldInfo m in ms){
+				if(m.FieldType.IsSubclassOf(typeof(Campo))){
+					Campo c=(Campo)m.GetValue(this);
+					if(c.Nombre==campo.Nombre){
+						return true;
+					}
+				}
+  			}
+  			return false;
+		}
+		public virtual Campo CampoIndirecto(Campo campo){
+			System.Collections.Generic.List<Campo> rta=new System.Collections.Generic.List<Campo>();
+  			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+			foreach(FieldInfo m in ms){
+				if(m.FieldType.IsSubclassOf(typeof(Campo))){
+					Campo c=(Campo)m.GetValue(this);
+					if(c.Nombre==campo.Nombre){
+						return c;
+					}
+				}
+  			}
+  			Assert.Fail("Debió encontrar el campo");
+  			return null;
 		}
 		public override string ToSql(BaseDatos db)
 		{
@@ -289,13 +330,32 @@ namespace Modelador
 		}
 	}
 	public abstract class Sentencia{
+		PartesSql ParteWhere=new PartesSql();
 		public abstract PartesSql Partes();
+		public abstract TablasSql Tablas();
+		public Sentencia Where(ExpresionSql expresion){
+			if(ParteWhere.Count>0){
+				ParteWhere.Add(new LiteralSql(" AND "));
+			}
+			ParteWhere.Add(expresion);
+			return this;
+		}
+		public PartesSql PartesWhere(){
+			PartesSql rta=new PartesSql();
+			if(ParteWhere.Count>0){
+				rta.Add(new LiteralSql(" WHERE "));
+				rta.AddRange(ParteWhere);
+			}
+			return rta;
+		}
 	}
 	public class SentenciaUpdate:Sentencia{
+		Tabla TablaBase;
 		PartesSql ParteSet=new PartesSql();
 		public SentenciaUpdate(Tabla tabla,Sets primerSet,params Sets[] sets){
+			TablaBase=tabla;
 			ParteSet.Add(new LiteralSql("UPDATE "));
-			ParteSet.Add(tabla);
+			ParteSet.Add(TablaBase);
 			ParteSet.Add(new LiteralSql(" SET "));
 			ParteSet.Add(primerSet.CampoAsignado);
 			ParteSet.Add(new LiteralSql("="));
@@ -315,24 +375,43 @@ namespace Modelador
 				this.ValorAsignar=ValorAsignar;
 			}
 		}
-		public SentenciaUpdate Where(ExpresionSql expresion){
-			ParteSet.Add(new LiteralSql(" WHERE "));
-			ParteSet.Add(expresion);
-			return this;
+		public override TablasSql Tablas(){
+			TablasSql rta=new TablasSql();
+			rta.Add(TablaBase);
+			return rta;
 		}
 		public override PartesSql Partes(){
-			return ParteSet;
+			PartesSql todas=new PartesSql();
+			todas.AddRange(ParteSet);
+			todas.AddRange(PartesWhere());
+			return todas;
 		}
 	}
 	public class Ejecutador:TodoASql.EjecutadorSql{
-		public Ejecutador(BaseDatos db)
+		System.Collections.Generic.List<Campo> CamposContexto=new System.Collections.Generic.List<Campo>();
+		public Ejecutador(BaseDatos db,params Tabla[] TablasContexto)
 			:base(db)
 		{
+			foreach(Tabla t in TablasContexto){
+				foreach(Campo c in t.CamposPk()){
+					if(c.ValorSinTipo!=null){
+						CamposContexto.Add(c);
+					}
+				}
+			}
 		}
 		public void Ejecutar(Sentencia s){
 			base.ExecuteNonQuery(Dump(s));
 		}
-		public string Dump(Sentencia s){
+		public string Dump(Sentencia laSentencia){
+			Sentencia s=laSentencia;
+			foreach(Tabla t in s.Tablas()){
+				foreach(Campo c in CamposContexto){
+					if(t.TieneElCampo(c)){
+						s.Where(t.CampoIndirecto(c).Igual(c.ValorSinTipo));
+					}
+				}
+			}
 			StringBuilder rta=new StringBuilder();
 			foreach(Sqlizable p in s.Partes()){
 				rta.Append(p.ToSql(db));
@@ -350,7 +429,8 @@ namespace Modelador
 			this.Partes=Partes;
 		}
 		public virtual ExpresionSql And(ExpresionSql otra){
-			PartesSql nueva=Partes;
+			PartesSql nueva=new PartesSql();
+			nueva.AddRange(Partes);
 			nueva.Add(new LiteralSql(" AND "));
 			nueva.AddRange(otra.Partes);
 			return new ExpresionSql(nueva);
@@ -410,11 +490,29 @@ namespace PrModelador
 			Assert.AreEqual("UPDATE [productos] SET [producto]='P1', [nombreproducto]='Producto 1';",
 			                new Ejecutador(dba)
 			                .Dump(new SentenciaUpdate(p,p.cProducto.Set("P1"),p.cNombreProducto.Set("Producto 1"))));
-			Assert.AreEqual("UPDATE [productos] SET [producto]='P1', [nombreproducto]='Producto 1' WHERE [producto]='P3' AND ([nombreproducto] IS NULL OR [nombreproducto]<>[producto]);",
+			string Esperado="UPDATE [productos] SET [producto]='P1', [nombreproducto]='Producto 1' WHERE [producto]='P3' AND ([nombreproducto] IS NULL OR [nombreproducto]<>[producto])";
+			Assert.AreEqual(Esperado+";",
 			                new Ejecutador(dba)
 			                .Dump(new SentenciaUpdate(p,p.cProducto.Set("P1"),p.cNombreProducto.Set("Producto 1"))
-			                      .Where(p.cProducto.Igual("P3").And(
-			                      	p.cNombreProducto.EsNulo().Or(p.cNombreProducto.Distinto(p.cProducto))))));
+			                      .Where(p.cProducto.Igual("P3")
+			                             .And(p.cNombreProducto.EsNulo()
+			                                  .Or(p.cNombreProducto.Distinto(p.cProducto))))));
+			SentenciaUpdate sentencia=new SentenciaUpdate(p,p.cProducto.Set("P1"),p.cNombreProducto.Set("Producto 1"));
+			sentencia.Where(p.cProducto.Igual("P3")
+			                .And(p.cNombreProducto.EsNulo()
+			                     .Or(p.cNombreProducto.Distinto(p.cProducto))));
+			Assert.AreEqual(1,sentencia.Tablas().Count);
+			Assert.AreEqual("productos",sentencia.Tablas()[0].NombreTabla);
+			sentencia.Where(p.cNombreProducto.Distinto("P0"));
+			Esperado+=" AND [nombreproducto]<>'P0'";
+			Assert.AreEqual(Esperado+";",new Ejecutador(dba).Dump(sentencia));
+			Assert.AreEqual(Esperado+";",new Ejecutador(dba).Dump(sentencia));
+			Productos contexto=new Productos();
+			contexto.cProducto.AsignarValor("P_este");
+			using(Ejecutador ej=new Ejecutador(dba,contexto)){
+				Esperado+=" AND [producto]='P_este'";
+				Assert.AreEqual(Esperado+";",ej.Dump(sentencia));
+			}
 		}	
 		#endif
 	}
