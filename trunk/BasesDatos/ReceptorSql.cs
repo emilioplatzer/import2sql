@@ -13,7 +13,9 @@ using System.Data;
 using System.Data.Common;
 using System.Data.OleDb;
 
-namespace TodoASql
+using Comunes;
+
+namespace BasesDatos
 {
 	public interface IParametorsReceptorSql{
 		string TablaReceptora{ get; }

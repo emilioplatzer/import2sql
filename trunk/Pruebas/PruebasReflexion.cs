@@ -12,7 +12,9 @@ using System.Reflection;
 using System.Text;
 using NUnit.Framework;
 
-namespace TodoASql
+using Comunes;
+
+namespace Pruebas
 {
 	/// <summary>
 	/// Description of PruebasReflexion.

@@ -11,7 +11,9 @@ using System;
 using System.Data;
 using System.Text;
 using NUnit.Framework;
-using TodoASql;
+
+using Comunes;
+using BasesDatos;
 using Modelador;
 
 namespace Indices
@@ -26,7 +28,7 @@ namespace Indices
 	public class CampoIndice:CampoReal{};
 	public class CampoFactor:CampoReal{};
 	public class CampoPeriodo:CampoChar{ public CampoPeriodo():base(4+2){} }
-	public class EjecutadorSql:TodoASql.EjecutadorSql{
+	public class EjecutadorSql:BasesDatos.EjecutadorSql{
 		public EjecutadorSql(BaseDatos db,Parametros[] param)
 			:base(db,param)
 		{
@@ -242,7 +244,6 @@ namespace Indices
 			}			
 		}
 		public void CalcularPonderadores(Agrupaciones agrupacion){
-			#if SuperSql
 			using(Ejecutador ej=new Ejecutador(db,agrupacion)){
 				Grupos grupos=new Grupos();
 				Grupos hijos=new Grupos();
@@ -271,7 +272,6 @@ namespace Indices
 				}
 				*/
 			}
-			#endif
 			using(EjecutadorSql ej=new EjecutadorSql(db,"agrupacion",agrupacion.cAgrupacion.Valor)){
 				for(int i=1;i<10;i++){
 					ej.ExecuteNonQuery(new SentenciaSql(db,@"
@@ -488,7 +488,7 @@ namespace Indices
 		RepositorioIndice repo;
 		public ProbarIndiceD3(){
 			BaseDatos db;
-			switch(3){
+			switch(2){
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					db.EliminarTablaSiExiste("calgru");

@@ -13,7 +13,7 @@ using System.Reflection;
 using System.ComponentModel;
 using NUnit.Framework;
 
-namespace TodoASql
+namespace Comunes
 {
 	/// <summary>
 	/// Para contener los parámetros de la aplicación.

@@ -17,7 +17,7 @@
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <DefineConstants>DEBUG;TRACE;SuperSql;SinPostgre</DefineConstants>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -46,26 +46,31 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="BaseDatos.cs" />
-    <Compile Include="BdAccess.cs" />
-    <Compile Include="Carpeta.cs" />
-    <Compile Include="CVP.cs" />
-    <Compile Include="Excel.cs" />
-    <Compile Include="Formulario.cs" />
-    <Compile Include="Indice.cs" />
-    <Compile Include="MailASql.cs" />
-    <Compile Include="MatrizExcelASql.cs" />
-    <Compile Include="Otras.cs" />
-    <Compile Include="Parametros.cs" />
-    <Compile Include="PostgreSql.cs" />
+    <Compile Include="BasesDatos\BaseDatos.cs" />
+    <Compile Include="BasesDatos\BdAccess.cs" />
+    <Compile Include="BasesDatos\PostgreSql.cs" />
+    <Compile Include="BasesDatos\ReceptorSql.cs" />
+    <Compile Include="BasesDatos\SqLite.cs" />
+    <Compile Include="Comunes\Archivo.cs" />
+    <Compile Include="Comunes\Cadena.cs" />
+    <Compile Include="Comunes\Parametros.cs" />
+    <Compile Include="DelOffice\Excel.cs" />
+    <Compile Include="DelOffice\MatrizExcelASql.cs" />
+    <Compile Include="Comunes\Carpeta.cs" />
+    <Compile Include="Comunes\Otras.cs" />
+    <Compile Include="Indices\CVP.cs" />
+    <Compile Include="Indices\Indice.cs" />
+    <Compile Include="Interactivo\Formulario.cs" />
+    <Compile Include="Interactivo\PruebaFormularios.cs" />
+    <Compile Include="Modelador\Campo.cs" />
+    <Compile Include="Modelador\PrModelador.cs" />
+    <Compile Include="Modelador\Repositorio.cs" />
+    <Compile Include="Modelador\Sentencia.cs" />
+    <Compile Include="Modelador\Tabla.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="PruebaFormularios.cs" />
-    <Compile Include="PruebasReflexion.cs" />
-    <Compile Include="ReceptorSql.cs" />
-    <Compile Include="Repositorio.cs" />
-    <Compile Include="SqLite.cs" />
-    <Compile Include="Tabla.cs" />
-    <Compile Include="UnProcesamiento.cs" />
+    <Compile Include="Pruebas\PruebasReflexion.cs" />
+    <Compile Include="Tareas\MailASql.cs" />
+    <Compile Include="Tareas\UnProcesamiento.cs" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="ADOX">
@@ -84,5 +89,13 @@
       <WrapperTool>tlbimp</WrapperTool>
       <Isolated>False</Isolated>
     </COMReference>
+    <Folder Include="Modelador" />
+    <Folder Include="Indices" />
+    <Folder Include="DelOffice" />
+    <Folder Include="Comunes" />
+    <Folder Include="BasesDatos" />
+    <Folder Include="Interactivo" />
+    <Folder Include="Tareas" />
+    <Folder Include="Pruebas" />
   </ItemGroup>
 </Project>

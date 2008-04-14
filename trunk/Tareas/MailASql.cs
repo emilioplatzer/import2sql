@@ -14,7 +14,10 @@ using System.IO;
 using System.Data;
 using NUnit.Framework;
 
-namespace TodoASql
+using Comunes;
+using BasesDatos;
+
+namespace Tareas
 {
 	/// <summary>
 	/// Description of Procesar.

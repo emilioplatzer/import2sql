@@ -14,7 +14,9 @@ using Excel = Microsoft.Office.Interop.Excel;
 #endif
 using NUnit.Framework;
 
-namespace TodoASql
+using Comunes;
+
+namespace DelOffice
 {
 #if SinOffice
 #else

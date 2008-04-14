@@ -12,7 +12,9 @@ using System.Drawing;
 using System.Windows;
 using System.Windows.Forms;
 
-namespace TodoASql
+using Comunes;
+
+namespace Interactivo
 {
 	/// <summary>
 	/// Description of PruebaFormularios.
