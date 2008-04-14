@@ -35,6 +35,7 @@ namespace PrModelador
 			[Pk] public CampoEntero cEmpresa;
 			[Pk] public CampoProducto cProducto;
 			public CampoNombre cNombreProducto;
+			[Fk] public Empresas fkEmpresas;
 		}
 		class PartesProductos:Tabla{
 			[Pk] public CampoEntero cEmpresa;
@@ -52,7 +53,7 @@ namespace PrModelador
 			Assert.AreEqual("create table periodos(ano integer,mes integer,anoant integer,mesant integer,primary key(ano,mes));"
 			                ,Cadena.Simplificar(p.SentenciaCreateTable()));
 			Productos pr=new Productos();
-			Assert.AreEqual("create table productos(empresa integer,producto varchar(4),nombreproducto varchar(250),primary key(empresa,producto));"
+			Assert.AreEqual("create table productos(empresa integer,producto varchar(4),nombreproducto varchar(250),primary key(empresa,producto),foreign key(empresa)references empresas(empresa));"
 			                ,Cadena.Simplificar(pr.SentenciaCreateTable()));
 		}
 		[Test]

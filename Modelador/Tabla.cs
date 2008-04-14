@@ -31,6 +31,7 @@ namespace Modelador
 		public string Alias;
 		public bool IniciadasFk=false;
 		public Tabla TablaRelacionada;
+		public TablasSql TablasFk;
 		public Tabla()
 		{
 			Construir();
@@ -83,6 +84,17 @@ namespace Modelador
 			}
       		pk.AppendLine(")");
       		rta.Append(pk);
+      		UsarFk();
+      		if(TablasFk!=null){
+	      		foreach(Tabla t in TablasFk){
+	      			StringBuilder camposFk=new StringBuilder();
+	      			Separador coma=new Separador(",");
+	      			foreach(Campo c in t.CamposPk()){
+	      				camposFk.Append(coma+c.NombreCampo);
+	      			}
+	      			rta.AppendLine(", foreign key ("+camposFk.ToString()+") references "+t.NombreTabla+" ("+camposFk.ToString()+")");
+	      		}
+      		}
 			rta.AppendLine(");");
 			return rta.ToString();
 		}
@@ -188,6 +200,7 @@ namespace Modelador
 		}
 		public void UsarFk(){
 			if(!IniciadasFk){
+				TablasFk=new TablasSql();
       			Assembly assem = Assembly.GetExecutingAssembly();
 	  			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 				foreach(FieldInfo m in ms){
@@ -197,6 +210,7 @@ namespace Modelador
       							Tabla nueva=(Tabla)assem.CreateInstance(m.FieldType.FullName);
       							nueva.TablaRelacionada=this;
       							m.SetValue(this,nueva);
+      							TablasFk.Add(nueva);
 	  						}
 	  					}
 	  				}
