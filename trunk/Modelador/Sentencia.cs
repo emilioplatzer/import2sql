@@ -250,9 +250,11 @@ namespace Modelador
 		public string Dump(Sentencia laSentencia){
 			Sentencia s=laSentencia;
 			foreach(Tabla t in s.Tablas()){
+				int OrdenPk=0;
 				if(t.TablaRelacionada!=null){
 					foreach(Campo c in t.CamposPk()){
-						s.Where(c.Igual(t.TablaRelacionada.CampoIndirecto(c)));
+						s.Where(c.Igual(t.CamposRelacionadosFk[OrdenPk]));
+						OrdenPk++;
 					}
 				}
 			}

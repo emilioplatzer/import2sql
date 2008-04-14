@@ -43,18 +43,39 @@ namespace PrModelador
 			[Pk] public CampoEntero cParte;
 			public CampoNombre cNombreParte;
 			public CampoEntero cCantidad;
+			[FkMixta("ant")] public CampoEntero cParteAnterior;
 			[Fk] public Productos fkProductos;
+			[FkMixta("ant")] public PartesProductos fkParteAnterior;
 		}
 		[Test]
-		public void Periodos(){
+		public void CreacionTablas(){
+			BdAccess dba=BdAccess.SinAbrir();
+			PostgreSql dbp=PostgreSql.SinAbrir();
 			Periodos p=new Periodos();
 			Assert.AreEqual(0,p.cAno.Valor);
 			Assert.AreEqual("Ano",p.cAno.Nombre);
 			Assert.AreEqual("create table periodos(ano integer,mes integer,anoant integer,mesant integer,primary key(ano,mes));"
-			                ,Cadena.Simplificar(p.SentenciaCreateTable()));
+			                ,Cadena.Simplificar(p.SentenciaCreateTable(dba)));
 			Productos pr=new Productos();
 			Assert.AreEqual("create table productos(empresa integer,producto varchar(4),nombreproducto varchar(250),primary key(empresa,producto),foreign key(empresa)references empresas(empresa));"
-			                ,Cadena.Simplificar(pr.SentenciaCreateTable()));
+			                ,Cadena.Simplificar(pr.SentenciaCreateTable(dba)));
+			PartesProductos pa=new PartesProductos();
+			Assert.AreEqual(false,dba.SoportaFkMixta);
+			pa.UsarFk();
+			Assert.AreEqual("partesproductos",pa.TablasFk[1].NombreTabla);
+			Assert.AreEqual(true,pa.TablasFk[1].EsFkMixta);
+			Assert.AreEqual("create table partesproductos(empresa integer,producto varchar(4),parte integer,nombreparte varchar(250),cantidad integer,parteanterior integer,primary key(empresa,producto,parte),foreign key(empresa,producto)references productos(empresa,producto));"
+			                ,Cadena.Simplificar(pa.SentenciaCreateTable(dba)));
+			Assert.AreEqual("create table partesproductos(empresa integer,producto varchar(4),parte integer,nombreparte varchar(250),cantidad integer,parteanterior integer,primary key(empresa,producto,parte),foreign key(empresa,producto)references productos(empresa,producto),foreign key(empresa,producto,parteanterior)references partesproductos(empresa,producto,parte));"
+			                ,Cadena.Simplificar(pa.SentenciaCreateTable(dbp)));
+			/*
+			[Pk] public CampoEntero cEmpresa;
+			[Pk] public CampoProducto cProducto;
+			[Pk] public CampoEntero cParte;
+			public CampoNombre cNombreParte;
+			public CampoEntero cCantidad;
+			public CampoEntero cParteAnterior;
+			*/
 		}
 		[Test]
 		public void SentenciaInsert(){

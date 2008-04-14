@@ -52,6 +52,9 @@ namespace BasesDatos
 		public override string StuffFecha(DateTime fecha){
 			return "#"+fecha.Month+"/"+fecha.Day+"/"+fecha.Year+"#";
 		}
+		public override bool SoportaFkMixta {
+			get { return false; }
+		}
 	}
 	[TestFixture]
 	public class ProbarBdAccess{
