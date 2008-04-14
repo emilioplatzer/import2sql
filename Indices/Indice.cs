@@ -70,6 +70,7 @@ namespace Indices
 			public CampoPonderador cPonderador;
 			public CampoNivel cNivel;
 			public CampoLogico cEsProducto;
+			[Fk] public Agrupaciones fkAgrupaciones;
 			public ExpresionSql InPadresWhere(ExpresionSql e){
 				return new ExpresionSql(
 					this.cGrupoPadre,
@@ -119,6 +120,8 @@ namespace Indices
 			[Pk] public CampoPeriodo cPeriodo;
 			[Pk] public CampoProducto cProducto;
 			public CampoPrecio cPromedio;
+			[Fk] public Periodos fkPeriodos;
+			[Fk] public Productos fkProductos;
 		}
 		public class CalGru:Tabla{
 			[Pk] public CampoPeriodo cPeriodo;
@@ -126,6 +129,8 @@ namespace Indices
 			[Pk] public CampoGrupo cGrupo;
 			public CampoIndice cIndice;
 			public CampoFactor cFactor;
+			[Fk] public Periodos fkPeriodos;
+			[Fk] public Grupos fkGrupos;
 			public CalGru(){}
 			public CalGru(BaseDatos db,Periodos p,Grupos g){
 				Leer(db,p.cPeriodo,g.cAgrupacion,g.cGrupo);
@@ -488,7 +493,7 @@ namespace Indices
 		RepositorioIndice repo;
 		public ProbarIndiceD3(){
 			BaseDatos db;
-			switch(2){
+			switch(1){
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					db.EliminarTablaSiExiste("calgru");
