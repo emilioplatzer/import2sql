@@ -27,6 +27,7 @@ namespace Modelador
 		public string NombreTabla;
 		public BaseDatos db;
 		public int CantidadCamposPk;
+		public string Alias;
 		public Tabla()
 		{
 			Construir();
@@ -120,7 +121,7 @@ namespace Modelador
 		}
 		public virtual Tabla LeerNoPk(BaseDatos db,params object[] parametros){
 			this.db=db;
-			Separador whereAnd=new Separador(" WHERE "," AND ");
+			Separador whereAnd=new Separador("\n WHERE ","\n AND ");
 			StringBuilder clausulaWhere=new StringBuilder();
 			for(int i=0;i<parametros.Length;i+=2){
 				object valor=parametros[i+1];
@@ -219,7 +220,11 @@ namespace Modelador
 		}
 		public override string ToSql(BaseDatos db)
 		{
-			return db.StuffCampo(this.NombreCampo);
+			if(this.TablaContenedora==null || this.TablaContenedora.Alias==null){
+				return db.StuffCampo(this.NombreCampo);
+			}else{
+				return db.StuffTabla(this.TablaContenedora.Alias)+"."+db.StuffCampo(NombreCampo);
+			}
 		}
 		public ExpresionSql Comparado<T>(string OperadorTextual,T expresion){
 			return new ExpresionSql(this,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
@@ -231,6 +236,7 @@ namespace Modelador
 			return Comparado<T>("<>",expresion);
 		}
 		public ExpresionSql ExpresionBase;
+		public bool ExpresionBaseTipoAgrupada=false;
 		public Campo Es(ExpresionSql expresion){
 			ExpresionBase=expresion;
 			return this;
@@ -283,7 +289,29 @@ namespace Modelador
 			EsPk=true;
 		}
 	}
-	public class CampoEntero:Modelador.CampoTipo<int>{
+	public class CampoDestino<T>:CampoNumericoTipo<T>{
+		public CampoDestino(string NombreCampo){
+			this.NombreCampo=NombreCampo;
+		}
+	}
+	public class CampoNumericoTipo<T>:CampoTipo<T>{
+		public Campo EsExpresionAgrupada(string operador,ExpresionSql expresion){
+			PartesSql nueva=new PartesSql();
+			nueva.Add(new LiteralSql(operador+"("));
+			nueva.AddRange(expresion.Partes);
+			nueva.Add(new LiteralSql(")"));
+			ExpresionBase=new ExpresionSql(nueva);
+			ExpresionBaseTipoAgrupada=true;
+			return this;	
+		}
+		public Campo EsSuma(ExpresionSql expresion){
+			return EsExpresionAgrupada("SUM",expresion);
+		}
+		public Campo EsSuma(Campo campo){
+			return EsExpresionAgrupada("SUM",new ExpresionSql(campo));
+		}
+	}
+	public class CampoEntero:Modelador.CampoNumericoTipo<int>{
 		public override string TipoCampo{ 
 			get { return "integer"; }
 		}
@@ -353,7 +381,7 @@ namespace Modelador
 		public abstract TablasSql Tablas();
 		public Sentencia Where(ExpresionSql expresion){
 			if(ParteWhere.Count>0){
-				ParteWhere.Add(new LiteralSql(" AND "));
+				ParteWhere.Add(new LiteralSql("\n AND "));
 			}
 			ParteWhere.Add(expresion);
 			return this;
@@ -361,7 +389,7 @@ namespace Modelador
 		public PartesSql PartesWhere(){
 			PartesSql rta=new PartesSql();
 			if(ParteWhere.Count>0){
-				rta.Add(new LiteralSql(" WHERE "));
+				rta.Add(new LiteralSql("\n WHERE "));
 				rta.AddRange(ParteWhere);
 			}
 			return rta;
@@ -438,6 +466,13 @@ namespace Modelador
 		public override TablasSql Tablas(){
 			return TablasUsadas;
 		}
+		void RegistrarTabla(Tabla t){
+			if(t!=null){
+				if(TablasUsadas.IndexOf(t)<0){
+					TablasUsadas.Add(t);
+				}
+			}
+		}
 		public override PartesSql Partes(){
 			PartesSql todas=new PartesSql();
 			todas.Add(new LiteralSql("SELECT "));
@@ -447,20 +482,21 @@ namespace Modelador
 					ExpresionSql expresion=c.ExpresionBase;
 					if(expresion!=null){
 						coma.AgregarEn(todas,expresion,new LiteralSql(" AS "),c);
+						foreach(Sqlizable s in c.ExpresionBase.Partes){
+							if(s is Campo){
+								Campo campo=s as Campo;
+								RegistrarTabla(campo.TablaContenedora);
+							}
+						}
 					}else{
 						coma.AgregarEn(todas,c);
 					}
-					Tabla t=c.TablaContenedora;
-					if(t!=null){
-						if(TablasUsadas.IndexOf(t)<0){
-							TablasUsadas.Add(t);
-						}
-					}
+					RegistrarTabla(c.TablaContenedora);
 				}
 			}
 			{
 				ParteSeparadora coma=new ParteSeparadora(", ");
-				todas.Add(new LiteralSql(" FROM "));
+				todas.Add(new LiteralSql("\n FROM "));
 				foreach(Tabla t in TablasUsadas){
 					coma.AgregarEn(todas,t);
 				}
@@ -509,12 +545,17 @@ namespace Modelador
 		}
 		public string Dump(Sentencia laSentencia){
 			Sentencia s=laSentencia;
+			s.Partes(); // para que revise las tablas;
 			foreach(Tabla t in s.Tablas()){
 				foreach(Campo c in CamposContexto){
 					if(t.TieneElCampo(c)){
 						s.Where(t.CampoIndirecto(c).Igual(c.ValorSinTipo));
 					}
 				}
+				t.Alias=t.NombreTabla;
+			}
+			if(s.Tablas().Count==1){
+				s.Tablas()[0].Alias=null;
 			}
 			StringBuilder rta=new StringBuilder();
 			foreach(Sqlizable p in s.Partes()){
@@ -529,13 +570,13 @@ namespace Modelador
 		public ExpresionSql(params Sqlizable[] Partes){
 			this.Partes.AddRange(Partes);
 		}
-		ExpresionSql(PartesSql Partes){
+		public ExpresionSql(PartesSql Partes){
 			this.Partes=Partes;
 		}
 		public virtual ExpresionSql And(ExpresionSql otra){
 			PartesSql nueva=new PartesSql();
 			nueva.AddRange(Partes);
-			nueva.Add(new LiteralSql(" AND "));
+			nueva.Add(new LiteralSql("\n AND "));
 			nueva.AddRange(otra.Partes);
 			return new ExpresionSql(nueva);
 		}
@@ -636,6 +677,7 @@ namespace PrModelador
 			[Pk] public CampoEntero cParte;
 			public CampoNombre cNombreParte;
 			public CampoEntero cCantidad;
+			[Fk] public Productos fkProductos;
 		}
 		[Test]
 		public void Periodos(){
@@ -652,7 +694,7 @@ namespace PrModelador
 		public void SentenciaInsert(){
 			Productos p=new Productos();
 			BaseDatos dba=BdAccess.SinAbrir();
-			Assert.AreEqual("INSERT INTO [productos] ([producto], [nombreproducto]) SELECT [producto], [producto] AS [nombreproducto] FROM [productos];",
+			Assert.AreEqual("INSERT INTO [productos] ([producto], [nombreproducto]) SELECT [producto], [producto] AS [nombreproducto]\n FROM [productos];",
 				new Ejecutador(dba)
 				.Dump(new SentenciaInsert(p).Select(p.cProducto,p.cNombreProducto.Es(p.cProducto))));
 		}
@@ -663,7 +705,7 @@ namespace PrModelador
 			Assert.AreEqual("UPDATE [productos] SET [producto]='P1', [nombreproducto]='Producto 1';",
 			                new Ejecutador(dba)
 			                .Dump(new SentenciaUpdate(p,p.cProducto.Set("P1"),p.cNombreProducto.Set("Producto 1"))));
-			string Esperado="UPDATE [productos] SET [producto]='P1', [nombreproducto]='Producto 1' WHERE [producto]='P3' AND ([nombreproducto] IS NULL OR [nombreproducto]<>[producto])";
+			string Esperado="UPDATE [productos] SET [producto]='P1', [nombreproducto]='Producto 1'\n WHERE [producto]='P3'\n AND ([nombreproducto] IS NULL OR [nombreproducto]<>[producto])";
 			Assert.AreEqual(Esperado+";",
 			                new Ejecutador(dba)
 			                .Dump(new SentenciaUpdate(p,p.cProducto.Set("P1"),p.cNombreProducto.Set("Producto 1"))
@@ -677,13 +719,13 @@ namespace PrModelador
 			Assert.AreEqual(1,sentencia.Tablas().Count);
 			Assert.AreEqual("productos",sentencia.Tablas()[0].NombreTabla);
 			sentencia.Where(p.cNombreProducto.Distinto("P0"));
-			Esperado+=" AND [nombreproducto]<>'P0'";
+			Esperado+="\n AND [nombreproducto]<>'P0'";
 			Assert.AreEqual(Esperado+";",new Ejecutador(dba).Dump(sentencia));
 			Assert.AreEqual(Esperado+";",new Ejecutador(dba).Dump(sentencia));
 			Empresas contexto=new Empresas();
 			contexto.cEmpresa.AsignarValor(14);
 			using(Ejecutador ej=new Ejecutador(dba,contexto)){
-				Esperado+=" AND [empresa]=14";
+				Esperado+="\n AND [empresa]=14";
 				Assert.AreEqual(Esperado+";",ej.Dump(sentencia));
 			}
 		}	
@@ -692,13 +734,18 @@ namespace PrModelador
 			Productos p=new Productos();
 			BaseDatos dba=BdAccess.SinAbrir();
 			Empresas e=new Empresas();
+			PartesProductos pp=new PartesProductos();
 			e.cEmpresa.Valor=13;
+			CampoDestino<int> cCantidadPartes=new CampoDestino<int>("cantidadpartes");
 			using(Ejecutador ej=new Ejecutador(dba,e)){
 				Sentencia s=
-					new SentenciaSelect(e.cEmpresa,e.cNombreEmpresa)
-					.Where(e.cEmpresa.Distinto(13));
-				Assert.AreEqual("SELECT [empresa], [nombreempresa] FROM [empresas] WHERE [empresa]<>13;",
+					new SentenciaSelect(e.cEmpresa,e.cNombreEmpresa);
+				Assert.AreEqual("SELECT [empresa], [nombreempresa]\n FROM [empresas]\n WHERE [empresa]=13;",
 				                ej.Dump(s));
+				Sentencia s2=
+					new SentenciaSelect(p.cProducto,p.cNombreProducto,cCantidadPartes.EsSuma(pp.cCantidad));
+				Assert.AreEqual("SELECT [productos].[producto], [productos].[nombreproducto], SUM([partesproductos].[cantidad]) AS [cantidadpartes]\n FROM [productos], [partesproductos]\n WHERE [productos].[empresa]=13\n AND [productos].[empresa]=[partesproductos].[empresa]\n AND [productos].[producto]=[partesproducto].[producto];\n"
+				                ,ej.Dump(s2));
 			}
 		}
 	}
