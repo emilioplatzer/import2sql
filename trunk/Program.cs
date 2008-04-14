@@ -21,7 +21,8 @@ namespace TodoASql
 			// new probarLibroExcel().UltimoFilasyColumnas();
 			// new ProcesoLevantarPlanillasCVP().TraerPlanillasRecepcion();
 			// new CVP().CreacionTablas();
-			new prTabla().SentenciaCompuesta();
+			new prTabla().Periodos();
+			// new prTabla().SentenciaCompuesta();
 			// new PruebasReflexion().NombresMiembros();
 		    // new ProbarSqLite().ConexionSqLite();
 		    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
