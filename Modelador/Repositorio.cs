@@ -38,7 +38,7 @@ namespace Modelador
 					}
 					if(crear){
 						Tabla tabla=(Tabla)assem.CreateInstance(t.FullName);
-						db.ExecuteNonQuery(tabla.SentenciaCreateTable());
+						db.ExecuteNonQuery(tabla.SentenciaCreateTable(db));
 					}
 				}
 			}

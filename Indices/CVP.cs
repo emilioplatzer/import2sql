@@ -41,7 +41,7 @@ namespace Indices
 		public void CreacionTablas(){
 			BaseDatos db=BdAccess.Abrir(@"c:\cvp\pruebas\importaciones.mdb");
 			FormulariosImportados f=new FormulariosImportados();
-			db.ExecuteNonQuery(f.SentenciaCreateTable());
+			db.ExecuteNonQuery(f.SentenciaCreateTable(db));
 		}
 		public void LevantarExcels(){
 			

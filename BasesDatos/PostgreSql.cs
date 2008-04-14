@@ -25,6 +25,7 @@ namespace BasesDatos
 			:base(con)
 		{
 		}
+		PostgreSql(){}
 		/*
 		public static OleDbConnection abrirPostgreOleDb(string Servidor,string Base, string Usuario, string Clave){
 			OleDbConnection ConexionABase = new System.Data.OleDb.OleDbConnection();
@@ -54,6 +55,9 @@ namespace BasesDatos
 			}else{
 				return base.StuffValor(valor);
 			}
+		}
+		public static PostgreSql SinAbrir(){
+			return new PostgreSql();
 		}
 	}
 	[TestFixture]

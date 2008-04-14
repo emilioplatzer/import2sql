@@ -31,7 +31,10 @@ namespace Modelador
 		public string Alias;
 		public bool IniciadasFk=false;
 		public Tabla TablaRelacionada;
+		public Campo[] CamposRelacionadosFk;
 		public TablasSql TablasFk;
+		public System.Collections.Generic.Dictionary<string, Campo> CamposFkAlias=new System.Collections.Generic.Dictionary<string, Campo>();
+		public bool EsFkMixta=false;
 		public Tabla()
 		{
 			Construir();
@@ -42,13 +45,16 @@ namespace Modelador
 		{
 			Leer(db,Claves);
 		}
+		public static string NombreFieldANombreCampo(string nombreField){
+			return nombreField.Substring(1);
+		}
 		protected virtual void ConstruirCampos(){
       		Assembly assem = Assembly.GetExecutingAssembly();
       		System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
       				Campo c=(Campo)assem.CreateInstance(m.FieldType.FullName);
-      				c.Nombre=m.Name.Substring(1);
+      				c.Nombre=NombreFieldANombreCampo(m.Name);
       				c.NombreCampo=c.Nombre.ToLowerInvariant();
       				c.TablaContenedora=this;
       				m.SetValue(this,c);
@@ -60,6 +66,12 @@ namespace Modelador
       					if(attr is Pk){
       						CantidadCamposPk++;
       					}
+      					if(attr is Fk){
+      						Fk fk=attr as Fk;
+      						if(fk.Alias!=null){
+      							CamposFkAlias[fk.Alias]=c;
+      						}
+      					}
       				}
 				}
 			}
@@ -67,9 +79,9 @@ namespace Modelador
 		protected void Construir(){
 			ConstruirCampos();
 		}
-		public string SentenciaCreateTable(){
+		public string SentenciaCreateTable(BaseDatos db){
 			StringBuilder rta=new StringBuilder();
-			StringBuilder pk=new StringBuilder("primary key (");
+			StringBuilder pk=new StringBuilder("\t"+"primary key (");
       		System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			rta.AppendLine("create table "+this.NombreTabla+"(");
       		Separador comapk=new Separador(",");
@@ -82,20 +94,26 @@ namespace Modelador
 					}
 				}
 			}
-      		pk.AppendLine(")");
+      		pk.Append(")");
       		rta.Append(pk);
       		UsarFk();
       		if(TablasFk!=null){
 	      		foreach(Tabla t in TablasFk){
-	      			StringBuilder camposFk=new StringBuilder();
-	      			Separador coma=new Separador(",");
-	      			foreach(Campo c in t.CamposPk()){
-	      				camposFk.Append(coma+c.NombreCampo);
-	      			}
-	      			rta.AppendLine(", foreign key ("+camposFk.ToString()+") references "+t.NombreTabla+" ("+camposFk.ToString()+")");
+      				if(db.SoportaFkMixta || !t.EsFkMixta){
+		      			StringBuilder camposFkEsta=new StringBuilder();
+		      			StringBuilder camposFkOtra=new StringBuilder();
+		      			Separador coma=new Separador(",");
+		      			int OrdenPk=0;
+		      			foreach(Campo c in t.CamposPk()){
+		      				camposFkEsta.Append(coma+t.CamposRelacionadosFk[OrdenPk].NombreCampo);
+		      				camposFkOtra.Append(coma.mismo()+c.NombreCampo);
+		      				OrdenPk++;
+		      			}
+		      			rta.Append(",\n\t"+"foreign key ("+camposFkEsta.ToString()+") references "+t.NombreTabla+" ("+camposFkOtra.ToString()+")");
+      				}
 	      		}
       		}
-			rta.AppendLine(");");
+			rta.AppendLine("\n);");
 			return rta.ToString();
 		}
 		public void Insertar(BaseDatos db,params object[] Valores){
@@ -184,19 +202,22 @@ namespace Modelador
   			}
   			return false;
 		}
-		public virtual Campo CampoIndirecto(Campo campo){
+		public virtual Campo CampoIndirecto(string campoNombre){
 			CamposSql rta=new CamposSql();
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
 					Campo c=(Campo)m.GetValue(this);
-					if(c.Nombre==campo.Nombre){
+					if(c.Nombre==campoNombre){
 						return c;
 					}
 				}
   			}
   			Assert.Fail("Debió encontrar el campo");
   			return null;
+		}
+		public virtual Campo CampoIndirecto(Campo campo){
+			return CampoIndirecto(campo.Nombre);
 		}
 		public void UsarFk(){
 			if(!IniciadasFk){
@@ -207,8 +228,20 @@ namespace Modelador
 					if(m.FieldType.IsSubclassOf(typeof(Tabla))){
 	  					foreach (System.Attribute attr in m.GetCustomAttributes(true)){
 	  						if(attr is Fk){
+	  							Fk fk=attr as Fk;
       							Tabla nueva=(Tabla)assem.CreateInstance(m.FieldType.FullName);
       							nueva.TablaRelacionada=this;
+      							int cantidadCamposFk=nueva.CamposPk().Count;
+      							int OrdenFk=0;
+      							nueva.CamposRelacionadosFk=new Campo[cantidadCamposFk];
+      							foreach(Campo c in nueva.CamposPk()){
+   									nueva.CamposRelacionadosFk[OrdenFk]=this.CampoIndirecto(c);
+      								OrdenFk++;
+      							}
+      							if(fk.Alias!=null){
+      								nueva.CamposRelacionadosFk[OrdenFk-1]=CamposFkAlias[fk.Alias];
+      							}
+      							nueva.EsFkMixta=fk.EsMixta;
       							m.SetValue(this,nueva);
       							TablasFk.Add(nueva);
 	  						}
@@ -230,6 +263,20 @@ namespace Modelador
 	/////////////
 	public class Vista:System.Attribute{}
 	public class Fk:System.Attribute{		
+		public string Alias;
+		public bool EsMixta; // Puede tener algunos campos sí y otros no
+		public Fk(){}
+		public Fk(string Alias):this(Alias,false){}
+		protected Fk(string Alias,bool EsMixta){
+			this.Alias=Alias;
+			this.EsMixta=EsMixta;
+		}
+	}
+	public class FkMixta:Fk{
+		public FkMixta(string Alias)
+			:base(Alias,true)
+		{
+		}
 	}
 	public class Insertador:InsertadorSql{
 		public Insertador(BaseDatos db,Tabla tabla)

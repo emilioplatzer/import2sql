@@ -190,6 +190,7 @@ namespace BasesDatos
 		public abstract string StuffTabla(string nombreTabla);
 		public abstract string StuffFecha(DateTime fecha);
 		public virtual string StuffCampo(string nombreCampo){ return StuffTabla(nombreCampo); }
+		public virtual bool SoportaFkMixta{ get{ return true;}}
 	}
 	public class SentenciaSql{
 		StringBuilder sentencia;

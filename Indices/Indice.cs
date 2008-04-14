@@ -66,11 +66,12 @@ namespace Indices
 			[Pk] public CampoAgrupacion cAgrupacion;
 			[Pk] public CampoGrupo cGrupo;
 			public CampoNombre cNombreGrupo;
-			public CampoGrupo cGrupoPadre;
+			[FkMixta("padre")] public CampoGrupo cGrupoPadre;
 			public CampoPonderador cPonderador;
 			public CampoNivel cNivel;
 			public CampoLogico cEsProducto;
 			[Fk] public Agrupaciones fkAgrupaciones;
+			[FkMixta("padre")] public Grupos fkGrupoPadre;
 			public ExpresionSql InPadresWhere(ExpresionSql e){
 				return new ExpresionSql(
 					this.cGrupoPadre,
@@ -493,7 +494,7 @@ namespace Indices
 		RepositorioIndice repo;
 		public ProbarIndiceD3(){
 			BaseDatos db;
-			switch(1){
+			switch(3){
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					db.EliminarTablaSiExiste("calgru");
