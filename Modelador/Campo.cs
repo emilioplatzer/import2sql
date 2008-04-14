@@ -58,14 +58,14 @@ namespace Modelador
 				return this.TablaContenedora.Alias+"."+db.StuffCampo(NombreCampo);
 			}
 		}
-		public ExpresionSql Comparado<T>(string OperadorTextual,T expresion){
+		public ExpresionSql Operado<T>(string OperadorTextual,T expresion){
 			return new ExpresionSql(this,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
 		}
 		public ExpresionSql Igual<T>(T expresion){
-			return Comparado<T>("=",expresion);
+			return Operado<T>("=",expresion);
 		}
 		public ExpresionSql Distinto<T>(T expresion){
-			return Comparado<T>("<>",expresion);
+			return Operado<T>("<>",expresion);
 		}
 		public ExpresionSql ExpresionBase;
 		public bool ExpresionBaseTipoAgrupada=false;
@@ -139,6 +139,12 @@ namespace Modelador
 		}
 		public Campo EsSuma(Campo campo){
 			return EsExpresionAgrupada("SUM",new ExpresionSql(campo));
+		}
+		public ExpresionSql Por<T>(T Valor){
+			return Operado<T>("*",Valor);
+		}
+		public ExpresionSql Dividido<T>(T Valor){
+			return Operado<T>("/",Valor);
 		}
 	}
 	public class CampoEntero:Modelador.CampoNumericoTipo<int>{

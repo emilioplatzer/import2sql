@@ -110,9 +110,6 @@ namespace BasesDatos
 			}
 		}
 	}
-	/// <summary>
-	/// Description of BaseDatos.
-	/// </summary>
 	public abstract class BaseDatos:EjecutadorBaseDatos,IDisposable
 	{
 		protected BaseDatos(IDbConnection con)
