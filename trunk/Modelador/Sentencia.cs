@@ -65,6 +65,10 @@ namespace Modelador
 					RegistrarTablas(s as Campo);
 				}else if(s is ExpresionSql){
 					RegistrarTablas(s as ExpresionSql);
+				}else if(s is ValorSql<Campo>){
+					RegistrarTablas((s as ValorSql<Campo>).Valor);
+				}else if(s is ValorSql<ExpresionSql>){
+					RegistrarTablas((s as ValorSql<ExpresionSql>).Valor);
 				}
 			}
 		}

@@ -278,11 +278,11 @@ namespace Indices
 						.Select(padre.cAgrupacion,padre.cGrupo,auxgrupos.cPonderadorOriginal.Es(padre.cPonderador),auxgrupos.cSumaPonderadorHijos.EsSuma(hijos.cPonderador))
 						.Where(hijos.cNivel.Igual(i))
 					);
-					/*
+					AuxGrupos aux=new AuxGrupos();
 					ej.Ejecutar(
-						new SentenciaUpdate(hijos,hijos.cPonderador.Set(hijos.cPonderador.Por(aux.cPo
+						new SentenciaUpdate(hijos,hijos.cPonderador.Set(hijos.cPonderador.Por(aux.cPonderadorOriginal.Dividido(aux.cSumaPonderadorHijos))))
+						.Where(hijos.cNivel.Igual(i))
 					);
-					*/
 				}
 			}
 			using(EjecutadorSql ej=new EjecutadorSql(db,"agrupacion",agrupacion.cAgrupacion.Valor)){
@@ -297,6 +297,7 @@ namespace Indices
 						    GROUP BY p.agrupacion,p.grupo,p.ponderador;
 					").Arg("nivel",i));
 					*/
+					/*
 					if(db.GetType()==typeof(BdAccess)){
 						ej.ExecuteNonQuery(new SentenciaSql(db,@"
 							UPDATE grupos h INNER JOIN auxgrupos a ON a.grupo=h.grupopadre AND a.agrupacion=h.agrupacion
@@ -315,6 +316,7 @@ namespace Indices
 		                        AND nivel={nivel}
 						").Arg("nivel",i));
 					}
+					*/
 				}
 			}
 		}
