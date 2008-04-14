@@ -133,8 +133,15 @@ namespace PrModelador
 				Productos pr=pp.fkProductos;
 				Sentencia s2=
 					new SentenciaSelect(pr.cProducto,pr.cNombreProducto,cCantidadPartes.EsSuma(pp.cCantidad));
-				Assert.AreEqual("SELECT p.[producto], p.[nombreproducto], SUM(pa.[cantidad]) AS [cantidadpartes]\n FROM [productos] p, [partesproductos] pa\n WHERE p.[empresa]=pa.[empresa]\n AND p.[producto]=pa.[producto]\n AND p.[empresa]=13\n AND pa.[empresa]=13;\n"
+				Assert.AreEqual("SELECT p.[producto], p.[nombreproducto], SUM(pa.[cantidad]) AS [cantidadpartes]\n FROM [productos] p, [partesproductos] pa\n WHERE p.[empresa]=pa.[empresa]\n AND p.[producto]=pa.[producto]\n AND p.[empresa]=13\n AND pa.[empresa]=13\n GROUP BY p.[producto], p.[nombreproducto];\n"
 				                ,ej.Dump(s2));
+				Assert.AreEqual("SELECT SUM(p.[cantidad]) AS [cantidadpartes]\n FROM [partesproductos] p, [productos] pr\n WHERE pr.[producto]<>pr.[nombreproducto]\n AND pr.[empresa]=p.[empresa]\n AND pr.[producto]=p.[producto]\n AND p.[empresa]=13\n AND pr.[empresa]=13;\n"
+				                ,ej.Dump(new SentenciaSelect(cCantidadPartes.EsSuma(pp.cCantidad)).Where(pr.cProducto.Distinto(pr.cNombreProducto))));
+				Sentencia su=
+					new SentenciaUpdate(pp,pp.cNombreParte.Set(pr.cNombreProducto.Concatenado(pp.cParte))).Where(pp.cNombreParte.EsNulo());
+				Assert.AreEqual("UPDATE [partesproductos] p INNER JOIN [productos] pr ON p.[empresa]=pr.[empresa] AND p.[producto]=pr.[producto] " +
+				                "SET p.[nombreparte]=(pr.[nombreproducto] & p.[parte])\n WHERE p.[nombreparte] IS NULL\n AND p.[empresa]=13\n AND pr.[empresa]=13;\n",
+				                ej.Dump(su));
 			}
 		}
 	}

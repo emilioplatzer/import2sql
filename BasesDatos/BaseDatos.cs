@@ -191,6 +191,10 @@ namespace BasesDatos
 		public abstract string StuffFecha(DateTime fecha);
 		public virtual string StuffCampo(string nombreCampo){ return StuffTabla(nombreCampo); }
 		public virtual bool SoportaFkMixta{ get{ return true;}}
+		public abstract string OperadorConcatenacionMedio{ get; }
+		public virtual string OperadorConcatenacionIzquierda{ get{ return "("; } }
+		public virtual string OperadorConcatenacionDerecha{ get{ return ")"; } } 
+		public abstract bool UpdateConJoin{ get; }
 	}
 	public class SentenciaSql{
 		StringBuilder sentencia;

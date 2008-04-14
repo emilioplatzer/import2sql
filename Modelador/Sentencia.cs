@@ -25,6 +25,8 @@ namespace Modelador
 {
 	public abstract class Sentencia{
 		PartesSql ParteWhere=new PartesSql();
+		protected System.Collections.Generic.Dictionary<string, string> AliasTablas=new System.Collections.Generic.Dictionary<string, string>();
+		protected TablasSql TablasUsadas;
 		public abstract PartesSql Partes();
 		public abstract TablasSql Tablas();
 		public Sentencia Where(ExpresionSql expresion){
@@ -42,14 +44,64 @@ namespace Modelador
 			}
 			return rta;
 		}
+		protected void RegistrarTablas(Campo c){
+			ExpresionSql expresion=c.ExpresionBase;
+			if(expresion!=null){
+				RegistrarTablas(expresion);
+			}
+			RegistrarTabla(c.TablaContenedora);
+		}
+		protected void RegistrarTablas(CamposSql Campos){
+			foreach(Campo c in Campos){
+				RegistrarTablas(c);
+			}
+		}
+		protected void RegistrarTablas(ExpresionSql expresion){
+			RegistrarTablas(expresion.Partes);
+		}
+		protected void RegistrarTablas(PartesSql Partes){
+			foreach(Sqlizable s in Partes){
+				if(s is Campo){
+					RegistrarTablas(s as Campo);
+				}else if(s is ExpresionSql){
+					RegistrarTablas(s as ExpresionSql);
+				}
+			}
+		}
+		protected void RegistrarTabla(Tabla t){
+			if(t!=null){
+				if(TablasUsadas.IndexOf(t)<0){
+					TablasUsadas.Add(t);
+					int Largo=1;
+					int Sufijo=0;
+					string Alias=t.NombreTabla.Substring(0,Largo);
+					while(AliasTablas.ContainsKey(Alias)){
+						if(Sufijo==0 && Largo<t.NombreTabla.Length){
+							Largo++;
+						}else{
+							Largo=1;
+							Sufijo++;
+						}
+						if(Sufijo==0){
+							Alias=t.NombreTabla.Substring(0,Largo);
+						}else{
+							Alias=t.NombreTabla.Substring(0,Largo)+Sufijo.ToString();
+						}
+					}
+					AliasTablas.Add(Alias,t.NombreTabla);
+					t.Alias=Alias;
+				}
+			}
+		}
+		public virtual Sentencia Clonate(){
+			return (Sentencia) this.MemberwiseClone();
+		}
 	}
 	public class SentenciaUpdate:Sentencia{
-		Tabla TablaBase;
+		public Tabla TablaBase;
 		PartesSql ParteSet=new PartesSql();
 		public SentenciaUpdate(Tabla tabla,Sets primerSet,params Sets[] sets){
 			TablaBase=tabla;
-			ParteSet.Add(new LiteralSql("UPDATE "));
-			ParteSet.Add(TablaBase);
 			ParteSet.Add(new LiteralSql(" SET "));
 			ParteSet.Add(primerSet.CampoAsignado);
 			ParteSet.Add(new LiteralSql("="));
@@ -69,16 +121,20 @@ namespace Modelador
 				this.ValorAsignar=ValorAsignar;
 			}
 		}
-		public override TablasSql Tablas(){
-			TablasSql rta=new TablasSql();
-			rta.Add(TablaBase);
-			return rta;
-		}
 		public override PartesSql Partes(){
 			PartesSql todas=new PartesSql();
 			todas.AddRange(ParteSet);
 			todas.AddRange(PartesWhere());
 			return todas;
+		}
+		public override TablasSql Tablas(){
+			if(TablasUsadas==null){
+				TablasUsadas=new TablasSql();
+				RegistrarTabla(TablaBase);
+				RegistrarTablas(ParteSet);
+				RegistrarTablas(PartesWhere());
+			}
+			return TablasUsadas;
 		}
 	}
 	public class ParteSeparadora{
@@ -105,85 +161,29 @@ namespace Modelador
 		}
 	}
 	public class SentenciaSelect:Sentencia{
-		TablasSql TablasUsadas;
-		System.Collections.Generic.Dictionary<string, string> AliasTablas=new System.Collections.Generic.Dictionary<string, string>();
 		protected CamposSql Campos=new CamposSql();
 		public SentenciaSelect(params Campo[] Campos){
-			ParteSeparadora coma=new ParteSeparadora(", ");
 			this.Campos.AddRange(Campos);
-		}
-		public override TablasSql Tablas(){
-			if(TablasUsadas==null){
-				TablasUsadas=new TablasSql();
-				RegistrarTablas(Campos);
-				RegistrarTablas(PartesWhere());
-			}
-			return TablasUsadas;
-		}
-		void RegistrarTablas(Campo c){
-			ExpresionSql expresion=c.ExpresionBase;
-			if(expresion!=null){
-				RegistrarTablas(expresion);
-			}
-			RegistrarTabla(c.TablaContenedora);
-		}
-		void RegistrarTablas(CamposSql Campos){
-			foreach(Campo c in Campos){
-				RegistrarTablas(c);
-			}
-		}
-		void RegistrarTablas(ExpresionSql expresion){
-			RegistrarTablas(expresion.Partes);
-		}
-		void RegistrarTablas(PartesSql Partes){
-			foreach(Sqlizable s in Partes){
-				if(s is Campo){
-					RegistrarTablas(s as Campo);
-				}else if(s is ExpresionSql){
-					RegistrarTablas(s as ExpresionSql);
-				}
-			}
-		}
-		void RegistrarTabla(Tabla t){
-			if(t!=null){
-				if(TablasUsadas.IndexOf(t)<0){
-					TablasUsadas.Add(t);
-					int Largo=1;
-					int Sufijo=0;
-					string Alias=t.NombreTabla.Substring(0,Largo);
-					while(AliasTablas.ContainsKey(Alias)){
-						if(Sufijo==0 && Largo<t.NombreTabla.Length){
-							Largo++;
-						}else{
-							Largo=1;
-							Sufijo++;
-						}
-						if(Sufijo==0){
-							Alias=t.NombreTabla.Substring(0,Largo);
-						}else{
-							Alias=t.NombreTabla.Substring(0,Largo)+Sufijo.ToString();
-						}
-					}
-					AliasTablas.Add(Alias,t.NombreTabla);
-					t.Alias=Alias;
-				}
-			}
 		}
 		public override PartesSql Partes(){
 			PartesSql todas=new PartesSql();
+			PartesSql groupBy=new PartesSql();
+			bool tieneAgrupados=false;
 			todas.Add(new LiteralSql("SELECT "));
 			{
 				ParteSeparadora coma=new ParteSeparadora(", ");
+				ParteSeparadora sepGB=new ParteSeparadora("\n GROUP BY ",", ");
 				foreach(Campo c in Campos){
 					ExpresionSql expresion=c.ExpresionBase;
 					if(expresion!=null){
-						coma.AgregarEn(todas,expresion,new LiteralSql(" AS "),new CampoReceptorInsert(c));
-						foreach(Sqlizable s in c.ExpresionBase.Partes){
-							if(s is Campo){
-								Campo campo=s as Campo;
-							}
+						if(c.ExpresionBaseTipoAgrupada){
+							tieneAgrupados=true;
+						}else{
+							sepGB.AgregarEn(groupBy,expresion);
 						}
+						coma.AgregarEn(todas,expresion,new LiteralSql(" AS "),new CampoReceptorInsert(c));
 					}else{
+						sepGB.AgregarEn(groupBy,c);
 						coma.AgregarEn(todas,c);
 					}
 				}
@@ -196,7 +196,18 @@ namespace Modelador
 				}
 			}
 			todas.AddRange(PartesWhere());
+			if(tieneAgrupados){
+				todas.AddRange(groupBy);
+			}
 			return todas;
+		}
+		public override TablasSql Tablas(){
+			if(TablasUsadas==null){
+				TablasUsadas=new TablasSql();
+				RegistrarTablas(Campos);
+				RegistrarTablas(PartesWhere());
+			}
+			return TablasUsadas;
 		}
 	}
 	public class CampoReceptorInsert:Sqlizable{
@@ -248,13 +259,41 @@ namespace Modelador
 			base.ExecuteNonQuery(Dump(s));
 		}
 		public string Dump(Sentencia laSentencia){
-			Sentencia s=laSentencia;
-			foreach(Tabla t in s.Tablas()){
-				int OrdenPk=0;
-				if(t.TablaRelacionada!=null){
-					foreach(Campo c in t.CamposPk()){
-						s.Where(c.Igual(t.CamposRelacionadosFk[OrdenPk]));
-						OrdenPk++;
+			Sentencia s=laSentencia.Clonate();
+			StringBuilder rta=new StringBuilder();
+			if(s is SentenciaUpdate){
+				rta.Append("UPDATE ");
+				SentenciaUpdate su=s as SentenciaUpdate;
+				if(db.UpdateConJoin){
+					TablasSql suTablas=su.Tablas();
+					if(suTablas.Count<=1){
+						su.TablaBase.Alias=null;
+					}
+					rta.Append(su.TablaBase.ToSql(db));
+					foreach(Tabla t in su.Tablas()){
+						if(t!=su.TablaBase){
+							int OrdenPk=0;
+							if(t.TablaRelacionada!=null){ 
+								rta.Append(" INNER JOIN "+t.ToSql(db)+" ON ");
+								Separador and=new Separador(" AND ");
+								foreach(Campo c in t.CamposPk()){
+									rta.Append(and+t.CamposRelacionadosFk[OrdenPk].Igual(c).ToSql(db));
+									OrdenPk++;
+								}
+							}
+						}
+					}
+				}else{
+					su.Tablas();
+				}
+			}else{
+				foreach(Tabla t in s.Tablas()){
+					int OrdenPk=0;
+					if(t.TablaRelacionada!=null){
+						foreach(Campo c in t.CamposPk()){
+							s.Where(c.Igual(t.CamposRelacionadosFk[OrdenPk]));
+							OrdenPk++;
+						}
 					}
 				}
 			}
@@ -265,7 +304,6 @@ namespace Modelador
 					}
 				}
 			}
-			StringBuilder rta=new StringBuilder();
 			foreach(Sqlizable p in s.Partes()){
 				rta.Append(p.ToSql(db));
 			}

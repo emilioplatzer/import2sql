@@ -159,8 +159,13 @@ namespace Modelador
 		public override string TipoCampo{ 
 			get { return "varchar("+Largo.ToString()+")"; }
 		}
+		public ExpresionSql Concatenado(Campo campo){
+			return new ExpresionSql(new OperadorConcatenacionIzquierda()
+			                        ,this,new OperadorConcatenacionMedio()
+			                        ,new ExpresionSql(campo),new OperadorConcatenacionDerecha());
+		}
 	};
-	public class CampoReal:Modelador.CampoTipo<double>{};
+	public class CampoReal:Modelador.CampoNumericoTipo<double>{};
 	public class CampoLogico:Modelador.CampoChar{
 		public CampoLogico():base(1){}
 	}

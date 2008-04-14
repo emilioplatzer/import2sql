@@ -59,6 +59,10 @@ namespace BasesDatos
 		public static PostgreSql SinAbrir(){
 			return new PostgreSql();
 		}
+		public override string OperadorConcatenacionMedio{ 
+			get { return "||"; }
+		}
+		public override bool UpdateConJoin{ get{ return false; } }
 	}
 	[TestFixture]
 	public class ProbarPostgreSql{

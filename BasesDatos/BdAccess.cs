@@ -55,6 +55,10 @@ namespace BasesDatos
 		public override bool SoportaFkMixta {
 			get { return false; }
 		}
+		public override string OperadorConcatenacionMedio{ 
+			get { return " & "; }
+		}
+		public override bool UpdateConJoin{ get{ return true; } }
 	}
 	[TestFixture]
 	public class ProbarBdAccess{

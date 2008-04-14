@@ -295,6 +295,21 @@ namespace Modelador
 			return Literal;
 		}
 	}
+	public class OperadorConcatenacionIzquierda:Sqlizable{
+		public override string ToSql(BaseDatos db){
+			return db.OperadorConcatenacionIzquierda;
+		}
+	}
+	public class OperadorConcatenacionDerecha:Sqlizable{
+		public override string ToSql(BaseDatos db){
+			return db.OperadorConcatenacionDerecha;
+		}
+	}
+	public class OperadorConcatenacionMedio:Sqlizable{
+		public override string ToSql(BaseDatos db){
+			return db.OperadorConcatenacionMedio;
+		}
+	}
 	public class ValorSql<T>:Sqlizable{
 		public T Valor;
 		public ValorSql(T Valor){
