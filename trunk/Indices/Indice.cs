@@ -253,6 +253,8 @@ namespace Indices
 			using(Ejecutador ej=new Ejecutador(db,agrupacion)){
 				Grupos grupos=new Grupos();
 				Grupos hijos=new Grupos();
+				hijos.UsarFk();
+				Grupos padre=hijos.fkGrupoPadre;
 				ej.Ejecutar(
 					new SentenciaUpdate(grupos,grupos.cNivel.Set(0),grupos.cPonderador.Set(1.0))
 					.Where(grupos.cGrupoPadre.EsNulo())); // .And(grupos.cAgrupacion.Igual(grupo.cAgrupacion))));
@@ -269,17 +271,23 @@ namespace Indices
 					);
 				}
 				AuxGrupos auxgrupos=new AuxGrupos();
-				/*
+				// auxgrupos.RegistrarFk(hijos);
 				for(int i=1;i<10;i++){
 					ej.Ejecutar(
-						new SentenciaInsert(auxgrupos)
-						.Select(grupos.cAgrupacion,grupos.cGrupo,grupos.cPonderador,auxgrupos.cSumaPonderadorHijos.EsSuma(hijos.cPonderador))
+						new SentenciaInsert(new AuxGrupos())
+						.Select(padre.cAgrupacion,padre.cGrupo,auxgrupos.cPonderadorOriginal.Es(padre.cPonderador),auxgrupos.cSumaPonderadorHijos.EsSuma(hijos.cPonderador))
+						.Where(hijos.cNivel.Igual(i))
 					);
+					/*
+					ej.Ejecutar(
+						new SentenciaUpdate(hijos,hijos.cPonderador.Set(hijos.cPonderador.Por(aux.cPo
+					);
+					*/
 				}
-				*/
 			}
 			using(EjecutadorSql ej=new EjecutadorSql(db,"agrupacion",agrupacion.cAgrupacion.Valor)){
 				for(int i=1;i<10;i++){
+					/*
 					ej.ExecuteNonQuery(new SentenciaSql(db,@"
 						INSERT INTO auxgrupos (agrupacion,grupo,ponderadororiginal,sumaponderadorhijos)
 						  SELECT p.agrupacion,p.grupo,p.ponderador,sum(h.ponderador)
@@ -288,6 +296,7 @@ namespace Indices
 	                          AND h.nivel={nivel}
 						    GROUP BY p.agrupacion,p.grupo,p.ponderador;
 					").Arg("nivel",i));
+					*/
 					if(db.GetType()==typeof(BdAccess)){
 						ej.ExecuteNonQuery(new SentenciaSql(db,@"
 							UPDATE grupos h INNER JOIN auxgrupos a ON a.grupo=h.grupopadre AND a.agrupacion=h.agrupacion

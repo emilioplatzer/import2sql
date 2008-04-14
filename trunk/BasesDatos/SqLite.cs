@@ -39,7 +39,10 @@ namespace BasesDatos
 		public override string StuffFecha(DateTime fecha){
 			return "'"+fecha.Year+"/"+fecha.Month+"/"+fecha.Day+"'";
 		}
-
+		public override string OperadorConcatenacionMedio{ 
+			get { return "||"; }
+		}
+		public override bool UpdateConJoin{ get{ return false; } }
 	}
 	[TestFixture]
 	public class ProbarSqLite{
