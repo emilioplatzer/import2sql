@@ -29,6 +29,8 @@ namespace Modelador
 		public BaseDatos db;
 		public int CantidadCamposPk;
 		public string Alias;
+		public bool IniciadasFk=false;
+		public Tabla TablaRelacionada;
 		public Tabla()
 		{
 			Construir();
@@ -183,6 +185,24 @@ namespace Modelador
   			}
   			Assert.Fail("Debió encontrar el campo");
   			return null;
+		}
+		public void UsarFk(){
+			if(!IniciadasFk){
+      			Assembly assem = Assembly.GetExecutingAssembly();
+	  			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+				foreach(FieldInfo m in ms){
+					if(m.FieldType.IsSubclassOf(typeof(Tabla))){
+	  					foreach (System.Attribute attr in m.GetCustomAttributes(true)){
+	  						if(attr is Fk){
+      							Tabla nueva=(Tabla)assem.CreateInstance(m.FieldType.FullName);
+      							nueva.TablaRelacionada=this;
+      							m.SetValue(this,nueva);
+	  						}
+	  					}
+	  				}
+	  			}
+	  			IniciadasFk=true;
+			}
 		}
 		public override string ToSql(BaseDatos db)
 		{

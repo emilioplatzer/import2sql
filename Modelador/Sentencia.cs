@@ -250,6 +250,13 @@ namespace Modelador
 		public string Dump(Sentencia laSentencia){
 			Sentencia s=laSentencia;
 			foreach(Tabla t in s.Tablas()){
+				if(t.TablaRelacionada!=null){
+					foreach(Campo c in t.CamposPk()){
+						s.Where(c.Igual(t.TablaRelacionada.CampoIndirecto(c)));
+					}
+				}
+			}
+			foreach(Tabla t in s.Tablas()){
 				foreach(Campo c in CamposContexto){
 					if(t.TieneElCampo(c)){
 						s.Where(t.CampoIndirecto(c).Igual(c.ValorSinTipo));
@@ -260,7 +267,7 @@ namespace Modelador
 			foreach(Sqlizable p in s.Partes()){
 				rta.Append(p.ToSql(db));
 			}
-			rta.Append(";");
+			rta.Append(";\n");
 			return rta.ToString();
 		}
 	}
