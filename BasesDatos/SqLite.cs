@@ -12,7 +12,9 @@ using System.Data;
 using System.Data.Odbc;
 using NUnit.Framework;
 
-namespace TodoASql
+using Comunes;
+
+namespace BasesDatos
 {
 	/// <summary>
 	/// Description of SqLite.

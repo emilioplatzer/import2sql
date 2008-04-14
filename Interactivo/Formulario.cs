@@ -17,7 +17,7 @@ using NUnit.Framework;
 
 using System.Runtime.InteropServices;
 
-namespace TodoASql
+namespace Interactivo
 {
 	/// <summary>
 	/// Description of Formularios.

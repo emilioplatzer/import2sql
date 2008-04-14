@@ -10,11 +10,8 @@
 using System;
 using System.IO;
 
-namespace TodoASql
+namespace Comunes
 {
-	/// <summary>
-	/// Description of Carpeta.
-	/// </summary>
 	public delegate bool ProcesadorPlanoContestaSiPudo(string contenidoPlano);
 	public delegate bool ProcesadorArchivoContestaSiPudo(string nombreArchivo);
 		
@@ -45,11 +42,12 @@ namespace TodoASql
 		}
 		public void ProcesarArchivosPlanos(string nombres,string nuevaExtension,ProcesadorPlanoContestaSiPudo procesar){
 			ProcesarArchivos(nombres,nuevaExtension,
-			                 delegate(string nombreArchivo){
-				string contenidoPlano=Archivo.Leer(nombreArchivo);
-				System.Console.Write(" leido");
-				return procesar(contenidoPlano);
-			                 }
+			                 delegate(string nombreArchivo)
+			    {
+					string contenidoPlano=Archivo.Leer(nombreArchivo);
+					System.Console.Write(" leido");
+					return procesar(contenidoPlano);
+			    }
 			);
 		}
 	}

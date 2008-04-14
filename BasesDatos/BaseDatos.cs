@@ -17,7 +17,9 @@ using System.Reflection;
 using NUnit.Framework;
 using ADOX;
 
-namespace TodoASql
+using Comunes;
+
+namespace BasesDatos
 {
 	public class EjecutadorBaseDatos{
 		internal IDbConnection con;
@@ -242,7 +244,7 @@ namespace TodoASql
 		}		
 		protected override string AdaptarSentecia(SentenciaSql sentencia)
 		{
-			TodoASql.SentenciaSql s=new TodoASql.SentenciaSql(db,base.AdaptarSentecia(sentencia));
+			BasesDatos.SentenciaSql s=new BasesDatos.SentenciaSql(db,base.AdaptarSentecia(sentencia));
 			foreach(Parametros p in param){
 				s.Arg(p.Parametro,p.Valor);
 			}

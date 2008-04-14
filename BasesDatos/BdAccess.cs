@@ -13,7 +13,9 @@ using System.Data.OleDb;
 using ADOX;
 using NUnit.Framework;
 
-namespace TodoASql
+using Comunes;
+
+namespace BasesDatos
 {
 	/// <summary>
 	/// Description of BdAccess.

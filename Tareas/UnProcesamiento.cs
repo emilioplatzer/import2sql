@@ -9,9 +9,13 @@
 
 using System;
 
+using Comunes;
+using BasesDatos;
+using DelOffice;
+
 #if SinOffice
 #else
-namespace TodoASql
+namespace Tareas
 {
 	public class UnProcesamiento
 	{
