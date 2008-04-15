@@ -16,9 +16,6 @@ using Comunes;
 
 namespace Pruebas
 {
-	/// <summary>
-	/// Description of PruebasReflexion.
-	/// </summary>
 	public class ClaseReflexiva
 	{
 		public string campo1;

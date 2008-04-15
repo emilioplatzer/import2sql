@@ -18,6 +18,7 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
+			new Tareas.PrComparacionPadrones().PrExacta();
 			// new probarLibroExcel().UltimoFilasyColumnas();
 			// new ProcesoLevantarPlanillasCVP().TraerPlanillasRecepcion();
 			// new CVP().CreacionTablas();
@@ -26,7 +27,7 @@ namespace TodoASql
 			// new PruebasReflexion().NombresMiembros();
 		    // new ProbarSqLite().ConexionSqLite();
 		    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
-		    // /*
+		    /*
 		    ProbarIndiceD3 p=new ProbarIndiceD3();
 		    p.A01CalculosBase();
 		    p.VerCanasta();

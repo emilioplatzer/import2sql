@@ -16,9 +16,6 @@ using Comunes;
 
 namespace BasesDatos
 {
-	/// <summary>
-	/// Description of PostgreSql.
-	/// </summary>
 	public class PostgreSql:BaseDatos
 	{
 		PostgreSql(OdbcConnection con)

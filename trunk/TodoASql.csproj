@@ -69,6 +69,7 @@
     <Compile Include="Modelador\Tabla.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Pruebas\PruebasReflexion.cs" />
+    <Compile Include="Tareas\ComparacionPadrones.cs" />
     <Compile Include="Tareas\MailASql.cs" />
     <Compile Include="Tareas\UnProcesamiento.cs" />
   </ItemGroup>

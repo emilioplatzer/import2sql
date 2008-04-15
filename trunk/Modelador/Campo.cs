@@ -140,24 +140,24 @@ namespace Modelador
 		public Campo EsSuma(Campo campo){
 			return EsExpresionAgrupada("SUM",new ExpresionSql(campo));
 		}
-		public ExpresionSql Por<T>(T Valor){
-			return Operado<T>("*",Valor);
+		public ExpresionSql Por<T2>(T2 Valor){
+			return Operado<T2>("*",Valor);
 		}
-		public ExpresionSql Dividido<T>(T Valor){
-			return Operado<T>("/",Valor);
+		public ExpresionSql Dividido<T2>(T2 Valor){
+			return Operado<T2>("/",Valor);
 		}
 	}
-	public class CampoEntero:Modelador.CampoNumericoTipo<int>{
+	public class CampoEntero:CampoNumericoTipo<int>{
 		public override string TipoCampo{ 
 			get { return "integer"; }
 		}
 	};
-	public class CampoEnteroOpcional:Modelador.CampoTipo<int?>{
+	public class CampoEnteroOpcional:CampoTipo<int?>{
 		public override string TipoCampo{ 
 			get { return "integer"; }
 		}
 	};
-	public class CampoChar:Modelador.CampoTipo<string>{
+	public class CampoChar:CampoTipo<string>{
 		public int Largo;
 		protected CampoChar(int largo){
 			this.Largo=largo;	
@@ -171,8 +171,8 @@ namespace Modelador
 			                        ,new ExpresionSql(campo),new OperadorConcatenacionDerecha());
 		}
 	};
-	public class CampoReal:Modelador.CampoNumericoTipo<double>{};
-	public class CampoLogico:Modelador.CampoChar{
+	public class CampoReal:CampoNumericoTipo<double>{};
+	public class CampoLogico:CampoChar{
 		public CampoLogico():base(1){}
 	}
 	public abstract class AplicadorCampo:System.Attribute{

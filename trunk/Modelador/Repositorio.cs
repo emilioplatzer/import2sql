@@ -15,9 +15,6 @@ using BasesDatos;
 
 namespace Modelador
 {
-	/// <summary>
-	/// Description of Repositorio.
-	/// </summary>
 	public class Repositorio
 	{
 		internal BaseDatos db;
@@ -41,6 +38,29 @@ namespace Modelador
 						db.ExecuteNonQuery(tabla.SentenciaCreateTable(db));
 					}
 				}
+			}
+		}
+		public virtual void EliminarTablas(){
+			System.Collections.Generic.Stack<string> NombresTablasABorrar=new System.Collections.Generic.Stack<string>();
+      		Assembly assem = Assembly.GetExecutingAssembly();
+			System.Type[] ts=this.GetType().GetNestedTypes();
+			foreach(Type t in ts){
+				if(t.IsSubclassOf(typeof(Tabla))){
+					System.Console.WriteLine(t.FullName);
+					bool borrar=true;
+					foreach(System.Attribute attr in t.GetCustomAttributes(true)){
+						if(attr is Vista){
+							borrar=false;
+						}
+					}
+					if(borrar){
+						Tabla tabla=(Tabla)assem.CreateInstance(t.FullName);
+						NombresTablasABorrar.Push(tabla.NombreTabla);
+					}
+				}
+			}
+			foreach(string nombreTabla in NombresTablasABorrar){
+				db.EliminarTablaSiExiste(nombreTabla);
 			}
 		}
 	}

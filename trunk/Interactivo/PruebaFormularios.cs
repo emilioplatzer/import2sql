@@ -16,9 +16,6 @@ using Comunes;
 
 namespace Interactivo
 {
-	/// <summary>
-	/// Description of PruebaFormularios.
-	/// </summary>
 	public class PruebaFormularios
 	{
 		public PruebaFormularios()
