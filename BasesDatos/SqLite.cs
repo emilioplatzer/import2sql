@@ -16,9 +16,6 @@ using Comunes;
 
 namespace BasesDatos
 {
-	/// <summary>
-	/// Description of SqLite.
-	/// </summary>
 	public class SqLite:BaseDatos
 	{
 		SqLite(OdbcConnection con)

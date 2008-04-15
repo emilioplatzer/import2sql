@@ -19,9 +19,6 @@ using BasesDatos;
 
 namespace Tareas
 {
-	/// <summary>
-	/// Description of Procesar.
-	/// </summary>
 	public class MailASql
 	{
 		string ContenidoPlano;

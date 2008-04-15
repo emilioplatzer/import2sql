@@ -17,9 +17,6 @@ using Comunes;
 
 namespace BasesDatos
 {
-	/// <summary>
-	/// Description of BdAccess.
-	/// </summary>
 	public class BdAccess:BaseDatos
 	{
 		BdAccess(OleDbConnection con)

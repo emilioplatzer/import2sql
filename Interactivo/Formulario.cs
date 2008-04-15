@@ -19,9 +19,6 @@ using System.Runtime.InteropServices;
 
 namespace Interactivo
 {
-	/// <summary>
-	/// Description of Formularios.
-	/// </summary>
 	public class Formulario:Form
 	{
 		bool camposAgregados=false;
