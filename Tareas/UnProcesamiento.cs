@@ -76,52 +76,62 @@ namespace Tareas
 	public class ProcesoLevantarPlanillas{
 		BaseDatos db;
 		ReceptorSql receptor;
+		MatrizExcelASql matriz;
+		LibroExcel libro;
+		string NombreArchivo;
+		string etiquetaFinal="FIN!";
+		bool LevantarParametrica(int cantidadVertice, // o sea arriba a la izquierda como campos únicos
+		                         int fila, int columna, // fila columna del primer dato 'util
+		                         int primerFila, int primerColumna // primera fila y primera columna con datos (matriz completa sin el vertice)
+		                        )
+		{
+			int filaFin=libro.BuscarPorColumnas(etiquetaFinal).NumeroFila-1;
+			int columnaFin=libro.BuscarPorFilas(etiquetaFinal).NumeroColumna-1;
+			if(filaFin<fila || columnaFin<columna){
+				System.Console.Write(" problema con la etiqueta "+etiquetaFinal+
+				                    " no deberia: "+filaFin+"<"+fila+" || "+columnaFin+"<"+columna);
+				libro.CerrarNoHayCambios();
+				return false;
+			}
+			string[] camposFijos=new string[]{"formato","origen","fecha_importacion"};
+			object[] valoresFijos=new object[]{libro.TextoCelda("A1"),NombreArchivo,DateTime.Now};
+			string[] camposFijosMasVertice=new string[camposFijos.Length+cantidadVertice];
+			object[] valoresFijosMasVertice=new object[camposFijos.Length+cantidadVertice];
+			camposFijos.CopyTo(camposFijosMasVertice,0);
+			valoresFijos.CopyTo(valoresFijosMasVertice,0);
+			if(cantidadVertice>0){
+				libro.Rango(3,1,cantidadVertice+3-1,1).TextoRango1D().CopyTo(camposFijosMasVertice,camposFijos.Length);
+				libro.Rango(3,2,cantidadVertice+3-1,2).ValorRango1D().CopyTo(valoresFijosMasVertice,camposFijos.Length);
+			}
+			matriz.CamposFijos=Objeto.Paratodo(camposFijosMasVertice,Cadena.Simplificar);
+			matriz.ValoresFijos=valoresFijosMasVertice;
+			// matriz.BuscarFaltantes=true;
+			matriz.PasarHoja(libro.Rango(fila,columna,filaFin,columnaFin)
+			                 ,libro.Rango(fila,primerColumna,filaFin,columna-2)
+			                 ,libro.Rango(primerFila,columna,fila-2,columnaFin)
+			                 ,"precio"
+			                 ,Objeto.Paratodo(libro.Rango(fila-1,primerColumna,fila-1,columna-2).TextoRango1D(),Cadena.Simplificar)
+			                 ,Objeto.Paratodo(libro.Rango(primerFila,columna-1,fila-2,columna-1).TextoRango1D(),Cadena.Simplificar));
+			libro.CerrarNoHayCambios();
+			return true;			
+		}
 		public bool LevantarPlanilla(string nombreArchivo){
 			receptor=new ReceptorSql(db,"PreciosImportados");
-			MatrizExcelASql matriz=new MatrizExcelASql(receptor);
-			LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
+			matriz=new MatrizExcelASql(receptor);
+			libro=LibroExcel.Abrir(nombreArchivo);
 			matriz.GuardarErroresEn=@"c:\temp\indice\Campo\Bases\ErroresDeImportacion.sql";
-			if(libro.TextoCelda("A1")=="PLAN PREC"){
-				string[] camposFijos=new string[]{"formato","origen","fecha_importacion","","",""};
-				object[] valoresFijos=new object[]{libro.TextoCelda("A1"),nombreArchivo,DateTime.Now,null,null,null};
-				libro.Rango("A3:A5").TextoRango1D().CopyTo(camposFijos,3);
-				libro.Rango("B3:B5").ValorRango1D().CopyTo(valoresFijos,3);
-				matriz.CamposFijos=Objeto.Paratodo(camposFijos,Cadena.Simplificar);
-				matriz.ValoresFijos=valoresFijos;
-				matriz.PasarHoja(libro.Rango("H8:Z172")
-				                 ,libro.Rango("A8:F172")
-				                 ,libro.Rango("H4:Z6")
-				                 ,"precio"
-				                 ,Objeto.Paratodo(libro.Rango("A7:F7").TextoRango1D(),Cadena.Simplificar)
-				                 ,Objeto.Paratodo(libro.Rango("G4:G6").TextoRango1D(),Cadena.Simplificar));
-			}else if(libro.TextoCelda("A1")=="PLAN PROD.INF/PER"){
-				string[] camposFijos=new string[]{"formato","origen","fecha_importacion"};
-				object[] valoresFijos=new object[]{libro.TextoCelda("A1"),nombreArchivo,DateTime.Now};
-				matriz.CamposFijos=Objeto.Paratodo(camposFijos,Cadena.Simplificar);
-				matriz.ValoresFijos=valoresFijos;
-				matriz.PasarHoja(libro.Rango("J8:Q100")
-				                 ,libro.Rango("A8:H100")
-				                 ,libro.Rango("J3:Q6")
-				                 ,"precio"
-				                 ,Objeto.Paratodo(libro.Rango("A7:H7").TextoRango1D(),Cadena.Simplificar)
-				                 ,Objeto.Paratodo(libro.Rango("I3:I6").TextoRango1D(),Cadena.Simplificar));
-			}else if(libro.TextoCelda("A1")=="PLAN PROD/PER.INF"){
-				string[] camposFijos=new string[]{"formato","origen","fecha_importacion"};
-				object[] valoresFijos=new object[]{libro.TextoCelda("A1"),nombreArchivo,DateTime.Now};
-				matriz.CamposFijos=Objeto.Paratodo(camposFijos,Cadena.Simplificar);
-				matriz.ValoresFijos=valoresFijos;
-				matriz.PasarHoja(libro.Rango("H10:Q100")
-				                 ,libro.Rango("A10:F100")
-				                 ,libro.Rango("H3:Q8")
-				                 ,"precio"
-				                 ,Objeto.Paratodo(libro.Rango("A9:F9").TextoRango1D(),Cadena.Simplificar)
-				                 ,Objeto.Paratodo(libro.Rango("G3:G8").TextoRango1D(),Cadena.Simplificar));
+			NombreArchivo=nombreArchivo;
+			if(libro.TextoCelda("A1")=="PER/PROD/INF"){
+				return LevantarParametrica(3,8,8,4,1);
+			}else if(libro.TextoCelda("A1")=="PROD.INF/PER"){
+				return LevantarParametrica(0,8,10,3,1);
+			}else if(libro.TextoCelda("A1")=="PROD/PER.INF"){
+				return LevantarParametrica(0,10,8,3,1);
 			}else{
+				libro.CerrarNoHayCambios();
 				System.Console.Write(" no es un formato valido reconocido");
 				return false;
 			}
-			libro.CerrarNoHayCambios();
-			return true;
 		}
 		public void TraerPlanillasRecepcion(){
 			Carpeta dir=new Carpeta(@"c:\temp\indice\Campo\RecepcionPura\");

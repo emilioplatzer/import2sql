@@ -41,11 +41,7 @@ namespace BasesDatos
 		public override string ErrorCode_NoExisteTabla{ get{ return "ERROR [42P01]";}}
 		public override string ErrorCode_NoExisteVista{ get{ return "ERROR [42P01]";}}
 		public override string StuffTabla(string nombreTabla){
-			if(TipoStuffActual==TipoStuff.Siempre 
-			   || TipoStuffActual==TipoStuff.Inteligente
-			   && nombreTabla.IndexOfAny("[],._áéíóúñÁÉÍÓÚÑüÜ!@#$%^&*'\"".ToCharArray())>=0
-			  )
-			{
+			if(DebeStuffear(nombreTabla)){
 				return '"'+nombreTabla+'"';
 			}else{
 				return nombreTabla;
