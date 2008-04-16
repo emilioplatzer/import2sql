@@ -69,7 +69,7 @@ namespace PrModelador
 			Assert.AreEqual(false,dba.SoportaFkMixta);
 			pa.UsarFk();
 			Assert.AreEqual("partesproductos",pa.TablasFk[1].NombreTabla);
-			Assert.AreEqual(true,pa.TablasFk[1].EsFkMixta);
+			Assert.AreEqual(Fk.Tipo.Mixta,pa.TablasFk[1].TipoFk);
 			Assert.AreEqual("create table partesproductos(empresa integer,producto varchar(4),parte integer,nombreparte varchar(250),cantidad integer,parteanterior integer,primary key(empresa,producto,parte),foreign key(empresa,producto)references productos(empresa,producto));"
 			                ,Cadena.Simplificar(pa.SentenciaCreateTable(dba)));
 			Assert.AreEqual("create table partesproductos(empresa integer,producto varchar(4),parte integer,nombreparte varchar(250),cantidad integer,parteanterior integer,primary key(empresa,producto,parte),foreign key(empresa,producto)references productos(empresa,producto),foreign key(empresa,producto,parteanterior)references partesproductos(empresa,producto,parte));"
@@ -162,7 +162,8 @@ namespace PrModelador
 				Assert.AreEqual("SELECT p.producto, p.nombreproducto, pr.nombreproducto\n FROM productos p, productos pr\n WHERE p.producto=(pr.producto & '2')\n AND p.empresa=13\n AND pr.empresa=13;\n",
 				                ej.Dump(su));
 				NovedadesProductos np=new NovedadesProductos();
-				Assert.Ignore("Generando el join del update");
+				// Assert.Ignore("Generando el join del update");
+				pr.EsFkDe(np,np.cProductoAuxiliar);
 				su=new SentenciaUpdate(pr,pr.cEstado.Set(np.cNuevoEstado)).Where(pr.cProducto.Distinto("P_este"));
 				Assert.AreEqual("UPDATE productos p INNER JOIN np ON p.empresa=np.empresa AND p.producto=np.productoauxiliar\n SET p.estado=np.nuevoestado\n WHERE p.producto='P_este';\n",
 				                ej.Dump(su));
