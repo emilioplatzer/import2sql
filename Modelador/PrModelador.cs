@@ -139,6 +139,7 @@ namespace PrModelador
 				PartesProductos pp=new PartesProductos(); 
 				pp.UsarFk();
 				Productos pr=pp.fkProductos;
+				Assert.AreEqual(pp,pr.TablaRelacionada);
 				Sentencia s2=
 					new SentenciaSelect(pr.cProducto,pr.cNombreProducto,cCantidadPartes.EsSuma(pp.cCantidad));
 				Assert.AreEqual("SELECT p.[producto], p.[nombreproducto], SUM(pa.[cantidad]) AS [cantidadpartes]\n FROM [productos] p, [partesproductos] pa\n WHERE p.[empresa]=pa.[empresa]\n AND p.[producto]=pa.[producto]\n AND p.[empresa]=13\n AND pa.[empresa]=13\n GROUP BY p.[producto], p.[nombreproducto];\n"
@@ -153,6 +154,12 @@ namespace PrModelador
 				dba.TipoStuffActual=BaseDatos.TipoStuff.Inteligente;
 				su=new SentenciaUpdate(pr,pr.cEstado.Set(0)).Where(pr.cEstado.EsNulo());
 				Assert.AreEqual("UPDATE productos SET estado=0\n WHERE estado IS NULL\n AND empresa=13;\n",
+				                ej.Dump(su));
+				su=new SentenciaUpdate(pp,pp.cCantidad.Set(pp.cCantidad.Mas(1))).Where(pp.cCantidad.EsNulo());
+				Assert.AreEqual("UPDATE partesproductos SET cantidad=cantidad+1\n WHERE cantidad IS NULL\n AND empresa=13;\n",
+				                ej.Dump(su));
+				su=new SentenciaSelect(p.cProducto,p.cNombreProducto,pr.cNombreProducto).Where(p.cProducto.Igual(pr.cProducto.Concatenado("2")));
+				Assert.AreEqual("SELECT p.producto, p.nombreproducto, pr.nombreproducto\n FROM productos p, productos pr\n WHERE p.producto=(pr.producto & '2')\n AND p.empresa=13\n AND pr.empresa=13;\n",
 				                ej.Dump(su));
 				NovedadesProductos np=new NovedadesProductos();
 				Assert.Ignore("Generando el join del update");

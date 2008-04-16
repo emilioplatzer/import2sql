@@ -277,7 +277,7 @@ namespace Modelador
 					foreach(Tabla t in su.Tablas()){
 						if(t!=su.TablaBase){
 							int OrdenPk=0;
-							if(t.TablaRelacionada!=null){ 
+							if(t.TablaRelacionada!=null && su.Tablas().Contains(t.TablaRelacionada)){
 								rta.Append(" INNER JOIN "+t.ToSql(db)+" ON ");
 								Separador and=new Separador(" AND ");
 								foreach(Campo c in t.CamposPk()){
@@ -293,7 +293,8 @@ namespace Modelador
 			}else{
 				foreach(Tabla t in s.Tablas()){
 					int OrdenPk=0;
-					if(t.TablaRelacionada!=null){
+					if(t.TablaRelacionada!=null && s.Tablas().Contains(t.TablaRelacionada)){
+					// if(t.TablaRelacionada!=null){
 						foreach(Campo c in t.CamposPk()){
 							s.Where(c.Igual(t.CamposRelacionadosFk[OrdenPk]));
 							OrdenPk++;
