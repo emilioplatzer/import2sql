@@ -35,6 +35,7 @@ namespace PrModelador
 			[Pk] public CampoEntero cEmpresa;
 			[Pk] public CampoProducto cProducto;
 			public CampoNombre cNombreProducto;
+			public CampoEntero cEstado;
 			[Fk] public Empresas fkEmpresas;
 		}
 		class PartesProductos:Tabla{
@@ -47,6 +48,11 @@ namespace PrModelador
 			[Fk] public Productos fkProductos;
 			[FkMixta("ant")] public PartesProductos fkParteAnterior;
 		}
+		class NovedadesProductos:Tabla{
+			[Pk] public CampoEntero cEmpresa;
+			[Pk] public CampoProducto cProductoAuxiliar;
+			public CampoEntero cNuevoEstado;
+		}
 		[Test]
 		public void CreacionTablas(){
 			BdAccess dba=BdAccess.SinAbrir();
@@ -57,7 +63,7 @@ namespace PrModelador
 			Assert.AreEqual("create table periodos(ano integer,mes integer,anoant integer,mesant integer,primary key(ano,mes));"
 			                ,Cadena.Simplificar(p.SentenciaCreateTable(dba)));
 			Productos pr=new Productos();
-			Assert.AreEqual("create table productos(empresa integer,producto varchar(4),nombreproducto varchar(250),primary key(empresa,producto),foreign key(empresa)references empresas(empresa));"
+			Assert.AreEqual("create table productos(empresa integer,producto varchar(4),nombreproducto varchar(250),estado integer,primary key(empresa,producto),foreign key(empresa)references empresas(empresa));"
 			                ,Cadena.Simplificar(pr.SentenciaCreateTable(dba)));
 			PartesProductos pa=new PartesProductos();
 			Assert.AreEqual(false,dba.SoportaFkMixta);
@@ -81,7 +87,7 @@ namespace PrModelador
 		public void SentenciaInsert(){
 			Productos p=new Productos();
 			BaseDatos dba=BdAccess.SinAbrir();
-			Assert.AreEqual("INSERT INTO [productos] ([producto], [nombreproducto]) SELECT p.[producto], p.[producto] AS [nombreproducto]\n FROM [productos] p;\n",
+			Assert.AreEqual("INSERT INTO productos (producto, nombreproducto) SELECT p.producto, p.producto AS nombreproducto\n FROM productos p;\n",
 				new Ejecutador(dba)
 				.Dump(new SentenciaInsert(new Productos()).Select(p.cProducto,p.cNombreProducto.Es(p.cProducto))));
 		}
@@ -89,6 +95,7 @@ namespace PrModelador
 		public void SentenciaUpdate(){
 			Productos p=new Productos();
 			BaseDatos dba=BdAccess.SinAbrir();
+			dba.TipoStuffActual=BaseDatos.TipoStuff.Siempre;
 			Assert.AreEqual("UPDATE [productos] SET [producto]='P1', [nombreproducto]='Producto 1';\n",
 			                new Ejecutador(dba)
 			                .Dump(new SentenciaUpdate(p,p.cProducto.Set("P1"),p.cNombreProducto.Set("Producto 1"))));
@@ -120,6 +127,7 @@ namespace PrModelador
 		public void SentenciaCompuesta(){
 			Productos p=new Productos();
 			BaseDatos dba=BdAccess.SinAbrir();
+			dba.TipoStuffActual=BaseDatos.TipoStuff.Siempre;
 			Empresas e=new Empresas();
 			e.cEmpresa.Valor=13;
 			CampoDestino<int> cCantidadPartes=new CampoDestino<int>("cantidadpartes");
@@ -142,6 +150,15 @@ namespace PrModelador
 				Assert.AreEqual("UPDATE [partesproductos] p INNER JOIN [productos] pr ON p.[empresa]=pr.[empresa] AND p.[producto]=pr.[producto] " +
 				                "SET p.[nombreparte]=(pr.[nombreproducto] & p.[parte])\n WHERE p.[nombreparte] IS NULL\n AND p.[empresa]=13\n AND pr.[empresa]=13;\n",
 				                ej.Dump(su));
+				dba.TipoStuffActual=BaseDatos.TipoStuff.Inteligente;
+				su=new SentenciaUpdate(pr,pr.cEstado.Set(0)).Where(pr.cEstado.EsNulo());
+				Assert.AreEqual("UPDATE productos SET estado=0\n WHERE estado IS NULL\n AND empresa=13;\n",
+				                ej.Dump(su));
+				NovedadesProductos np=new NovedadesProductos();
+				su=new SentenciaUpdate(pr,pr.cEstado.Set(np.cNuevoEstado)).Where(pr.cProducto.Distinto("P_este"));
+				Assert.AreEqual("UPDATE productos p INNER JOIN np ON p.empresa=np.empresa AND p.producto=np.productoauxiliar\n SET p.estado=np.nuevoestado\n WHERE p.producto='P_este';\n",
+				                ej.Dump(su));
+					
 			}
 		}
 	}
