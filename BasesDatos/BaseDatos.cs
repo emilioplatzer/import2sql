@@ -112,6 +112,8 @@ namespace BasesDatos
 	}
 	public abstract class BaseDatos:EjecutadorBaseDatos,IDisposable
 	{
+		public enum TipoStuff { Siempre, Inteligente, Nunca };
+		public TipoStuff TipoStuffActual=TipoStuff.Inteligente;
 		protected BaseDatos(IDbConnection con)
 			:base(con)
 		{
