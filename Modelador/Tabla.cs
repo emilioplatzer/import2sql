@@ -34,7 +34,7 @@ namespace Modelador
 		public Campo[] CamposRelacionadosFk;
 		public TablasSql TablasFk;
 		public System.Collections.Generic.Dictionary<string, Campo> CamposFkAlias=new System.Collections.Generic.Dictionary<string, Campo>();
-		public bool EsFkMixta=false;
+		public Fk.Tipo TipoFk=Fk.Tipo.Obligatoria;
 		public Tabla()
 		{
 			Construir();
@@ -99,7 +99,7 @@ namespace Modelador
       		UsarFk();
       		if(TablasFk!=null){
 	      		foreach(Tabla t in TablasFk){
-      				if(db.SoportaFkMixta || !t.EsFkMixta){
+      				if(t.TipoFk==Fk.Tipo.Obligatoria || t.TipoFk!=Fk.Tipo.Sugerida && db.SoportaFkMixta){
 		      			StringBuilder camposFkEsta=new StringBuilder();
 		      			StringBuilder camposFkOtra=new StringBuilder();
 		      			Separador coma=new Separador(",");
@@ -219,6 +219,28 @@ namespace Modelador
 		public virtual Campo CampoIndirecto(Campo campo){
 			return CampoIndirecto(campo.Nombre);
 		}
+		public void EsFkDe(Tabla maestra,Fk.Tipo TipoFk,Campo UltimoCampoFk){
+			this.TablaRelacionada=maestra;
+			int cantidadCamposFk=CamposPk().Count;
+			int OrdenFk=0;
+			CamposRelacionadosFk=new Campo[cantidadCamposFk];
+			foreach(Campo c in CamposPk()){
+				if(OrdenFk<cantidadCamposFk-1 || UltimoCampoFk==null){
+					CamposRelacionadosFk[OrdenFk]=maestra.CampoIndirecto(c);
+				}
+				OrdenFk++;
+			}
+			if(UltimoCampoFk!=null){
+				CamposRelacionadosFk[OrdenFk-1]=UltimoCampoFk;
+			}
+			this.TipoFk=TipoFk;
+		}
+		public void EsFkDe(Tabla maestra){
+			EsFkDe(maestra,Fk.Tipo.Sugerida,null);
+		}
+		public void EsFkDe(Tabla maestra,Campo UltimoCampoFk){
+			EsFkDe(maestra,Fk.Tipo.Sugerida,UltimoCampoFk);
+		}
 		public void UsarFk(){
 			if(!IniciadasFk){
 				TablasFk=new TablasSql();
@@ -230,18 +252,7 @@ namespace Modelador
 	  						if(attr is Fk){
 	  							Fk fk=attr as Fk;
       							Tabla nueva=(Tabla)assem.CreateInstance(m.FieldType.FullName);
-      							nueva.TablaRelacionada=this;
-      							int cantidadCamposFk=nueva.CamposPk().Count;
-      							int OrdenFk=0;
-      							nueva.CamposRelacionadosFk=new Campo[cantidadCamposFk];
-      							foreach(Campo c in nueva.CamposPk()){
-   									nueva.CamposRelacionadosFk[OrdenFk]=this.CampoIndirecto(c);
-      								OrdenFk++;
-      							}
-      							if(fk.Alias!=null){
-      								nueva.CamposRelacionadosFk[OrdenFk-1]=CamposFkAlias[fk.Alias];
-      							}
-      							nueva.EsFkMixta=fk.EsMixta;
+      							nueva.EsFkDe(this,fk.TipoFk,(fk.Alias!=null?this.CamposFkAlias[fk.Alias]:null));
       							m.SetValue(this,nueva);
       							TablasFk.Add(nueva);
 	  						}
@@ -263,18 +274,19 @@ namespace Modelador
 	/////////////
 	public class Vista:System.Attribute{}
 	public class Fk:System.Attribute{		
+		public enum Tipo { Obligatoria, Mixta/*puede tener algún campo null y otro no*/, Sugerida/*solo para los joins*/ };
+		public Tipo TipoFk;
 		public string Alias;
-		public bool EsMixta; // Puede tener algunos campos sí y otros no
 		public Fk(){}
-		public Fk(string Alias):this(Alias,false){}
-		protected Fk(string Alias,bool EsMixta){
+		public Fk(string Alias):this(Alias,Tipo.Obligatoria){}
+		protected Fk(string Alias,Tipo TipoFk){
 			this.Alias=Alias;
-			this.EsMixta=EsMixta;
+			this.TipoFk=TipoFk;
 		}
 	}
 	public class FkMixta:Fk{
 		public FkMixta(string Alias)
-			:base(Alias,true)
+			:base(Alias,Tipo.Mixta)
 		{
 		}
 	}
