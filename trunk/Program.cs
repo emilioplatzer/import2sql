@@ -11,6 +11,7 @@ using System;
 using Indices;
 using Modelador;
 using PrModelador;
+using Tareas;
 
 namespace TodoASql
 {
@@ -18,7 +19,7 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
-			new Tareas.PrComparacionPadrones().PrExacta();
+			// new Tareas.PrComparacionPadrones().PrExacta();
 			// new probarLibroExcel().UltimoFilasyColumnas();
 			// new ProcesoLevantarPlanillasCVP().TraerPlanillasRecepcion();
 			// new CVP().CreacionTablas();
@@ -26,7 +27,7 @@ namespace TodoASql
 			// new prTabla().SentenciaCompuesta();
 			// new PruebasReflexion().NombresMiembros();
 		    // new ProbarSqLite().ConexionSqLite();
-		    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
+		    new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
 		    /*
 		    ProbarIndiceD3 p=new ProbarIndiceD3();
 		    p.A01CalculosBase();
@@ -77,10 +78,8 @@ namespace TodoASql
 			} // */
 			
 			Console.WriteLine("Listo!");
-			/*
 			Console.Write("presione cualquier tecla . . . ");
 			Console.ReadKey(true);
-			*/
 		}
 	}
 }

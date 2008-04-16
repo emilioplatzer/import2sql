@@ -182,6 +182,11 @@ namespace BasesDatos
 		public void Dispose(){
 			Close();
 		}
+		public bool DebeStuffear(string nombreTabla){
+			return TipoStuffActual==TipoStuff.Siempre 
+			   || TipoStuffActual==TipoStuff.Inteligente
+			   && nombreTabla.IndexOfAny("[],._áéíóúñÁÉÍÓÚÑüÜ!@#$%^&*'\" ".ToCharArray())>=0;
+		}
 		public object Verdadero{ get {return "S";} }
 		public object Falso{ get {return "N";} }
 		public abstract string ErrorCode_NoExisteTabla{ get; }

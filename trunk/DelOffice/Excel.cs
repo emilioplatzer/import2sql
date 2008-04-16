@@ -30,7 +30,7 @@ namespace DelOffice
 		public static Excel.Application ApExcel{
 			get{
 				if(apExcel==null) apExcel = new Excel.Application();
-				apExcel.Visible=true;
+				apExcel.Visible=false;
 				return apExcel;
 			}
 		}

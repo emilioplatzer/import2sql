@@ -65,7 +65,7 @@ namespace Tareas
 		BaseDatos db;
 		ComparacionPadrones cp;
 		public PrComparacionPadrones(){
-			switch(1){
+			switch(3){
 				case 1:
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					cp=new ComparacionPadrones(db);
