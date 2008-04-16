@@ -140,6 +140,9 @@ namespace Modelador
 		public Campo EsSuma(Campo campo){
 			return EsExpresionAgrupada("SUM",new ExpresionSql(campo));
 		}
+		public ExpresionSql Mas<T2>(T2 Valor){
+			return Operado<T2>("+",Valor);
+		}
 		public ExpresionSql Por<T2>(T2 Valor){
 			return Operado<T2>("*",Valor);
 		}
@@ -165,10 +168,10 @@ namespace Modelador
 		public override string TipoCampo{ 
 			get { return "varchar("+Largo.ToString()+")"; }
 		}
-		public ExpresionSql Concatenado(Campo campo){
+		public ExpresionSql Concatenado<T>(T expresion){
 			return new ExpresionSql(new OperadorConcatenacionIzquierda()
 			                        ,this,new OperadorConcatenacionMedio()
-			                        ,new ExpresionSql(campo),new OperadorConcatenacionDerecha());
+			                        ,new ValorSql<T>(expresion),new OperadorConcatenacionDerecha());
 		}
 	};
 	public class CampoReal:CampoNumericoTipo<double>{};
