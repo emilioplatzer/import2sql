@@ -355,25 +355,26 @@ namespace Modelador
 			public SelectSuma(Tabla TablaBase,Campo CampoSumar,ExpresionSql ExpresionWhere){
 				this.TablaBase=TablaBase;
 				this.CampoSumar=CampoSumar;
-				this.ExpresionWhere=ExpresionWhere;
+			}
+			public SelectSuma(Tabla TablaBase,Campo CampoSumar)
+				:this(TablaBase,CampoSumar,null)
+			{
 			}
 			public override string ToSql(BaseDatos db)
 			{
 				// return "";
 				StringBuilder rta=new StringBuilder();
 				if(db is BdAccess){
+					Tabla TablaSumandis=CampoSumar.TablaContenedora;
 					rta.Append("DSum('"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
-					           +db.StuffTabla(TablaBase.NombreTabla)+"','");
-					foreach(Sqlizable s in ExpresionWhere.Partes){
-						if(s is Campo){
-							Campo c=s as Campo;
-							if(c.TablaContenedora!=TablaBase){
-								rta.Append("''' & "+c.ToSql(db)+" & '''");
-							}else{
-								rta.Append(db.StuffCampo(c.NombreCampo));
-							}
-						}else{
-							rta.Append(s.ToSql(db));
+					           +db.StuffTabla(TablaSumandis.NombreTabla));
+					if(TablaSumandis.TablaRelacionada==TablaBase){
+						rta.Append("','");
+						Separador and=new Separador(" AND ");
+						int OrdenPk=0;
+						foreach(Campo c in TablaSumandis.CamposPk()){
+							rta.Append(and+db.StuffCampo(c.NombreCampo)+"=''' & "+TablaSumandis.CamposRelacionadosFk[OrdenPk].ToSql(db)+"'''");
+							OrdenPk++;
 						}
 					}
 					rta.Append("')");

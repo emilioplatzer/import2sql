@@ -152,7 +152,7 @@ namespace Indices
 		public override void CrearTablas(){
 			base.CrearTablas();
 			for(int i=0; i<=20; i++){
-				db.ExecuteNonQuery("insert into numeros (numero) values ("+i.ToString()+")");
+				db.ExecuteNonQuery("INSERT INTO numeros (numero) VALUES ("+i.ToString()+");");
 			}
 		}
 		public static RepositorioIndice Abrir(BaseDatos db){
@@ -279,6 +279,7 @@ namespace Indices
 						.Where(hijos.cNivel.Igual(i))
 					);
 					AuxGrupos aux=new AuxGrupos();
+					aux.EsFkDe(hijos,hijos.cGrupoPadre);
 					ej.Ejecutar(
 						new SentenciaUpdate(hijos,hijos.cPonderador.Set(hijos.cPonderador.Por(aux.cPonderadorOriginal.Dividido(aux.cSumaPonderadorHijos))))
 						.Where(hijos.cNivel.Igual(i))

@@ -24,11 +24,11 @@ namespace TodoASql
 			// new ProcesoLevantarPlanillasCVP().TraerPlanillasRecepcion();
 			// new CVP().CreacionTablas();
 			// new prTabla().Periodos();
-			// new prTabla().SentenciaCompuesta();
+			new prTabla().UpdateSuma();
 			// new PruebasReflexion().NombresMiembros();
 		    // new ProbarSqLite().ConexionSqLite();
-		    new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
-		    /*
+		    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
+		    // /*
 		    ProbarIndiceD3 p=new ProbarIndiceD3();
 		    p.A01CalculosBase();
 		    p.VerCanasta();
