@@ -163,7 +163,7 @@ namespace Modelador
 				}
 				clausulaWhere.Append(whereAnd+parametros[i]+"="+db.StuffValor(valor));
   			}
-			IDataReader SelectAbierto=db.ExecuteReader("SELECT * FROM "+db.StuffTabla(NombreTabla)+clausulaWhere);
+			IDataReader SelectAbierto=db.ExecuteReader("SELECT * FROM "+db.StuffTabla(NombreTabla)+clausulaWhere+";");
 			SelectAbierto.Read();
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
@@ -268,6 +268,9 @@ namespace Modelador
 		}
 		public ExpresionSql SelectSuma(Campo CampoSumar,ExpresionSql ExpresionWhere){
 			return new ExpresionSql.SelectSuma(this,CampoSumar,ExpresionWhere);
+		}
+		public ExpresionSql SelectSuma(Campo CampoSumar){
+			return new ExpresionSql.SelectSuma(this,CampoSumar);
 		}
 	}
 

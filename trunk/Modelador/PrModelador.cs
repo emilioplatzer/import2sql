@@ -37,6 +37,7 @@ namespace PrModelador
 			[Pk] public CampoProducto cProducto;
 			public CampoNombre cNombreProducto;
 			public CampoEntero cEstado;
+			public CampoReal cCosto;
 			[Fk] public Empresas fkEmpresas;
 		}
 		class PartesProductos:Tabla{
@@ -65,7 +66,7 @@ namespace PrModelador
 			Assert.AreEqual("create table periodos(ano integer,mes integer,anoant integer,mesant integer,primary key(ano,mes));"
 			                ,Cadena.Simplificar(p.SentenciaCreateTable(dba)));
 			Productos pr=new Productos();
-			Assert.AreEqual("create table productos(empresa integer,producto varchar(4),nombreproducto varchar(250),estado integer,primary key(empresa,producto),foreign key(empresa)references empresas(empresa));"
+			Assert.AreEqual("create table productos(empresa integer,producto varchar(4),nombreproducto varchar(250),estado integer,costo double precision,primary key(empresa,producto),foreign key(empresa)references empresas(empresa));"
 			                ,Cadena.Simplificar(pr.SentenciaCreateTable(dba)));
 			PartesProductos pa=new PartesProductos();
 			Assert.AreEqual(false,dba.SoportaFkMixta);
@@ -76,14 +77,6 @@ namespace PrModelador
 			                ,Cadena.Simplificar(pa.SentenciaCreateTable(dba)));
 			Assert.AreEqual("create table partesproductos(empresa integer,producto varchar(4),parte integer,nombreparte varchar(250),cantidad integer,parteanterior integer,primary key(empresa,producto,parte),foreign key(empresa,producto)references productos(empresa,producto),foreign key(empresa,producto,parteanterior)references partesproductos(empresa,producto,parte));"
 			                ,Cadena.Simplificar(pa.SentenciaCreateTable(dbp)));
-			/*
-			[Pk] public CampoEntero cEmpresa;
-			[Pk] public CampoProducto cProducto;
-			[Pk] public CampoEntero cParte;
-			public CampoNombre cNombreParte;
-			public CampoEntero cCantidad;
-			public CampoEntero cParteAnterior;
-			*/
 		}
 		[Test]
 		public void SentenciaInsert(){
@@ -171,6 +164,23 @@ namespace PrModelador
 				                ej.Dump(su));
 					
 			}
+		}
+		[Test]
+		public void UpdateSuma(){
+			BaseDatos dba=BdAccess.SinAbrir();
+			PartesProductos pp=new PartesProductos();
+			pp.UsarFk();
+			Productos pr=pp.fkProductos;
+			SentenciaUpdate su=
+				new SentenciaUpdate(pr,pr.cCosto.Set(pp.SelectSuma(pp.cCantidad)));
+			Assert.AreEqual("UPDATE productos SET costo=DSum('cantidad','partesproductos','producto=''' & producto & '''');"
+			                ,new Ejecutador(dba).Dump(su));
+			NovedadesProductos np=new NovedadesProductos();
+			np.UsarFk();
+			np.EsFkDe(pr,pr.cProducto);
+			su=new SentenciaUpdate(pr,pr.cCosto.Set(pp.SelectSuma(np.cNuevoEstado)));
+			Assert.AreEqual("UPDATE productos SET costo=DSum('nuevoestado','novedadesproducto','productoauxiliar=''' & producto & '''');"
+			                ,new Ejecutador(dba).Dump(su));
 		}
 	}
 }

@@ -96,6 +96,18 @@ namespace Comunes
 				.Substring(0,Otras.Min(250,valor.Length)).Trim();
 				*/
 		}
+		public static string AgregarSiFalta(string frase, string ultimosCaracteres){
+			if(frase.EndsWith(ultimosCaracteres)){
+				return frase;
+			}else{
+				for(int i=1; i<ultimosCaracteres.Length; i++){
+					if(frase.EndsWith(ultimosCaracteres.Remove(i))){
+					   	return frase+ultimosCaracteres.Substring(ultimosCaracteres.Length-i);
+				    }
+				}
+				return frase+ultimosCaracteres;
+			}
+		}
 	}
 
 	[TestFixture]
@@ -149,6 +161,15 @@ namespace Comunes
 			Assert.AreEqual("tett",Cadena.BuscarYReemplazar("ttt","tt","tet"));
 		}
 		*/
+		[Test]
+		public void AgregarSiFalta(){
+			Assert.AreEqual("-1 esto.",Cadena.AgregarSiFalta("-1 esto.","."));
+			Assert.AreEqual("0 esto.",Cadena.AgregarSiFalta("0 esto","."));
+			Assert.AreEqual("1 esto.-",Cadena.AgregarSiFalta("1 esto",".-"));
+			Assert.AreEqual("2 esto.-",Cadena.AgregarSiFalta("2 esto.",".-"));
+			Assert.AreEqual("3 esto.-",Cadena.AgregarSiFalta("3 esto.-",".-"));
+			Assert.AreEqual("4 esto-.-",Cadena.AgregarSiFalta("4 esto-",".-"));
+		}
 	}
 	public class ConjuntosString{
 		public static int Cardinal(string conjunto,string separador){

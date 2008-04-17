@@ -52,6 +52,7 @@
     <Compile Include="BasesDatos\ReceptorSql.cs" />
     <Compile Include="BasesDatos\SqLite.cs" />
     <Compile Include="Comunes\Archivo.cs" />
+    <Compile Include="Comunes\Bitacora.cs" />
     <Compile Include="Comunes\Cadena.cs" />
     <Compile Include="Comunes\Parametros.cs" />
     <Compile Include="DelOffice\Excel.cs" />

@@ -24,6 +24,12 @@ namespace BasesDatos
 	public class EjecutadorBaseDatos{
 		internal IDbConnection con;
 		protected IDbCommand cmd;
+		static Bitacora bitacora;
+		static Bitacora bitacoraAsertos;
+		static EjecutadorBaseDatos(){
+			bitacora=new Bitacora("i2s_query.sql","i2s_queries.sql");
+			bitacoraAsertos=new Bitacora("i2s_Asert.txt","i2s_Asertos.txt");
+		}
 		protected EjecutadorBaseDatos(IDbConnection con)
 		{
 			this.con=con;
@@ -36,7 +42,7 @@ namespace BasesDatos
 		public IDataReader ExecuteReader(SentenciaSql sentencia){
 			Assert.IsNotNull(con);
 			IDbCommand cmd_local=con.CreateCommand();
-			cmd_local.CommandText=AdaptarSentecia(sentencia);
+			cmd_local.CommandText=bitacora.RegistrarSql(AdaptarSentecia(sentencia));
 			return cmd_local.ExecuteReader();
 		}
 		public object ExecuteScalar(SentenciaSql sentencia){
@@ -46,7 +52,7 @@ namespace BasesDatos
 		}
 		public int ExecuteNonQuery(SentenciaSql sentencia){
 			Assert.IsNotNull(cmd);
-			cmd.CommandText=AdaptarSentecia(sentencia);
+			cmd.CommandText=bitacora.RegistrarSql(AdaptarSentecia(sentencia));
 			return cmd.ExecuteNonQuery();
 		}
 		public void EjecutrarSecuencia(SentenciaSql secuencia){
@@ -61,13 +67,10 @@ namespace BasesDatos
 			return rta;
 		}
 		public void AssertSinRegistros(string explicacion,string sentencia){
-			IDataReader rdr=ExecuteReader(sentencia);
+			IDataReader rdr=ExecuteReader(bitacora.RegistrarSql(sentencia));
 			bool rta=!rdr.Read();
 			if(!rta){
-				Archivo.Escribir(System.Environment.GetEnvironmentVariable("TEMP")
-			                      + @"\dataquery.txt"
-			                      ,explicacion+"\n"+
-			                      Dump(rdr,10));
+				bitacoraAsertos.Registrar(explicacion+"\n"+Dump(rdr,10));
 			}
 			rdr.Close();
 			Assert.IsTrue(rta,explicacion);
@@ -89,9 +92,6 @@ namespace BasesDatos
 			return rta.ToString();
 		}
 		protected virtual string AdaptarSentecia(SentenciaSql sentencia){
-			Archivo.Escribir(System.Environment.GetEnvironmentVariable("TEMP")
-			                      + @"\query.sql"
-			                      ,sentencia.ToString());
 			return sentencia.ToString();
 		}
 		public class SentenciaSql{
