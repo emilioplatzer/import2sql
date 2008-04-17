@@ -65,7 +65,8 @@ namespace Tareas
 		BaseDatos db;
 		ComparacionPadrones cp;
 		public PrComparacionPadrones(){
-			switch(3){
+			#pragma warning disable 162
+			switch(3){ // Solo se va a tomar un camino
 				case 1:
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					cp=new ComparacionPadrones(db);
@@ -81,6 +82,7 @@ namespace Tareas
 					cp.CrearTablas();
 					break;
 			}
+			#pragma warning restore 162
 		}
 		public void Cargar1(string[] datos,string conjunto){
 			ComparacionPadrones.Nombres n=new ComparacionPadrones.Nombres();
