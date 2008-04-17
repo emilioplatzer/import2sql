@@ -505,7 +505,8 @@ namespace Indices
 		RepositorioIndice repo;
 		public ProbarIndiceD3(){
 			BaseDatos db;
-			switch(3){
+			#pragma warning disable 162
+			switch(3){ // solo se va a tomar un camino
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					db.EliminarTablaSiExiste("calgru");
@@ -529,6 +530,7 @@ namespace Indices
 					db=BdAccess.Abrir(archivoMDB);
 					break;
 			}
+			#pragma warning restore 162
 			repo=RepositorioIndice.Crear(db);
 			RepositorioIndice.Productos P100=repo.CrearProducto("P100");
 			RepositorioIndice.Productos P101=repo.CrearProducto("P101");

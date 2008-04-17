@@ -24,6 +24,7 @@ namespace Indices
 		*/
 		public class CampoAtributo:CampoChar{ public CampoAtributo():base(250){} };
 		public class CampoValor:CampoChar{ public CampoValor():base(250){} };
+		#pragma warning disable 169
 		public class FormulariosImportados:Tabla{
 			[Pk] CampoEntero cAno;
 			[Pk] CampoEntero cMes;
@@ -35,6 +36,7 @@ namespace Indices
 			[Pk] CampoAtributo cAtributo;
 			CampoValor cValor;
 		}
+		#pragma warning restore 169
 		public CVP()
 		{
 		}

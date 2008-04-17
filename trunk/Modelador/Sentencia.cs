@@ -284,6 +284,7 @@ namespace Modelador
 									rta.Append(and+t.CamposRelacionadosFk[OrdenPk].Igual(c).ToSql(db));
 									OrdenPk++;
 								}
+								rta.Append("\n");
 							}
 						}
 					}

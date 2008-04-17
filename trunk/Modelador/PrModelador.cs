@@ -25,6 +25,7 @@ namespace PrModelador
 	}
 	[TestFixture]
 	public class prTabla{
+		#pragma warning disable 649
 		public prTabla(){
 		}
 		class Empresas:Tabla{
@@ -53,6 +54,7 @@ namespace PrModelador
 			[Pk] public CampoProducto cProductoAuxiliar;
 			public CampoEntero cNuevoEstado;
 		}
+		#pragma warning restore 649
 		[Test]
 		public void CreacionTablas(){
 			BdAccess dba=BdAccess.SinAbrir();
@@ -148,7 +150,7 @@ namespace PrModelador
 				                ,ej.Dump(new SentenciaSelect(cCantidadPartes.EsSuma(pp.cCantidad)).Where(pr.cProducto.Distinto(pr.cNombreProducto))));
 				Sentencia su=
 					new SentenciaUpdate(pp,pp.cNombreParte.Set(pr.cNombreProducto.Concatenado(pp.cParte))).Where(pp.cNombreParte.EsNulo());
-				Assert.AreEqual("UPDATE [partesproductos] p INNER JOIN [productos] pr ON p.[empresa]=pr.[empresa] AND p.[producto]=pr.[producto] " +
+				Assert.AreEqual("UPDATE [partesproductos] p INNER JOIN [productos] pr ON p.[empresa]=pr.[empresa] AND p.[producto]=pr.[producto]\n " +
 				                "SET p.[nombreparte]=(pr.[nombreproducto] & p.[parte])\n WHERE p.[nombreparte] IS NULL\n AND p.[empresa]=13\n AND pr.[empresa]=13;\n",
 				                ej.Dump(su));
 				dba.TipoStuffActual=BaseDatos.TipoStuff.Inteligente;
@@ -162,10 +164,10 @@ namespace PrModelador
 				Assert.AreEqual("SELECT p.producto, p.nombreproducto, pr.nombreproducto\n FROM productos p, productos pr\n WHERE p.producto=(pr.producto & '2')\n AND p.empresa=13\n AND pr.empresa=13;\n",
 				                ej.Dump(su));
 				NovedadesProductos np=new NovedadesProductos();
-				// Assert.Ignore("Generando el join del update");
-				pr.EsFkDe(np,np.cProductoAuxiliar);
+				np.EsFkDe(pr,pr.cProducto);
+				Assert.AreEqual(pr,np.TablaRelacionada);
 				su=new SentenciaUpdate(pr,pr.cEstado.Set(np.cNuevoEstado)).Where(pr.cProducto.Distinto("P_este"));
-				Assert.AreEqual("UPDATE productos p INNER JOIN np ON p.empresa=np.empresa AND p.producto=np.productoauxiliar\n SET p.estado=np.nuevoestado\n WHERE p.producto='P_este';\n",
+				Assert.AreEqual("UPDATE productos p INNER JOIN novedadesproductos n ON p.empresa=n.empresa AND p.producto=n.productoauxiliar\n SET p.estado=n.nuevoestado\n WHERE p.producto<>'P_este'\n AND p.empresa=13\n AND n.empresa=13;\n",
 				                ej.Dump(su));
 					
 			}
