@@ -266,8 +266,8 @@ namespace Indices
 				}
 				for(int i=9;i>=0;i--){ // Subir ponderadores nulos
 					ej.Ejecutar(
-						new SentenciaUpdate(grupos,grupos.cPonderador.Set(hijos.SelectSuma(hijos.cPonderador,hijos.cGrupoPadre.Igual(grupos.cGrupo))))
-						.Where(grupos.cNivel.Igual(i).And(grupos.cPonderador.EsNulo()))
+						new SentenciaUpdate(padre,padre.cPonderador.Set(padre.SelectSuma(hijos.cPonderador)))
+						.Where(padre.cNivel.Igual(i).And(padre.cPonderador.EsNulo()))
 					);
 				}
 				AuxGrupos auxgrupos=new AuxGrupos();

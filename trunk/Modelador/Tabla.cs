@@ -266,9 +266,11 @@ namespace Modelador
 		{
 			return db.StuffTabla(this.NombreTabla)+(this.Alias==null?"":" "+this.Alias);
 		}
+		/*
 		public ExpresionSql SelectSuma(Campo CampoSumar,ExpresionSql ExpresionWhere){
 			return new ExpresionSql.SelectSuma(this,CampoSumar,ExpresionWhere);
 		}
+		*/
 		public ExpresionSql SelectSuma(Campo CampoSumar){
 			return new ExpresionSql.SelectSuma(this,CampoSumar);
 		}

@@ -85,6 +85,14 @@ namespace PrModelador
 			Assert.AreEqual("INSERT INTO productos (producto, nombreproducto) SELECT p.producto, p.producto AS nombreproducto\n FROM productos p;\n",
 				new Ejecutador(dba)
 				.Dump(new SentenciaInsert(new Productos()).Select(p.cProducto,p.cNombreProducto.Es(p.cProducto))));
+			PartesProductos pp=new PartesProductos();
+			pp.UsarFk();
+			Productos pr=pp.fkProductos;
+			NovedadesProductos np=new NovedadesProductos();
+			np.EsFkDe(pr,pr.cProducto);
+			Assert.AreEqual("INSERT INTO partesproductos (producto, cantidad, nombreparte) SELECT p.producto, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n FROM productos p, novedadesproductos n\n WHERE n.empresa=p.empresa\n AND n.productoauxiliar=p.producto\n GROUP BY p.producto, n.nuevoestado;\n",
+				new Ejecutador(dba)
+				.Dump(new SentenciaInsert(pp).Select(pr.cProducto,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado))));
 		}
 		[Test]
 		public void SentenciaUpdate(){
@@ -171,15 +179,16 @@ namespace PrModelador
 			PartesProductos pp=new PartesProductos();
 			pp.UsarFk();
 			Productos pr=pp.fkProductos;
+			Assert.AreEqual(pr.TablaRelacionada,pp);
 			SentenciaUpdate su=
-				new SentenciaUpdate(pr,pr.cCosto.Set(pp.SelectSuma(pp.cCantidad)));
-			Assert.AreEqual("UPDATE productos SET costo=DSum('cantidad','partesproductos','producto=''' & producto & '''');"
+				new SentenciaUpdate(pr,pr.cCosto.Set(pr.SelectSuma(pp.cCantidad)));
+			Assert.AreEqual("UPDATE productos SET costo=DSum('cantidad','partesproductos','empresa=''' & empresa & ''' AND producto=''' & producto & '''');\n"
 			                ,new Ejecutador(dba).Dump(su));
 			NovedadesProductos np=new NovedadesProductos();
 			np.UsarFk();
-			np.EsFkDe(pr,pr.cProducto);
-			su=new SentenciaUpdate(pr,pr.cCosto.Set(pp.SelectSuma(np.cNuevoEstado)));
-			Assert.AreEqual("UPDATE productos SET costo=DSum('nuevoestado','novedadesproducto','productoauxiliar=''' & producto & '''');"
+			pr.EsFkDe(np,np.cProductoAuxiliar);
+			su=new SentenciaUpdate(pr,pr.cCosto.Set(pr.SelectSuma(np.cNuevoEstado)));
+			Assert.AreEqual("UPDATE productos SET costo=DSum('nuevoestado','novedadesproductos','empresa=''' & empresa & ''' AND productoauxiliar=''' & producto & '''');\n"
 			                ,new Ejecutador(dba).Dump(su));
 		}
 	}
