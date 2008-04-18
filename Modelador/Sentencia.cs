@@ -81,31 +81,36 @@ namespace Modelador
 					RegistrarTablas((s as ValorSql<ExpresionSql>).Valor);
 				}else if(s is SentenciaUpdate.Sets){
 					RegistrarTablas((s as SentenciaUpdate.Sets).ValorAsignar);
+				}else if(s is ExpresionSql.SelectSuma){
+					AsignarAlias((s as ExpresionSql.SelectSuma).CampoSumar.TablaContenedora);
 				}
 			}
+		}
+		protected void AsignarAlias(Tabla t){
+			int Largo=1;
+			int Sufijo=0;
+			string Alias=t.NombreTabla.Substring(0,Largo);
+			while(AliasTablas.ContainsKey(Alias)){
+				if(Sufijo==0 && Largo<t.NombreTabla.Length){
+					Largo++;
+				}else{
+					Largo=1;
+					Sufijo++;
+				}
+				if(Sufijo==0){
+					Alias=t.NombreTabla.Substring(0,Largo);
+				}else{
+					Alias=t.NombreTabla.Substring(0,Largo)+Sufijo.ToString();
+				}
+			}
+			AliasTablas.Add(Alias,t.NombreTabla);
+			t.Alias=Alias;
 		}
 		protected void RegistrarTabla(Tabla t){
 			if(t!=null){
 				if(TablasUsadas.IndexOf(t)<0){
 					TablasUsadas.Add(t);
-					int Largo=1;
-					int Sufijo=0;
-					string Alias=t.NombreTabla.Substring(0,Largo);
-					while(AliasTablas.ContainsKey(Alias)){
-						if(Sufijo==0 && Largo<t.NombreTabla.Length){
-							Largo++;
-						}else{
-							Largo=1;
-							Sufijo++;
-						}
-						if(Sufijo==0){
-							Alias=t.NombreTabla.Substring(0,Largo);
-						}else{
-							Alias=t.NombreTabla.Substring(0,Largo)+Sufijo.ToString();
-						}
-					}
-					AliasTablas.Add(Alias,t.NombreTabla);
-					t.Alias=Alias;
+					AsignarAlias(t);
 				}
 			}
 		}
@@ -406,7 +411,7 @@ namespace Modelador
 		}
 		public class SelectSuma:Sqlizable{
 			Tabla TablaBase;
-			Campo CampoSumar;
+			public Campo CampoSumar;
 			// ExpresionSql ExpresionWhere;
 			/*
 			public SelectSuma(Tabla TablaBase,Campo CampoSumar,ExpresionSql ExpresionWhere){
@@ -423,7 +428,7 @@ namespace Modelador
 			{
 				// return "";
 				StringBuilder rta=new StringBuilder();
-				if(db is BdAccess){
+				if(db.UpdateSelectSumViaDSum){
 					Tabla TablaSumandis=CampoSumar.TablaContenedora;
 					rta.Append("DSum('"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
 					           +db.StuffTabla(TablaSumandis.NombreTabla));
@@ -440,13 +445,13 @@ namespace Modelador
 					return rta.ToString();
 				}else{
 					Tabla TablaSumandis=CampoSumar.TablaContenedora;
-					rta.Append("(SELECT SUM("+CampoSumar.ToSql(db)+" FROM "
+					rta.Append("(SELECT SUM("+CampoSumar.ToSql(db)+") FROM "
 					           +TablaSumandis.ToSql(db));
 					if(TablaSumandis==TablaBase.TablaRelacionada){
 						Separador and=new Separador(" WHERE "," AND ");
 						int OrdenPk=0;
 						foreach(Campo c in TablaBase.CamposPk()){
-							rta.Append(and+db.StuffCampo(TablaBase.CamposRelacionadosFk[OrdenPk].NombreCampo)+"="+c.ToSql(db));
+							rta.Append(and+TablaBase.CamposRelacionadosFk[OrdenPk].ToSql(db)+"="+c.ToSql(db));
 							OrdenPk++;
 						}
 					}

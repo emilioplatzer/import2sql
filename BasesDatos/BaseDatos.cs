@@ -199,6 +199,7 @@ namespace BasesDatos
 		public virtual string OperadorConcatenacionIzquierda{ get{ return "("; } }
 		public virtual string OperadorConcatenacionDerecha{ get{ return ")"; } } 
 		public abstract bool UpdateConJoin{ get; }
+		poner esto que es mejor UpdateSelectSumViaDSum
 	}
 	public class SentenciaSql{
 		StringBuilder sentencia;
