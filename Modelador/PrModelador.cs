@@ -130,11 +130,12 @@ namespace PrModelador
 		public void SentenciaCompuesta(){
 			Productos p=new Productos();
 			BaseDatos dba=BdAccess.SinAbrir();
+			BaseDatos dbp=PostgreSql.SinAbrir();
 			dba.TipoStuffActual=BaseDatos.TipoStuff.Siempre;
 			Empresas e=new Empresas();
 			e.cEmpresa.Valor=13;
 			CampoDestino<int> cCantidadPartes=new CampoDestino<int>("cantidadpartes");
-			using(Ejecutador ej=new Ejecutador(dba,e)){
+			using(Ejecutador ej=new Ejecutador(dba,e), ejp=new Ejecutador(dbp,e)){
 				Sentencia s=
 					new SentenciaSelect(e.cEmpresa,e.cNombreEmpresa);
 				Assert.AreEqual("SELECT e.[empresa], e.[nombreempresa]\n FROM [empresas] e\n WHERE e.[empresa]=13;\n",
@@ -154,6 +155,9 @@ namespace PrModelador
 				Assert.AreEqual("UPDATE [partesproductos] p INNER JOIN [productos] pr ON p.[empresa]=pr.[empresa] AND p.[producto]=pr.[producto]\n " +
 				                "SET p.[nombreparte]=(pr.[nombreproducto] & p.[parte])\n WHERE p.[nombreparte] IS NULL\n AND p.[empresa]=13\n AND pr.[empresa]=13;\n",
 				                ej.Dump(su));
+				Assert.AreEqual("UPDATE partesproductos \n " +
+				                "SET p.[nombreparte]=(SELECT (pr.nombreproducto || p.parte) FROM productos pr WHERE pr.empresa=empresa AND pr.producto=producto) WHERE nombreparte IS NULL\n AND empresa=13;\n",
+				                ejp.Dump(su));
 				dba.TipoStuffActual=BaseDatos.TipoStuff.Inteligente;
 				su=new SentenciaUpdate(pr,pr.cEstado.Set(0)).Where(pr.cEstado.EsNulo());
 				Assert.AreEqual("UPDATE productos SET estado=0\n WHERE estado IS NULL\n AND empresa=13;\n",
