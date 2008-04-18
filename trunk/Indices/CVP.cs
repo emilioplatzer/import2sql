@@ -49,6 +49,8 @@ namespace Indices
 			
 		}
 	}
+	#if SinOffice
+	#else
 	public class ProcesoLevantarPlanillasCVP{
 		BaseDatos db;
 		ReceptorSql receptor;
@@ -88,4 +90,5 @@ namespace Indices
 			dir.ProcesarArchivos("*.xls","procesado",LevantarPlanilla);
 		}
 	}
+	#endif
 }
