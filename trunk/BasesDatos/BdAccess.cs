@@ -60,6 +60,7 @@ namespace BasesDatos
 			get { return " & "; }
 		}
 		public override bool UpdateConJoin{ get{ return true; } }
+		public override bool UpdateSelectSumViaDSum{ get{ return true; } }
 	}
 	[TestFixture]
 	public class ProbarBdAccess{

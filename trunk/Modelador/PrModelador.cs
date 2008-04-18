@@ -217,6 +217,8 @@ namespace PrModelador
 			su=new SentenciaUpdate(pr,pr.cCosto.Set(pr.SelectSuma(np.cNuevoEstado)));
 			Assert.AreEqual("UPDATE productos SET costo=DSum('nuevoestado','novedadesproductos','empresa=''' & empresa & ''' AND productoauxiliar=''' & producto & '''');\n"
 			                ,new Ejecutador(dba).Dump(su));
+			Assert.AreEqual("UPDATE productos SET costo=(SELECT SUM(n.nuevoestado) FROM novedadesproductos n WHERE n.empresa=empresa AND n.productoauxiliar=producto);\n"
+			                ,new Ejecutador(dbp).Dump(su));
 		}
 	}
 }

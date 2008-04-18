@@ -507,7 +507,7 @@ namespace Indices
 		public ProbarIndiceD3(){
 			BaseDatos db;
 			#pragma warning disable 162
-			switch(3){ // solo se va a tomar un camino
+			switch(1){ // solo se va a tomar un camino
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					db.EliminarTablaSiExiste("calgru");
