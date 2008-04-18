@@ -427,17 +427,6 @@ namespace Modelador
 					Tabla TablaSumandis=CampoSumar.TablaContenedora;
 					rta.Append("DSum('"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
 					           +db.StuffTabla(TablaSumandis.NombreTabla));
-					/*
-					if(TablaSumandis.TablaRelacionada==TablaBase){
-						rta.Append("','");
-						Separador and=new Separador(" AND ");
-						int OrdenPk=0;
-						foreach(Campo c in TablaSumandis.CamposPk()){
-							rta.Append(and+db.StuffCampo(c.NombreCampo)+"=''' & "+TablaSumandis.CamposRelacionadosFk[OrdenPk].ToSql(db)+" & '''");
-							OrdenPk++;
-						}
-					}
-					*/
 					if(TablaSumandis==TablaBase.TablaRelacionada){
 						rta.Append("','");
 						Separador and=new Separador(" AND ");
@@ -450,22 +439,20 @@ namespace Modelador
 					rta.Append("')");
 					return rta.ToString();
 				}else{
-					// return "(SELECT sum("+CampoSumar.ToSql(db)+") FROM "+TablaBase.ToSql(db)+" WHERE "+ExpresionWhere.ToSql(db)+")";
-					return "x:";
-					/*
-					foreach(Sqlizable s in ExpresionWhere){
-						rta.Append(s.ToSql(db));
+					Tabla TablaSumandis=CampoSumar.TablaContenedora;
+					rta.Append("(SELECT SUM("+CampoSumar.ToSql(db)+" FROM "
+					           +TablaSumandis.ToSql(db));
+					if(TablaSumandis==TablaBase.TablaRelacionada){
+						Separador and=new Separador(" WHERE "," AND ");
+						int OrdenPk=0;
+						foreach(Campo c in TablaBase.CamposPk()){
+							rta.Append(and+db.StuffCampo(TablaBase.CamposRelacionadosFk[OrdenPk].NombreCampo)+"="+c.ToSql(db));
+							OrdenPk++;
+						}
 					}
-					*/
+					rta.Append(")");
+					return rta.ToString();
 				}
-				/* 
-							    DSum('ponderador','grupos','grupopadre=''' & grupo & ''' and agrupacion=''' & agrupacion & '''')
-
-							    (SELECT sum(h.ponderador)
-							       FROM grupos h
-							       WHERE h.grupopadre=grupos.grupo
-							         AND h.agrupacion=grupos.agrupacion)
-				 */ 
 			}
 			public static implicit operator ExpresionSql(SelectSuma ss){
 				return new ExpresionSql(ss);

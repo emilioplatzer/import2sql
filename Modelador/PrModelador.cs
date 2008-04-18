@@ -200,6 +200,7 @@ namespace PrModelador
 		[Test]
 		public void UpdateSuma(){
 			BaseDatos dba=BdAccess.SinAbrir();
+			BaseDatos dbp=PostgreSql.SinAbrir();
 			PartesProductos pp=new PartesProductos();
 			pp.UsarFk();
 			Productos pr=pp.fkProductos;
@@ -208,6 +209,8 @@ namespace PrModelador
 				new SentenciaUpdate(pr,pr.cCosto.Set(pr.SelectSuma(pp.cCantidad)));
 			Assert.AreEqual("UPDATE productos SET costo=DSum('cantidad','partesproductos','empresa=''' & empresa & ''' AND producto=''' & producto & '''');\n"
 			                ,new Ejecutador(dba).Dump(su));
+			Assert.AreEqual("UPDATE productos SET costo=(SELECT SUM(pa.cantidad) FROM partesproductos pa WHERE pa.empresa=empresa AND pa.producto=producto);\n"
+			                ,new Ejecutador(dbp).Dump(su));
 			NovedadesProductos np=new NovedadesProductos();
 			np.UsarFk();
 			pr.EsFkDe(np,np.cProductoAuxiliar);
