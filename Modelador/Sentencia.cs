@@ -48,8 +48,9 @@ namespace Modelador
 			ExpresionSql expresion=c.ExpresionBase;
 			if(expresion!=null){
 				RegistrarTablas(expresion);
+			}else{
+				RegistrarTabla(c.TablaContenedora);
 			}
-			RegistrarTabla(c.TablaContenedora);
 		}
 		protected void RegistrarTablas(CamposSql Campos){
 			foreach(Campo c in Campos){
@@ -237,6 +238,7 @@ namespace Modelador
 			PartesSql todas=new PartesSql();
 			todas.Add(new LiteralSql("INSERT INTO "));
 			todas.Add(TablaBase);
+			TablaBase.Alias=null;
 			ParteSeparadora coma=new ParteSeparadora(" (",", ");
 			foreach(Campo c in Campos){
 				coma.AgregarEn(todas,new CampoReceptorInsert(c));
@@ -351,14 +353,17 @@ namespace Modelador
 		public class SelectSuma:Sqlizable{
 			Tabla TablaBase;
 			Campo CampoSumar;
-			ExpresionSql ExpresionWhere;
+			// ExpresionSql ExpresionWhere;
+			/*
 			public SelectSuma(Tabla TablaBase,Campo CampoSumar,ExpresionSql ExpresionWhere){
 				this.TablaBase=TablaBase;
 				this.CampoSumar=CampoSumar;
 			}
+			*/
 			public SelectSuma(Tabla TablaBase,Campo CampoSumar)
-				:this(TablaBase,CampoSumar,null)
 			{
+				this.TablaBase=TablaBase;
+				this.CampoSumar=CampoSumar;
 			}
 			public override string ToSql(BaseDatos db)
 			{
@@ -368,19 +373,31 @@ namespace Modelador
 					Tabla TablaSumandis=CampoSumar.TablaContenedora;
 					rta.Append("DSum('"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
 					           +db.StuffTabla(TablaSumandis.NombreTabla));
+					/*
 					if(TablaSumandis.TablaRelacionada==TablaBase){
 						rta.Append("','");
 						Separador and=new Separador(" AND ");
 						int OrdenPk=0;
 						foreach(Campo c in TablaSumandis.CamposPk()){
-							rta.Append(and+db.StuffCampo(c.NombreCampo)+"=''' & "+TablaSumandis.CamposRelacionadosFk[OrdenPk].ToSql(db)+"'''");
+							rta.Append(and+db.StuffCampo(c.NombreCampo)+"=''' & "+TablaSumandis.CamposRelacionadosFk[OrdenPk].ToSql(db)+" & '''");
+							OrdenPk++;
+						}
+					}
+					*/
+					if(TablaSumandis==TablaBase.TablaRelacionada){
+						rta.Append("','");
+						Separador and=new Separador(" AND ");
+						int OrdenPk=0;
+						foreach(Campo c in TablaBase.CamposPk()){
+							rta.Append(and+db.StuffCampo(TablaBase.CamposRelacionadosFk[OrdenPk].NombreCampo)+"=''' & "+c.ToSql(db)+" & '''");
 							OrdenPk++;
 						}
 					}
 					rta.Append("')");
 					return rta.ToString();
 				}else{
-					return "(SELECT sum("+CampoSumar.ToSql(db)+") FROM "+TablaBase.ToSql(db)+" WHERE "+ExpresionWhere.ToSql(db)+")";
+					// return "(SELECT sum("+CampoSumar.ToSql(db)+") FROM "+TablaBase.ToSql(db)+" WHERE "+ExpresionWhere.ToSql(db)+")";
+					return "x:";
 					/*
 					foreach(Sqlizable s in ExpresionWhere){
 						rta.Append(s.ToSql(db));
