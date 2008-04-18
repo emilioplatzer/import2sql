@@ -17,9 +17,6 @@ using NUnit.Framework;
 using Comunes;
 using BasesDatos;
 using Modelador;
-using PartesSql = System.Collections.Generic.List<Modelador.Sqlizable>;
-using TablasSql = System.Collections.Generic.List<Modelador.Tabla>;
-using CamposSql = System.Collections.Generic.List<Modelador.Campo>;
 
 namespace Modelador
 {
@@ -112,6 +109,9 @@ namespace Modelador
 		public virtual SentenciaUpdate.Sets Set(Campo campo){
 			return new SentenciaUpdate.Sets(this,new ExpresionSql(campo));
 		}
+		public virtual SentenciaUpdate.Sets SetNull(){
+			return new SentenciaUpdate.Sets(this,new ExpresionSql(new ValorSqlNulo()));
+		}
 	}
 	public class CampoPkTipo<T>:CampoTipo<T>{
 		public CampoPkTipo()
@@ -126,7 +126,7 @@ namespace Modelador
 	}
 	public class CampoNumericoTipo<T>:CampoTipo<T>{
 		public Campo EsExpresionAgrupada(string operador,ExpresionSql expresion){
-			PartesSql nueva=new PartesSql();
+			Lista<Sqlizable> nueva=new Lista<Sqlizable>();
 			nueva.Add(new LiteralSql(operador+"("));
 			nueva.AddRange(expresion.Partes);
 			nueva.Add(new LiteralSql(")"));

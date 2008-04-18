@@ -17,9 +17,6 @@ using NUnit.Framework;
 using Comunes;
 using BasesDatos;
 using Modelador;
-using PartesSql=System.Collections.Generic.List<Modelador.Sqlizable>;
-using TablasSql=System.Collections.Generic.List<Modelador.Tabla>;
-using CamposSql=System.Collections.Generic.List<Modelador.Campo>;
 
 namespace Modelador
 {
@@ -32,7 +29,7 @@ namespace Modelador
 		public bool IniciadasFk=false;
 		public Tabla TablaRelacionada;
 		public Campo[] CamposRelacionadosFk;
-		public TablasSql TablasFk;
+		public Lista<Tabla> TablasFk;
 		public System.Collections.Generic.Dictionary<string, Campo> CamposFkAlias=new System.Collections.Generic.Dictionary<string, Campo>();
 		public Fk.Tipo TipoFk=Fk.Tipo.Obligatoria;
 		public Tabla()
@@ -176,8 +173,8 @@ namespace Modelador
   			}
 			return this;
 		}
-		public virtual CamposSql CamposPk(){
-			CamposSql rta=new CamposSql();
+		public virtual Lista<Campo> CamposPk(){
+			Lista<Campo> rta=new Lista<Campo>();
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
@@ -190,7 +187,7 @@ namespace Modelador
   			return rta;
 		}
 		public virtual bool TieneElCampo(Campo campo){
-			CamposSql rta=new CamposSql();
+			Lista<Campo> rta=new Lista<Campo>();
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
@@ -203,7 +200,7 @@ namespace Modelador
   			return false;
 		}
 		public virtual Campo CampoIndirecto(string campoNombre){
-			CamposSql rta=new CamposSql();
+			Lista<Campo> rta=new Lista<Campo>();
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
@@ -243,7 +240,7 @@ namespace Modelador
 		}
 		public void UsarFk(){
 			if(!IniciadasFk){
-				TablasFk=new TablasSql();
+				TablasFk=new Lista<Tabla>();
       			Assembly assem = Assembly.GetExecutingAssembly();
 	  			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 				foreach(FieldInfo m in ms){
@@ -340,5 +337,11 @@ namespace Modelador
 			return db.StuffValor(Valor);
 		}
 	}
-
+	public class ValorSqlNulo:Sqlizable{
+		public ValorSqlNulo(){
+		}
+		public override string ToSql(BaseDatos db){
+			return "null";
+		}
+	}
 }
