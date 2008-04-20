@@ -112,6 +112,9 @@ namespace Modelador
 		public virtual SentenciaUpdate.Sets SetNull(){
 			return new SentenciaUpdate.Sets(this,new ExpresionSql(new ValorSqlNulo()));
 		}
+		public Campo Es(T valor){
+			return Es(new ExpresionSql(new ValorSql<T>(valor)));
+		}
 	}
 	public class CampoPkTipo<T>:CampoTipo<T>{
 		public CampoPkTipo()

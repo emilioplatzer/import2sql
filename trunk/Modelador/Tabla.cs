@@ -28,7 +28,7 @@ namespace Modelador
 		public string Alias;
 		public bool IniciadasFk=false;
 		public Tabla TablaRelacionada;
-		public Campo[] CamposRelacionadosFk;
+		public Diccionario<Campo,Campo> CamposRelacionadosFk;
 		public Lista<Tabla> TablasFk;
 		public System.Collections.Generic.Dictionary<string, Campo> CamposFkAlias=new System.Collections.Generic.Dictionary<string, Campo>();
 		public Fk.Tipo TipoFk=Fk.Tipo.Obligatoria;
@@ -100,11 +100,9 @@ namespace Modelador
 		      			StringBuilder camposFkEsta=new StringBuilder();
 		      			StringBuilder camposFkOtra=new StringBuilder();
 		      			Separador coma=new Separador(",");
-		      			int OrdenPk=0;
 		      			foreach(Campo c in t.CamposPk()){
-		      				camposFkEsta.Append(coma+t.CamposRelacionadosFk[OrdenPk].NombreCampo);
+		      				camposFkEsta.Append(coma+t.CamposRelacionadosFk[c].NombreCampo);
 		      				camposFkOtra.Append(coma.mismo()+c.NombreCampo);
-		      				OrdenPk++;
 		      			}
 		      			rta.Append(",\n\t"+"foreign key ("+camposFkEsta.ToString()+") references "+t.NombreTabla+" ("+camposFkOtra.ToString()+")");
       				}
@@ -220,15 +218,15 @@ namespace Modelador
 			this.TablaRelacionada=maestra;
 			int cantidadCamposFk=CamposPk().Count;
 			int OrdenFk=0;
-			CamposRelacionadosFk=new Campo[cantidadCamposFk];
+			CamposRelacionadosFk=new Diccionario<Campo,Campo>();
 			foreach(Campo c in CamposPk()){
 				if(OrdenFk<cantidadCamposFk-1 || UltimoCampoFk==null){
-					CamposRelacionadosFk[OrdenFk]=maestra.CampoIndirecto(c);
+					CamposRelacionadosFk[c]=maestra.CampoIndirecto(c);
 				}
 				OrdenFk++;
 			}
 			if(UltimoCampoFk!=null){
-				CamposRelacionadosFk[OrdenFk-1]=UltimoCampoFk;
+				CamposRelacionadosFk[CamposPk()[OrdenFk-1]]=UltimoCampoFk;
 			}
 			this.TipoFk=TipoFk;
 		}

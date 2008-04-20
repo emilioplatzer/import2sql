@@ -117,7 +117,7 @@ namespace Indices
 				return new Periodos(db,ano,mes);
 			}
 		}
-		public class CalPro:Tabla{
+		public class CalProd:Tabla{
 			[Pk] public CampoPeriodo cPeriodo;
 			[Pk] public CampoProducto cProducto;
 			public CampoPrecio cPromedio;
@@ -241,7 +241,7 @@ namespace Indices
 			return p;
 		}
 		public void RegistrarPromedio(Periodos per,Productos prod,double promedio){
-			CalPro t=new CalPro();
+			CalProd t=new CalProd();
 			using(Insertador ins=t.Insertar(db)){
 				t.cPeriodo[ins]=per.cPeriodo;
 				t.cProducto[ins]=prod.cProducto;
@@ -286,68 +286,32 @@ namespace Indices
 					);
 				}
 			}
-			using(EjecutadorSql ej=new EjecutadorSql(db,"agrupacion",agrupacion.cAgrupacion.Valor)){
-				for(int i=1;i<10;i++){
-					/*
-					ej.ExecuteNonQuery(new SentenciaSql(db,@"
-						INSERT INTO auxgrupos (agrupacion,grupo,ponderadororiginal,sumaponderadorhijos)
-						  SELECT p.agrupacion,p.grupo,p.ponderador,sum(h.ponderador)
-						    FROM grupos p INNER JOIN grupos h ON p.agrupacion=h.agrupacion AND p.grupo=h.grupopadre
-						    WHERE h.agrupacion={agrupacion} 
-	                          AND h.nivel={nivel}
-						    GROUP BY p.agrupacion,p.grupo,p.ponderador;
-					").Arg("nivel",i));
-					*/
-					/*
-					if(db.GetType()==typeof(BdAccess)){
-						ej.ExecuteNonQuery(new SentenciaSql(db,@"
-							UPDATE grupos h INNER JOIN auxgrupos a ON a.grupo=h.grupopadre AND a.agrupacion=h.agrupacion
-                              SET h.ponderador=h.ponderador*a.ponderadororiginal/a.sumaponderadorhijos
-							  WHERE h.agrupacion={agrupacion} 
-		                        AND h.nivel={nivel}
-						").Arg("nivel",i));
-					}else{
-						ej.ExecuteNonQuery(new SentenciaSql(db,@"
-							UPDATE grupos SET ponderador=ponderador
-							    *(SELECT a.ponderadororiginal/a.sumaponderadorhijos
-							       FROM auxgrupos a 
-							       WHERE a.grupo=grupos.grupopadre
-							         AND a.agrupacion=grupos.agrupacion)
-							  WHERE agrupacion={agrupacion} 
-		                        AND nivel={nivel}
-						").Arg("nivel",i));
-					}
-					*/
-				}
-			}
 		}
 		public void CalcularMesBase(Periodos per,Agrupaciones agrupacion){
-			using(EjecutadorSql ej=new EjecutadorSql(db,"periodo",per.cPeriodo.Valor,"agrupacion",agrupacion.cAgrupacion.Valor)){
-				ej.ExecuteNonQuery(@"
-					insert into calgru (periodo,agrupacion,grupo,indice,factor)
-					  select {periodo},agrupacion,grupo,100,1
-					    from grupos
-					    where agrupacion={agrupacion};
-				");
+			using(Ejecutador ej=new Ejecutador(db,agrupacion,per)){
+				CalGru cg=new CalGru();
+				Grupos g=new Grupos();
+				ej.Ejecutar(
+					new SentenciaInsert(cg)
+					.Select(cg.cPeriodo.Es(per.cPeriodo.Valor),g.cAgrupacion,g.cGrupo,cg.cIndice.Es(100.0),cg.cFactor.Es(1.0))
+				);
 			}
 		}
 		public void CalcularCalGru(Periodos periodo,Agrupaciones agrupacion){
-			using(EjecutadorSql ej=new EjecutadorSql(db,"periodo",periodo.cPeriodo.Valor,"agrupacion",agrupacion.cAgrupacion.Valor)){
+			using(Ejecutador ej=new Ejecutador(db,agrupacion,periodo)){
+				// Tabla a insertar:
+				CalGru cg=new CalGru();
+				// Tabla base:
+				CalProd cp=new CalProd();
+				cp.UsarFk();
+				Periodos per=cp.fkPeriodos;
+				CalGru cg0=new CalGru();
 				/*
-				ej.ExecuteNonQuery(@"
-					insert into calgru (ano,mes,agrupacion,grupo,indice,factor)
-					  select per.ano,per.mes,g.agrupacion,g.grupo,cg0.indice*cp1.promedio/cp0.promedio,cg0.factor
-					    from ((((grupos as g 
-							 inner join productos as p on g.grupo=p.producto)
-					         inner join calgru as cg0 on g.grupo=cg0.grupo and g.agrupacion=cg0.agrupacion)
-					         inner join periodos as per on per.anoant=cg0.ano and per.mesant=cg0.mes)
-					         inner join calpro as cp0 on cp0.ano=per.anoant and cp0.mes=per.mesant and cp0.producto=p.producto)
-					         inner join calpro as cp1 on cp1.ano=per.ano and cp1.mes=per.mes and cp1.producto=p.producto
-					    where g.agrupacion={agrupacion}
-					      and per.ano={ano}
-					      and per.mes={mes}
-				");
+				cg0.EsFkDeEspecial(
+				CalProd cp0=new CalProd();
 				*/
+			}
+			using(EjecutadorSql ej=new EjecutadorSql(db,"periodo",periodo.cPeriodo.Valor,"agrupacion",agrupacion.cAgrupacion.Valor)){
 				ej.ExecuteNonQuery(@"
 					insert into calgru (periodo,agrupacion,grupo,indice,factor)
 					  select per.periodo,g.agrupacion,g.grupo,cg0.indice*cp1.promedio/cp0.promedio,cg0.factor
@@ -355,8 +319,8 @@ namespace Indices
 							 productos as p,
 					         calgru as cg0,
 					         periodos as per, 
-					         calpro as cp0, 
-					         calpro as cp1
+					         calprod as cp0, 
+					         calprod as cp1
 					    where g.agrupacion={agrupacion}
 					      and per.periodo={periodo}
 					      and g.grupo=p.producto
@@ -366,22 +330,6 @@ namespace Indices
 					      and cp1.periodo=per.periodo and cp1.producto=p.producto
 				");
 				for(int i=9;i>=0;i--){
-					/*
-					ej.ExecuteNonQuery(new SentenciaSql(db,@"
-						insert into calgru (ano,mes,agrupacion,grupo,indice,factor)
-						  select cg.ano,cg.mes,gp.agrupacion,gp.grupo
-								,sum(cg.indice*gh.ponderador)/sum(gh.ponderador)
-								,sum(cg.factor*gh.ponderador)/sum(gh.ponderador)
-						    from (grupos gh
-						         inner join calgru as cg on gh.grupo=cg.grupo and gh.agrupacion=cg.agrupacion)
-						         inner join grupos gp on gp.agrupacion=gh.agrupacion and gp.grupo=gh.grupopadre
-						    where cg.agrupacion={agrupacion}
-						      and cg.ano={ano}
-						      and cg.mes={mes}
-						      and gh.nivel={nivel}
-						    group by cg.ano,cg.mes,gp.agrupacion,gp.grupo;
-					").Arg("nivel",i));
-					*/
 					ej.ExecuteNonQuery(new SentenciaSql(db,@"
 						insert into calgru (periodo,agrupacion,grupo,indice,factor)
 						  select cg.periodo,gp.agrupacion,gp.grupo
@@ -507,9 +455,10 @@ namespace Indices
 		public ProbarIndiceD3(){
 			BaseDatos db;
 			#pragma warning disable 162
-			switch(1){ // solo se va a tomar un camino
+			switch(3){ // solo se va a tomar un camino
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
+					/*
 					db.EliminarTablaSiExiste("calgru");
 					db.EliminarTablaSiExiste("calpro");
 					db.EliminarTablaSiExiste("periodos");
@@ -518,21 +467,25 @@ namespace Indices
 					db.EliminarTablaSiExiste("productos");
 					db.EliminarTablaSiExiste("numeros");
 					db.EliminarTablaSiExiste("auxgrupos");
+					*/
+					repo=RepositorioIndice.Crear(db);
+					repo.EliminarTablas();
 					break;
 				case 2: // probar con sqlite
 					string archivoSqLite="prueba_sqlite.db";
 					Archivo.Borrar(archivoSqLite);
 					db=SqLite.Abrir(archivoSqLite);
+					repo=RepositorioIndice.Crear(db);
 					break;
 				case 3: // probar con access
 					string archivoMDB="indices_canastaD3.mdb";
 					Archivo.Borrar(archivoMDB);
 					BdAccess.Crear(archivoMDB);
 					db=BdAccess.Abrir(archivoMDB);
+					repo=RepositorioIndice.Crear(db);
 					break;
 			}
 			#pragma warning restore 162
-			repo=RepositorioIndice.Crear(db);
 			RepositorioIndice.Productos P100=repo.CrearProducto("P100");
 			RepositorioIndice.Productos P101=repo.CrearProducto("P101");
 			RepositorioIndice.Productos P102=repo.CrearProducto("P102");

@@ -20,6 +20,7 @@ using Modelador;
 
 namespace Modelador
 {
+	public class Diccionario<TKey, TValue>:System.Collections.Generic.Dictionary<TKey, TValue>{};
 	public class Lista<T>:System.Collections.Generic.List<T>{};
 	public abstract class Sentencia{
 		Lista<Sqlizable> ParteWhere=new Lista<Sqlizable>();
@@ -299,13 +300,11 @@ namespace Modelador
 				if(db.UpdateConJoin){
 					foreach(Tabla t in su.Tablas()){
 						if(t!=su.TablaBase){
-							int OrdenPk=0;
 							if(t.TablaRelacionada!=null && su.Tablas().Contains(t.TablaRelacionada)){
 								rta.Append(" INNER JOIN "+t.ToSql(db)+" ON ");
 								Separador and=new Separador(" AND ");
 								foreach(Campo c in t.CamposPk()){
-									rta.Append(and+t.CamposRelacionadosFk[OrdenPk].Igual(c).ToSql(db));
-									OrdenPk++;
+									rta.Append(and+t.CamposRelacionadosFk[c].Igual(c).ToSql(db));
 								}
 								rta.Append("\n");
 							}
@@ -325,12 +324,10 @@ namespace Modelador
 					Separador coma=new Separador(" FROM ",", ");
 					foreach(Tabla t in su.Tablas()){
 						if(t!=su.TablaBase){
-							int OrdenPk=0;
 							if(t.TablaRelacionada!=null && su.Tablas().Contains(t.TablaRelacionada)){
 								parteFrom.Append(coma+t.ToSql(db));
 								foreach(Campo c in t.CamposPk()){
-									parteWhere.Append(and+c.Igual(t.CamposRelacionadosFk[OrdenPk]).ToSql(db));
-									OrdenPk++;
+									parteWhere.Append(and+c.Igual(t.CamposRelacionadosFk[c]).ToSql(db));
 								}
 							}
 						}
@@ -354,12 +351,10 @@ namespace Modelador
 				}
 			}else{
 				foreach(Tabla t in s.Tablas()){
-					int OrdenPk=0;
 					if(t.TablaRelacionada!=null && s.Tablas().Contains(t.TablaRelacionada)){
 					// if(t.TablaRelacionada!=null){
 						foreach(Campo c in t.CamposPk()){
-							s.Where(c.Igual(t.CamposRelacionadosFk[OrdenPk]));
-							OrdenPk++;
+							s.Where(c.Igual(t.CamposRelacionadosFk[c]));
 						}
 					}
 				}
@@ -435,10 +430,8 @@ namespace Modelador
 					if(TablaSumandis==TablaBase.TablaRelacionada){
 						rta.Append("','");
 						Separador and=new Separador(" AND ");
-						int OrdenPk=0;
 						foreach(Campo c in TablaBase.CamposPk()){
-							rta.Append(and+db.StuffCampo(TablaBase.CamposRelacionadosFk[OrdenPk].NombreCampo)+"=''' & "+c.ToSql(db)+" & '''");
-							OrdenPk++;
+							rta.Append(and+db.StuffCampo(TablaBase.CamposRelacionadosFk[c].NombreCampo)+"=''' & "+c.ToSql(db)+" & '''");
 						}
 					}
 					rta.Append("')");
@@ -449,10 +442,8 @@ namespace Modelador
 					           +TablaSumandis.ToSql(db));
 					if(TablaSumandis==TablaBase.TablaRelacionada){
 						Separador and=new Separador(" WHERE "," AND ");
-						int OrdenPk=0;
 						foreach(Campo c in TablaBase.CamposPk()){
-							rta.Append(and+TablaBase.CamposRelacionadosFk[OrdenPk].ToSql(db)+"="+c.ToSql(db));
-							OrdenPk++;
+							rta.Append(and+TablaBase.CamposRelacionadosFk[c].ToSql(db)+"="+c.ToSql(db));
 						}
 					}
 					rta.Append(")");
