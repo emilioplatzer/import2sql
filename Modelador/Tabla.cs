@@ -28,10 +28,11 @@ namespace Modelador
 		public string Alias;
 		public bool IniciadasFk=false;
 		public Tabla TablaRelacionada;
-		public Diccionario<Campo,Campo> CamposRelacionadosFk;
+		public Diccionario<Campo,ExpresionSql> CamposRelacionadosFk;
 		public Lista<Tabla> TablasFk;
 		public System.Collections.Generic.Dictionary<string, Campo> CamposFkAlias=new System.Collections.Generic.Dictionary<string, Campo>();
 		public Fk.Tipo TipoFk=Fk.Tipo.Obligatoria;
+		public bool LiberadaDelContextoDelEjecutador; // Del contexto del ejecutador
 		public Tabla()
 		{
 			Construir();
@@ -101,7 +102,7 @@ namespace Modelador
 		      			StringBuilder camposFkOtra=new StringBuilder();
 		      			Separador coma=new Separador(",");
 		      			foreach(Campo c in t.CamposPk()){
-		      				camposFkEsta.Append(coma+t.CamposRelacionadosFk[c].NombreCampo);
+		      				camposFkEsta.Append(coma+t.CamposRelacionadosFk[c].UnicoCampo().NombreCampo);
 		      				camposFkOtra.Append(coma.mismo()+c.NombreCampo);
 		      			}
 		      			rta.Append(",\n\t"+"foreign key ("+camposFkEsta.ToString()+") references "+t.NombreTabla+" ("+camposFkOtra.ToString()+")");
@@ -214,27 +215,37 @@ namespace Modelador
 		public virtual Campo CampoIndirecto(Campo campo){
 			return CampoIndirecto(campo.Nombre);
 		}
-		public void EsFkDe(Tabla maestra,Fk.Tipo TipoFk,Campo UltimoCampoFk){
+		public void EsFkDe(Tabla maestra,Fk.Tipo TipoFk,params Campo[] CamposReemplazo){
 			this.TablaRelacionada=maestra;
 			int cantidadCamposFk=CamposPk().Count;
-			int OrdenFk=0;
-			CamposRelacionadosFk=new Diccionario<Campo,Campo>();
-			foreach(Campo c in CamposPk()){
-				if(OrdenFk<cantidadCamposFk-1 || UltimoCampoFk==null){
-					CamposRelacionadosFk[c]=maestra.CampoIndirecto(c);
+			Lista<Campo> CampoAReemplazar=new Lista<Campo>();
+			Lista<ExpresionSql> ExpresionDeReemplazo=new Lista<ExpresionSql>();
+			CamposRelacionadosFk=new Diccionario<Campo,ExpresionSql>();
+			foreach(Campo CampoReemplazo in CamposReemplazo){
+				if(CampoReemplazo!=null){
+					if(CampoReemplazo.TablaContenedora==maestra){
+						CampoAReemplazar.Add(CamposPk()[cantidadCamposFk-1]);
+						ExpresionDeReemplazo.Add(new ExpresionSql(CampoReemplazo));
+					}else{
+						CampoAReemplazar.Add(CampoReemplazo);
+						ExpresionDeReemplazo.Add(CampoReemplazo.ExpresionBase);
+					}
 				}
-				OrdenFk++;
 			}
-			if(UltimoCampoFk!=null){
-				CamposRelacionadosFk[CamposPk()[OrdenFk-1]]=UltimoCampoFk;
+			foreach(Campo c in CamposPk()){
+				if(CampoAReemplazar!=null && CampoAReemplazar.IndexOf(c)>=0){
+					CamposRelacionadosFk[c]=ExpresionDeReemplazo[CampoAReemplazar.IndexOf(c)];
+				}else{
+					CamposRelacionadosFk[c]=new ExpresionSql(maestra.CampoIndirecto(c));
+				}
 			}
 			this.TipoFk=TipoFk;
 		}
 		public void EsFkDe(Tabla maestra){
 			EsFkDe(maestra,Fk.Tipo.Sugerida,null);
 		}
-		public void EsFkDe(Tabla maestra,Campo UltimoCampoFk){
-			EsFkDe(maestra,Fk.Tipo.Sugerida,UltimoCampoFk);
+		public void EsFkDe(Tabla maestra,params Campo[] CampoReemplazo){
+			EsFkDe(maestra,Fk.Tipo.Sugerida,CampoReemplazo);
 		}
 		public void UsarFk(){
 			if(!IniciadasFk){

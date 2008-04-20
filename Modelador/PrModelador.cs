@@ -55,6 +55,9 @@ namespace PrModelador
 			[Pk] public CampoProducto cProductoAuxiliar;
 			public CampoEntero cNuevoEstado;
 		}
+		class Numeros:Tabla{
+			[Pk] public CampoEntero cNumero;
+		}
 		#pragma warning restore 649
 		[Test]
 		public void CreacionTablas(){
@@ -177,24 +180,74 @@ namespace PrModelador
 				                ej.Dump(su));
 				NovedadesProductos np=new NovedadesProductos();
 				np.EsFkDe(pr,pr.cProducto);
+				pr.LiberadaDelContextoDelEjecutador=true;
 				Assert.AreEqual(pr,np.TablaRelacionada);
 				su=new SentenciaUpdate(pr,pr.cEstado.Set(np.cNuevoEstado),pr.cNombreProducto.Set(pr.cNombreProducto.Concatenado(np.cNuevoEstado))).Where(pr.cProducto.Distinto("P_este"));
 				Assert.AreEqual("UPDATE productos p INNER JOIN novedadesproductos n ON p.empresa=n.empresa AND p.producto=n.productoauxiliar\n" +
 				                " SET p.estado=n.nuevoestado,\n p.nombreproducto=(p.nombreproducto & n.nuevoestado)\n" +
-				                " WHERE p.producto<>'P_este'\n AND p.empresa=13\n AND n.empresa=13;\n",
+				                " WHERE p.producto<>'P_este'\n AND n.empresa=13;\n",
 				                ej.Dump(su));
 				Assert.AreEqual("UPDATE productos " +
 				                "SET estado=(SELECT n.nuevoestado FROM novedadesproductos n WHERE n.empresa=empresa AND n.productoauxiliar=producto),\n" +
 				                " nombreproducto=(SELECT (nombreproducto||n.nuevoestado) FROM novedadesproductos n WHERE n.empresa=empresa AND n.productoauxiliar=producto)\n" +
-				                " WHERE producto<>'P_este'\n AND empresa=13;\n",
+				                " WHERE producto<>'P_este';\n",
 				                ejp.Dump(su));
 				su=new SentenciaUpdate(pr,pr.cEstado.Set(np.cNuevoEstado),pr.cCosto.SetNull()).Where(pr.cProducto.Distinto("P_este"));
-				Assert.AreEqual("UPDATE productos p INNER JOIN novedadesproductos n ON p.empresa=n.empresa AND p.producto=n.productoauxiliar\n SET p.estado=n.nuevoestado,\n p.costo=null\n WHERE p.producto<>'P_este'\n AND p.empresa=13\n AND n.empresa=13;\n",
+				Assert.AreEqual("UPDATE productos p INNER JOIN novedadesproductos n ON p.empresa=n.empresa AND p.producto=n.productoauxiliar\n SET p.estado=n.nuevoestado,\n p.costo=null\n WHERE p.producto<>'P_este'\n AND n.empresa=13;\n",
 				                ej.Dump(su));
+				
 				/* Falta programar
 				Assert.AreEqual("UPDATE productos SET estado=(SELECT n.nuevoestado FROM novedadesproductos n WHERE n.empresa=empresa AND n.productoauxiliar=producto),\n p.costo=null\n WHERE p.producto<>'P_este'\n AND p.empresa=13\n;\n",
 				                ejp.Dump(su));
 				*/
+			}
+		}
+		[Test]
+		public void MultiFk(){
+			BaseDatos dba=BdAccess.SinAbrir();
+			BaseDatos dbp=PostgreSql.SinAbrir();
+			Productos p=new Productos();
+			Numeros num=new Numeros();
+			{
+				PartesProductos pp=new PartesProductos();
+				pp.EsFkDe(p,pp.cParte.Es(num.cNumero));
+				Sentencia s=
+					new SentenciaSelect(p.cProducto,p.cNombreProducto,num.cNumero,pp.cNombreParte).Where(num.cNumero.Operado("<=",3));
+				Assert.AreEqual("SELECT p.producto, p.nombreproducto, n.numero, pa.nombreparte\n" +
+				                " FROM productos p, numeros n, partesproductos pa\n" +
+				                " WHERE n.numero<=3\n AND pa.empresa=p.empresa\n AND pa.producto=p.producto\n AND pa.parte=n.numero;\n",
+				                new Ejecutador(dba).Dump(s));
+			}
+			{
+				PartesProductos pp=new PartesProductos();
+				pp.EsFkDe(p,pp.cParte.Es(7));
+				Sentencia s=
+					new SentenciaSelect(p.cProducto,p.cNombreProducto,pp.cNombreParte);
+				Assert.AreEqual("SELECT p.producto, p.nombreproducto, pa.nombreparte\n" +
+				                " FROM productos p, partesproductos pa\n" +
+				                " WHERE pa.empresa=p.empresa\n AND pa.producto=p.producto\n AND pa.parte=7;\n",
+				                new Ejecutador(dba).Dump(s));
+			}
+			{
+				PartesProductos pp=new PartesProductos();
+				pp.EsFkDe(p,pp.cParte.Es(num.cNumero),pp.cEmpresa.Es(1));
+				Sentencia s=
+					new SentenciaSelect(p.cProducto,p.cNombreProducto,num.cNumero,pp.cNombreParte);
+				Assert.AreEqual("SELECT p.producto, p.nombreproducto, n.numero, pa.nombreparte\n" +
+				                " FROM productos p, numeros n, partesproductos pa\n" +
+				                " WHERE pa.empresa=1\n AND pa.producto=p.producto\n AND pa.parte=n.numero;\n",
+				                new Ejecutador(dba).Dump(s));
+			}
+			{
+				PartesProductos pp=new PartesProductos();
+				pp.EsFkDe(p,pp.cParte.Es(num.cNumero),pp.cEmpresa.Es(1));
+				Sentencia s=
+					new SentenciaSelect(p.cProducto,p.cNombreProducto,pp.cNombreParte);
+				Assert.Ignore("Falta considerar tablas que sirvan para los joins y no estén en los campos del select");
+				Assert.AreEqual("SELECT p.producto, p.nombreproducto, pa.nombreparte\n" +
+				                " FROM productos p, numeros n, partesproductos pa\n" +
+				                " WHERE pa.empresa=1\n AND pa.producto=p.producto\n AND pa.parte=n.numero;\n",
+				                new Ejecutador(dba).Dump(s));
 			}
 		}
 		[Test]
