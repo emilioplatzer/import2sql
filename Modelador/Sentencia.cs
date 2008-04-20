@@ -201,7 +201,7 @@ namespace Modelador
 				foreach(Campo c in Campos){
 					ExpresionSql expresion=c.ExpresionBase;
 					if(expresion!=null){
-						if(c.ExpresionBaseTipoAgrupada){
+						if(c.ExpresionBase.TipoAgrupada){
 							tieneAgrupados=true;
 						}else{
 							sepGB.AgregarEn(groupBy,expresion);
@@ -380,12 +380,22 @@ namespace Modelador
 		}
 	}
 	public class ExpresionSql:Sqlizable{
+		public bool TipoAgrupada=false;
 		public Lista<Sqlizable> Partes=new Lista<Sqlizable>();
+		void CalcularTipoAgruapada(){
+			foreach(Sqlizable p in Partes){
+				if(p is ExpresionSql){
+					TipoAgrupada=TipoAgrupada || (p as ExpresionSql).TipoAgrupada;
+				}
+			}
+		}
 		public ExpresionSql(params Sqlizable[] Partes){
 			this.Partes.AddRange(Partes);
+			CalcularTipoAgruapada();
 		}
 		public ExpresionSql(Lista<Sqlizable> Partes){
 			this.Partes=Partes;
+			CalcularTipoAgruapada();
 		}
 		public virtual ExpresionSql And(ExpresionSql otra){
 			Lista<Sqlizable> nueva=new Lista<Sqlizable>();
@@ -413,6 +423,27 @@ namespace Modelador
 		public Campo UnicoCampo(){
 			Assert.AreEqual(1,Partes.Count);
 			return (Campo)Partes[0];
+		}
+		public ExpresionSql Operado<T>(string OperadorTextual,T expresion){
+			return new ExpresionSql(this,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
+		}
+		public ExpresionSql Dividido<T2>(T2 Valor){
+			return Operado<T2>("/",Valor);
+		}
+		public static ExpresionSql Agrupada<T>(string Operador, T expresion){
+			/*
+			Lista<Sqlizable> nuevasPartes=new Lista<Sqlizable>();
+			nuevasPartes.Add(Operador+"(");
+			nuevasPartes.AddRange(expresion.Partes);
+			nuevasPartes.Add(")");
+			ExpresionSql nueva=new ExpresionSql(nuevasPartes);
+			*/
+			ExpresionSql nueva=new ExpresionSql(new LiteralSql(Operador+"("),new ValorSql<T>(expresion),new LiteralSql(")"));
+			nueva.TipoAgrupada=true;
+			return nueva;
+		}
+		public static ExpresionSql Sum<T>(T expresion){
+			return Agrupada("SUM",expresion);
 		}
 		public class SelectSuma:Sqlizable{
 			Tabla TablaBase;

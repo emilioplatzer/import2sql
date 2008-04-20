@@ -128,6 +128,7 @@ namespace Comunes
 		}
 	}
 	public class Controlar{
+		public const double DeltaDouble=0.000000000001;
 		static string etiquetas;
 		static Controlar(){
 			string nombreArchivo="ControlarEtiquetas.txt";
