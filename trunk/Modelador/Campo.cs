@@ -65,7 +65,6 @@ namespace Modelador
 			return Operado<T>("<>",expresion);
 		}
 		public ExpresionSql ExpresionBase;
-		public bool ExpresionBaseTipoAgrupada=false;
 		public Campo Es(ExpresionSql expresion){
 			ExpresionBase=expresion;
 			return this;
@@ -134,7 +133,7 @@ namespace Modelador
 			nueva.AddRange(expresion.Partes);
 			nueva.Add(new LiteralSql(")"));
 			ExpresionBase=new ExpresionSql(nueva);
-			ExpresionBaseTipoAgrupada=true;
+			ExpresionBase.TipoAgrupada=true;
 			return this;	
 		}
 		public Campo EsSuma(ExpresionSql expresion){

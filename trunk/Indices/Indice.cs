@@ -315,6 +315,20 @@ namespace Indices
 					new SentenciaInsert(cg)
 					.Select(per.cPeriodo,cg0.cAgrupacion,cg0.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedio.Dividido(cp0.cPromedio))),cg0.cFactor)
 				);
+				Grupos gh=new Grupos();
+				cg.EsFkDe(gh,cg.cPeriodo.Es(periodo.cPeriodo.Valor));
+				Grupos gp=new Grupos();
+				gp.EsFkDe(gh,gp.cGrupo.Es(gh.cGrupoPadre));
+				CalGru cgp=new CalGru();
+				for(int i=9;i>=0;i--){
+					ej.Ejecutar(
+						new SentenciaInsert(cgp)
+						.Select(cg.cPeriodo,gp.cAgrupacion,gp.cGrupo,
+						        cgp.cIndice.Es(ExpresionSql.Sum(cg.cIndice.Por(gh.cPonderador)).Dividido(ExpresionSql.Sum(gh.cPonderador))),
+						        cgp.cFactor.Es(ExpresionSql.Sum(cg.cFactor.Por(gh.cPonderador)).Dividido(ExpresionSql.Sum(gh.cPonderador))))
+						.Where(gh.cNivel.Igual(i))
+					);
+				}
 			}
 			using(EjecutadorSql ej=new EjecutadorSql(db,"periodo",periodo.cPeriodo.Valor,"agrupacion",agrupacion.cAgrupacion.Valor)){
 				/*
@@ -335,7 +349,6 @@ namespace Indices
 					      and cp0.periodo=per.periodoanterior and cp0.producto=p.producto
 					      and cp1.periodo=per.periodo and cp1.producto=p.producto
 				");
-				*/
 				for(int i=9;i>=0;i--){
 					ej.ExecuteNonQuery(new SentenciaSql(db,@"
 						insert into calgru (periodo,agrupacion,grupo,indice,factor)
@@ -353,6 +366,7 @@ namespace Indices
 						    group by cg.periodo,gp.agrupacion,gp.grupo;
 					").Arg("nivel",i));
 				}
+				*/
 			}
 		}
 		public void ReglasDeIntegridad(){
@@ -515,10 +529,10 @@ namespace Indices
 			RepositorioIndice.Grupos A=repo.AbrirGrupo("A","A");
 			RepositorioIndice.Grupos A1=repo.AbrirGrupo("A","A1");
 			RepositorioIndice.Productos P100=repo.AbrirProducto("P100");
-			Assert.AreEqual(1.0,A.cPonderador.Valor);
-			Assert.AreEqual(0.6,A1.cPonderador.Valor,0.00000001);
-			Assert.AreEqual(0.36,P100.Ponderador(A));
-			Assert.AreEqual(0.6,P100.Ponderador(A1));
+			Assert.AreEqual(1.0,A.cPonderador.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(0.6,A1.cPonderador.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(0.36,P100.Ponderador(A),Controlar.DeltaDouble);
+			Assert.AreEqual(0.6,P100.Ponderador(A1),Controlar.DeltaDouble);
 		}
 		[Test]
 		public void A01CalculosBase(){
@@ -543,15 +557,15 @@ namespace Indices
 			repo.RegistrarPromedio(Per1,P101,10.0);
 			repo.RegistrarPromedio(Per1,P102,22.0);
 			repo.CalcularCalGru(Per1,A);
-			Assert.AreEqual(110.0,new RepositorioIndice.CalGru(repo.db,Per1,A2).cIndice.Valor);
-			Assert.AreEqual(104.0,new RepositorioIndice.CalGru(repo.db,Per1,A).cIndice.Valor);
+			Assert.AreEqual(110.0,new RepositorioIndice.CalGru(repo.db,Per1,A2).cIndice.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(104.0,new RepositorioIndice.CalGru(repo.db,Per1,A).cIndice.Valor,Controlar.DeltaDouble);
 			RepositorioIndice.Periodos Per2=Per1.CrearProximo();
 			repo.RegistrarPromedio(Per2,P100,2.2);
 			repo.RegistrarPromedio(Per2,P101,11.0);
 			repo.RegistrarPromedio(Per2,P102,22.0);
 			repo.CalcularCalGru(Per2,A);
-			Assert.AreEqual(110.0,new RepositorioIndice.CalGru(repo.db,Per2,A2).cIndice.Valor);
-			Assert.AreEqual(110.0,new RepositorioIndice.CalGru(repo.db,Per2,A).cIndice.Valor);
+			Assert.AreEqual(110.0,new RepositorioIndice.CalGru(repo.db,Per2,A2).cIndice.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(110.0,new RepositorioIndice.CalGru(repo.db,Per2,A).cIndice.Valor,Controlar.DeltaDouble);
 		}
 		[Test]
 		public void zReglasDeIntegridad(){
