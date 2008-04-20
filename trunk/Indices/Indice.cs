@@ -305,13 +305,19 @@ namespace Indices
 				CalProd cp=new CalProd();
 				cp.UsarFk();
 				Periodos per=cp.fkPeriodos;
-				CalGru cg0=new CalGru();
-				/*
-				cg0.EsFkDeEspecial(
 				CalProd cp0=new CalProd();
-				*/
+				cp0.EsFkDe(cp,cp0.cPeriodo.Es(per.cPeriodoAnterior));
+				cp0.LiberadaDelContextoDelEjecutador=true;
+				CalGru cg0=new CalGru();
+				cg0.EsFkDe(cp0,cg0.cGrupo.Es(cp0.cProducto),cg0.cAgrupacion.Es(agrupacion.cAgrupacion.Valor));
+				cg0.LiberadaDelContextoDelEjecutador=true;
+				ej.Ejecutar(
+					new SentenciaInsert(cg)
+					.Select(per.cPeriodo,cg0.cAgrupacion,cg0.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedio.Dividido(cp0.cPromedio))),cg0.cFactor)
+				);
 			}
 			using(EjecutadorSql ej=new EjecutadorSql(db,"periodo",periodo.cPeriodo.Valor,"agrupacion",agrupacion.cAgrupacion.Valor)){
+				/*
 				ej.ExecuteNonQuery(@"
 					insert into calgru (periodo,agrupacion,grupo,indice,factor)
 					  select per.periodo,g.agrupacion,g.grupo,cg0.indice*cp1.promedio/cp0.promedio,cg0.factor
@@ -329,6 +335,7 @@ namespace Indices
 					      and cp0.periodo=per.periodoanterior and cp0.producto=p.producto
 					      and cp1.periodo=per.periodo and cp1.producto=p.producto
 				");
+				*/
 				for(int i=9;i>=0;i--){
 					ej.ExecuteNonQuery(new SentenciaSql(db,@"
 						insert into calgru (periodo,agrupacion,grupo,indice,factor)

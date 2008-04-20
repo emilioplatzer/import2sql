@@ -304,16 +304,18 @@ namespace Modelador
 								rta.Append(" INNER JOIN "+t.ToSql(db)+" ON ");
 								Separador and=new Separador(" AND ");
 								foreach(Campo c in t.CamposPk()){
-									rta.Append(and+t.CamposRelacionadosFk[c].Igual(c).ToSql(db));
+									rta.Append(and+t.CamposRelacionadosFk[c].UnicoCampo().Igual(c).ToSql(db));
 								}
 								rta.Append("\n");
 							}
 						}
 					}
 					foreach(Tabla t in s.Tablas()){
-						foreach(Campo c in CamposContexto){
-							if(t.TieneElCampo(c)){
-								s.Where(t.CampoIndirecto(c).Igual(c.ValorSinTipo));
+						if(!t.LiberadaDelContextoDelEjecutador){
+							foreach(Campo c in CamposContexto){
+								if(t.TieneElCampo(c)){
+									s.Where(t.CampoIndirecto(c).Igual(c.ValorSinTipo));
+								}
 							}
 						}
 					}
@@ -336,9 +338,11 @@ namespace Modelador
 						prefijoSet="(SELECT ";
 						sufijoSet=parteFrom.ToString()+parteWhere.ToString()+")";
 					}
-					foreach(Campo c in CamposContexto){
-						if(su.TablaBase.TieneElCampo(c)){
-							s.Where(su.TablaBase.CampoIndirecto(c).Igual(c.ValorSinTipo));
+					if(!su.TablaBase.LiberadaDelContextoDelEjecutador){
+						foreach(Campo c in CamposContexto){
+							if(su.TablaBase.TieneElCampo(c)){
+								s.Where(su.TablaBase.CampoIndirecto(c).Igual(c.ValorSinTipo));
+							}
 						}
 					}
 				}
@@ -359,9 +363,11 @@ namespace Modelador
 					}
 				}
 				foreach(Tabla t in s.Tablas()){
-					foreach(Campo c in CamposContexto){
-						if(t.TieneElCampo(c)){
-							s.Where(t.CampoIndirecto(c).Igual(c.ValorSinTipo));
+					if(!t.LiberadaDelContextoDelEjecutador){
+						foreach(Campo c in CamposContexto){
+							if(t.TieneElCampo(c)){
+								s.Where(t.CampoIndirecto(c).Igual(c.ValorSinTipo));
+							}
 						}
 					}
 				}
@@ -404,6 +410,10 @@ namespace Modelador
 			}
 			return rta.ToString();
 		}
+		public Campo UnicoCampo(){
+			Assert.AreEqual(1,Partes.Count);
+			return (Campo)Partes[0];
+		}
 		public class SelectSuma:Sqlizable{
 			Tabla TablaBase;
 			public Campo CampoSumar;
@@ -431,7 +441,7 @@ namespace Modelador
 						rta.Append("','");
 						Separador and=new Separador(" AND ");
 						foreach(Campo c in TablaBase.CamposPk()){
-							rta.Append(and+db.StuffCampo(TablaBase.CamposRelacionadosFk[c].NombreCampo)+"=''' & "+c.ToSql(db)+" & '''");
+							rta.Append(and+db.StuffCampo(TablaBase.CamposRelacionadosFk[c].UnicoCampo().NombreCampo)+"=''' & "+c.ToSql(db)+" & '''");
 						}
 					}
 					rta.Append("')");
