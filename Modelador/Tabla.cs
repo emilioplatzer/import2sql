@@ -272,7 +272,7 @@ namespace Modelador
 		{
 			return db.StuffTabla(this.NombreTabla)+(this.Alias==null?"":" "+this.Alias);
 		}
-		public override bool TieneVariables{ 
+		public override bool CandidatoAGroupBy{ 
 			get{
 				Assert.Fail("No debería preguntar si una tabla tiene variables");
 				return false; 
@@ -314,7 +314,7 @@ namespace Modelador
 	}
 	public abstract class Sqlizable{
 		public abstract string ToSql(BaseDatos db);
-		public abstract bool TieneVariables{ get; }
+		public abstract bool CandidatoAGroupBy{ get; }
 	}
 	public class LiteralSql:Sqlizable{
 		public string Literal;
@@ -324,25 +324,25 @@ namespace Modelador
 		public override string ToSql(BaseDatos db){
 			return Literal;
 		}
-		public override bool TieneVariables{ get{return false;} }
+		public override bool CandidatoAGroupBy{ get{return false;} }
 	}
 	public class OperadorConcatenacionIzquierda:Sqlizable{
 		public override string ToSql(BaseDatos db){
 			return db.OperadorConcatenacionIzquierda;
 		}
-		public override bool TieneVariables{ get{return false;} }
+		public override bool CandidatoAGroupBy{ get{return false;} }
 	}
 	public class OperadorConcatenacionDerecha:Sqlizable{
 		public override string ToSql(BaseDatos db){
 			return db.OperadorConcatenacionDerecha;
 		}
-		public override bool TieneVariables{ get{return false;} }
+		public override bool CandidatoAGroupBy{ get{return false;} }
 	}
 	public class OperadorConcatenacionMedio:Sqlizable{
 		public override string ToSql(BaseDatos db){
 			return db.OperadorConcatenacionMedio;
 		}
-		public override bool TieneVariables{ get{return false;} }
+		public override bool CandidatoAGroupBy{ get{return false;} }
 	}
 	public class ValorSql<T>:Sqlizable{
 		public T Valor;
@@ -356,10 +356,10 @@ namespace Modelador
 			}
 			return db.StuffValor(Valor);
 		}
-		public override bool TieneVariables{ 
+		public override bool CandidatoAGroupBy{ 
 			get{
 				if(Valor is Sqlizable){
-					return (Valor as Sqlizable).TieneVariables;
+					return (Valor as Sqlizable).CandidatoAGroupBy;
 				}
 				return false;
 			}
@@ -371,6 +371,6 @@ namespace Modelador
 		public override string ToSql(BaseDatos db){
 			return "null";
 		}
-		public override bool TieneVariables{ get{return false;} }
+		public override bool CandidatoAGroupBy{ get{return false;} }
 	}
 }

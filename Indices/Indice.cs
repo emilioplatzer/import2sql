@@ -142,7 +142,7 @@ namespace Indices
 				Leer(db,p.cPeriodo,a.cAgrupacion,a.cAgrupacion);
 			}
 		}
-		public class Informante:Tabla{
+		public class Informantes:Tabla{
 			[Pk] public CampoInformante cInformante;
 			public CampoTipo cTipoInformante;
 		}
@@ -503,7 +503,7 @@ namespace Indices
 		public ProbarIndiceD3(){
 			BaseDatos db;
 			#pragma warning disable 162
-			switch(1){ // solo se va a tomar un camino
+			switch(3){ // solo se va a tomar un camino
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					/*
