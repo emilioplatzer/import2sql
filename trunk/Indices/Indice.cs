@@ -19,6 +19,8 @@ using Modelador;
 namespace Indices
 {
 	public class CampoProducto:CampoChar{ public CampoProducto():base(4){} };
+	public class CampoEspecificacion:CampoChar{ public CampoEspecificacion():base(8){} };
+	public class CampoVariedad:CampoChar{ public CampoVariedad():base(12){} };
 	public class CampoNombre:CampoChar{ public CampoNombre():base(250){} };
 	public class CampoAgrupacion:CampoChar{ public CampoAgrupacion():base(9){} };
 	public class CampoGrupo:CampoChar{ public CampoGrupo():base(9){} };
@@ -144,7 +146,11 @@ namespace Indices
 		}
 		public class Informantes:Tabla{
 			[Pk] public CampoInformante cInformante;
+			public CampoNombre cNombreInformante;
 			public CampoTipo cTipoInformante;
+			public CampoNombre cRubro;
+			public CampoNombre cCadena;
+			public CampoNombre cDireccion;
 		}
 		public class ProdTipoInf:Tabla{
 			[Pk] public CampoProducto cProducto;
@@ -160,6 +166,21 @@ namespace Indices
 			[Fk] public Periodos fkPeriodos;
 			[Fk] public Productos fkProductos;
 			[Fk] public ProdTipoInf fkProdTipoInf;
+		}
+		public class Especificaciones:Tabla{
+			[Pk] public CampoEspecificacion cEspecificacion;
+			public CampoNombre cNombreEspecificacion;
+			public CampoReal cTamannoNormal;
+			public CampoProducto cProducto;
+			[Fk] public Productos fkProductos;
+		}
+		public class Variedades:Tabla{
+			[Pk] public CampoVariedad cVariedad;
+			public CampoNombre cNombreVariedad;
+			public CampoReal cTamanno;
+			public CampoNombre cUnidad;
+			public CampoEspecificacion cEspecificacion;
+			[Fk] public Especificaciones fkEspecificaciones;
 		}
 		public RepositorioIndice(BaseDatos db)
 			:base(db)
@@ -208,6 +229,11 @@ namespace Indices
 					);
 				}
 			}
+		}
+		public void CalcularPonderadores(string agrupacion){
+			Agrupaciones a=new Agrupaciones();
+			a.Leer(db,"C");
+			CalcularPonderadores(a);
 		}
 		public void CalcularMesBase(Periodos per,Agrupaciones agrupacion){
 			using(Ejecutador ej=new Ejecutador(db,agrupacion,per)){
@@ -372,7 +398,7 @@ namespace Indices
 				  FROM numeros as n, grupos as g
 				  WHERE g.nivel=n.numero OR g.esproducto='S' AND g.nivel<n.numero
 				  GROUP BY g.agrupacion,n.numero
-				  HAVING sum(ponderador)<>1;
+				  HAVING abs(sum(ponderador)-1)>0.000000001;
 			");
 			db.AssertSinRegistros(
 				"No debe haber dos códigos de grupo iguales en distintas agrupaciones",

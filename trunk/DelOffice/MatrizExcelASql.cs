@@ -18,6 +18,7 @@ using BasesDatos;
 
 namespace DelOffice
 {
+	public delegate void InsertadorValorCentral(InsertadorSql insert,string campoValor,object valor);
 	public class MatrizExcelASql
 	{
 		ReceptorSql Receptor;
@@ -25,8 +26,10 @@ namespace DelOffice
 		public object[] ValoresFijos;
 		public string GuardarErroresEn;
 		public bool BuscarFaltantes=false;
+		public InsertadorValorCentral InsertarValorCentral;
 		public MatrizExcelASql(ReceptorSql receptor){
 			this.Receptor=receptor;
+			this.InsertarValorCentral=InsertarValorCentralSimple;
 		}
 		InsertadorSql NuevoInsertador(){
 			InsertadorSql insert=new InsertadorSql(Receptor);
@@ -38,7 +41,7 @@ namespace DelOffice
 			}
 			return insert;
 		}
-		public void PasarHoja(RangoExcel matriz,RangoExcel[] encabezadosFilas, RangoExcel[] encabezadosColumnas, string campoValor, 
+		public void PasarHoja(RangoExcel matriz,RangoExcel[] encabezadosFilas, RangoExcel[] encabezadosColumnas, string campoValor,
 		                      string[] camposFilas, string[] camposColumnas)
 		{
 			int maxFila=matriz.CantidadFilas;
@@ -67,12 +70,15 @@ namespace DelOffice
 								}
 								insert[camposColumnas[i]]=titulo;
 							}
-							insert[campoValor]=valor;
+							InsertarValorCentral(insert,campoValor,valor);
 							insert.GuardarErroresEn=GuardarErroresEn;
 						}
 					}
 				}
 			}
+		}
+		public static void InsertarValorCentralSimple(InsertadorSql insert,string campoValor,object valor){
+			insert[campoValor]=valor;
 		}
 		public void PasarHoja(RangoExcel matriz,RangoExcel encabezadosFilas, RangoExcel encabezadosColumnas, string campoValor, 
 		                      string[] camposFilas, string[] camposColumnas)

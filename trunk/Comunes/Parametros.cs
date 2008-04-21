@@ -31,13 +31,16 @@ namespace Comunes
 		public enum Tipo {INI};
 		public enum LeerPorDefecto {SI, NO};
 		string NombreAplicacion;
-		public Parametros(LeerPorDefecto queHacer)
+		public Parametros(LeerPorDefecto queHacer,string NombreAplicacion)
 		{
-			NombreAplicacion=System.Windows.Forms.Application.ProductName;
+			this.NombreAplicacion=NombreAplicacion;
 			if(queHacer==LeerPorDefecto.SI){
 				LeerPorDefecto_();
 			}
 		}
+		public Parametros(LeerPorDefecto queHacer)
+			:this(queHacer,System.Windows.Forms.Application.ProductName)
+		{}
 		public void LeerString(string valores,Tipo tipo){
 			string finDefinicion=";" ,medioDefinicion=":";
 			if(tipo==Tipo.INI){

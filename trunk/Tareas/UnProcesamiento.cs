@@ -12,6 +12,7 @@ using System;
 using Comunes;
 using BasesDatos;
 using DelOffice;
+using Indices;
 
 #if SinOffice
 #else
@@ -73,6 +74,76 @@ namespace Tareas
 			codigos.CerrarNoHayCambios();
 		}
 	}
+	public class ParametrosPruebasExternas:Parametros{
+		public string NombreBase;
+		public string NombreBaseCodigos;
+		public string NombreBaseImportacion;
+		public ParametrosPruebasExternas(LeerPorDefecto queHacer,string N):base(queHacer,N){}	
+	}
+	public class PruebasExternas{
+		ParametrosPruebasExternas param;
+		BdAccess db;
+		RepositorioIndice repo;
+		public PruebasExternas(){
+			param=new ParametrosPruebasExternas(Parametros.LeerPorDefecto.SI,"repo");
+		}
+		public void AbrirBase(){
+			db=BdAccess.Abrir(param.NombreBase);
+			repo=new RepositorioIndice(db);
+		}
+		public void ArmarBase(){
+			Archivo.Borrar(param.NombreBase);
+			BdAccess.Crear(param.NombreBase);
+			AbrirBase();
+			repo.CrearTablas();
+			ProcesoLevantarPlanillas.CrearTablaReceptora(db);
+			db.EjecutrarSecuencia(
+				@"INSERT INTO productos (producto,nombreproducto) "+
+				@"SELECT codigoproducto,nombreproducto FROM productos IN '"+param.NombreBaseCodigos+"';"+
+				@"INSERT INTO especificaciones (especificacion,nombreespecificacion,tamannonormal,producto) SELECT codigoespecificacion,descripcionespecificacion,tamannonormal,codigoproducto FROM especificaciones IN '"+param.NombreBaseCodigos+"';"+
+				@"INSERT INTO variedades (variedad,nombrevariedad,tamanno,unidad,especificacion) SELECT codigovariedad,descripcionvariedad,tamanno,unidad,codigoespecificacion FROM variedades IN '"+param.NombreBaseCodigos+"';"+
+				@"INSERT INTO agrupaciones (agrupacion) VALUES ('C');"+
+				@"INSERT INTO grupos (agrupacion,grupo,nombregrupo,grupopadre,ponderador,nivel,esproducto) VALUES ('C','C','Nivel General',null,100,0,'N'); "+
+				@"INSERT INTO grupos (agrupacion,grupo,nombregrupo,grupopadre,ponderador,nivel,esproducto) "+
+				@"SELECT 'C','C' & CodigoOriginal,NombreOriginal,'C' & left(CodigoOriginal,nivel-1),ponderadordic2006,nivel,'N' "+
+				@" FROM CanastaOriginal IN '"+param.NombreBaseCodigos+"' WHERE nivel<6 AND nivel>0 ORDER BY nivel,CodigoOriginal;"+
+				@"INSERT INTO grupos (agrupacion,grupo,nombregrupo,grupopadre,ponderador,nivel,esproducto) "+
+				@"SELECT 'C',producto,null,'C' & padre,PondProd,6,'S' "+
+				@" FROM PonderadoresDeProductos IN '"+param.NombreBaseCodigos+"';"+
+				@"delete * from grupos where DCount('agrupacion','grupos','agrupacion=''' & agrupacion & ''' and grupopadre=''' & grupo & '''')=0 and nivel<=5;"+
+				@"delete * from grupos where DCount('agrupacion','grupos','agrupacion=''' & agrupacion & ''' and grupopadre=''' & grupo & '''')=0 and nivel<=5;"+
+				@"delete * from grupos where DCount('agrupacion','grupos','agrupacion=''' & agrupacion & ''' and grupopadre=''' & grupo & '''')=0 and nivel<=5;"+
+				@"delete * from grupos where DCount('agrupacion','grupos','agrupacion=''' & agrupacion & ''' and grupopadre=''' & grupo & '''')=0 and nivel<=5;"+
+				@"INSERT INTO informantes SELECT * FROM informantes IN '"+param.NombreBaseCodigos+"';"+
+				@"INSERT INTO preciosImportados SELECT * FROM PreciosImportados IN '"+param.NombreBaseImportacion+"';"+
+				@"CREATE VIEW [Control Codigos Informante] AS
+					SELECT PreciosImportados.Cod_Info, PreciosImportados.Origen
+					FROM PreciosImportados LEFT JOIN informantes ON PreciosImportados.Cod_Info = informantes.informante
+					WHERE (((informantes.informante) Is Null))
+					GROUP BY PreciosImportados.Cod_Info, PreciosImportados.Origen;"+
+				@"CREATE VIEW [Control Nombres Informante] AS
+					SELECT PreciosImportados.Cod_Info, PreciosImportados.Informante, informantes.nombreinformante, informantes.rubro, informantes.cadena, informantes.direccion, PreciosImportados.Origen
+					FROM informantes INNER JOIN PreciosImportados ON informantes.informante = PreciosImportados.Cod_Info
+					GROUP BY PreciosImportados.Cod_Info, PreciosImportados.Informante, informantes.nombreinformante, informantes.rubro, informantes.cadena, informantes.direccion, PreciosImportados.Origen;"+
+				@"CREATE VIEW [Control Codigos Variedad] AS
+					SELECT PreciosImportados.Cod_Var, PreciosImportados.Nombre, PreciosImportados.Especificacion, PreciosImportados.Variedad, PreciosImportados.Origen
+					FROM PreciosImportados LEFT JOIN variedades ON PreciosImportados.Cod_Var = variedades.variedad
+					WHERE (((variedades.variedad) Is Null))
+					GROUP BY PreciosImportados.Cod_Var, PreciosImportados.Nombre, PreciosImportados.Especificacion, PreciosImportados.Variedad, PreciosImportados.Origen
+					"
+			);
+			db.Close();
+		}
+		public void Reponderar(){
+			AbrirBase();
+			repo.CalcularPonderadores("C");
+			repo.ReglasDeIntegridad();
+			db.Close();
+		}
+		public void ImportarPrecios(){
+			
+		}
+	}
 	public class ProcesoLevantarPlanillas{
 		BaseDatos db;
 		ReceptorSql receptor;
@@ -106,11 +177,15 @@ namespace Tareas
 			matriz.CamposFijos=Objeto.Paratodo(camposFijosMasVertice,Cadena.Simplificar);
 			matriz.ValoresFijos=valoresFijosMasVertice;
 			// matriz.BuscarFaltantes=true;
+			string[] TitulosFila=Objeto.Paratodo(libro.Rango(fila-1,primerColumna,fila-1,columna-2).TextoRango1D(),Cadena.Simplificar);
+			if(TitulosFila[0]=="Cod_Prod"){
+				TitulosFila[0]="Cod_Var";
+			}
 			matriz.PasarHoja(libro.Rango(fila,columna,filaFin,columnaFin)
 			                 ,libro.Rango(fila,primerColumna,filaFin,columna-2)
 			                 ,libro.Rango(primerFila,columna,fila-2,columnaFin)
 			                 ,"precio"
-			                 ,Objeto.Paratodo(libro.Rango(fila-1,primerColumna,fila-1,columna-2).TextoRango1D(),Cadena.Simplificar)
+			                 ,TitulosFila
 			                 ,Objeto.Paratodo(libro.Rango(primerFila,columna-1,fila-2,columna-1).TextoRango1D(),Cadena.Simplificar));
 			libro.CerrarNoHayCambios();
 			return true;			
@@ -120,6 +195,7 @@ namespace Tareas
 			matriz=new MatrizExcelASql(receptor);
 			libro=LibroExcel.Abrir(nombreArchivo);
 			matriz.GuardarErroresEn=@"c:\temp\indice\Campo\Bases\ErroresDeImportacion.sql";
+			matriz.InsertarValorCentral=InsertarValorCentralStringASennal;
 			NombreArchivo=nombreArchivo;
 			if(libro.TextoCelda("A1")=="PER/PROD/INF"){
 				return LevantarParametrica(3,8,8,4,1);
@@ -134,12 +210,20 @@ namespace Tareas
 			}
 		}
 		public void TraerPlanillasRecepcion(){
+			ParametrosPruebasExternas param=new ParametrosPruebasExternas(Parametros.LeerPorDefecto.SI,"repo");
 			Carpeta dir=new Carpeta(@"c:\temp\indice\Campo\RecepcionPura\");
-			db=BdAccess.Abrir(@"c:\temp\indice\Campo\Bases\PreciosRecibidos.mdb");
+			db=BdAccess.Abrir(param.NombreBaseImportacion);
 			// CrearUnaTabla231(db);
 			dir.ProcesarArchivos("*.xls","procesado",LevantarPlanilla);
 		}
-		public static void CrearUnaTabla231(BaseDatos db){
+		public static void InsertarValorCentralStringASennal(InsertadorSql insert,string campoValor,object valor){
+			if(valor is string){
+				insert["sennal"+campoValor]=valor;
+			}else{
+				insert[campoValor]=valor;
+			}
+		}
+		public static void CrearTablaReceptora(BaseDatos db){
 			db.EjecutrarSecuencia(@"
 				create table PreciosImportados(
 				Ano integer,
@@ -148,13 +232,14 @@ namespace Tareas
 				Cod_Info integer,
 				Informante varchar(100),
 				Fecha date,
-				Cod_Prod varchar(10),
+				Cod_Var varchar(10),
 				Nombre varchar(100),
 				Especificacion varchar(250),
 				Variedad varchar(250),
 				Tamano varchar(100),
 				Unidad varchar(100),
-				Precio varchar(200),
+				Precio double precision,
+				SennalPrecio varchar(100),
 				Formato varchar(100),
 				Origen varchar(250),
 				Fecha_Importacion date)
