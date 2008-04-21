@@ -161,114 +161,15 @@ namespace Indices
 			[Fk] public Productos fkProductos;
 			[Fk] public ProdTipoInf fkProdTipoInf;
 		}
-		RepositorioIndice(BaseDatos db)
+		public RepositorioIndice(BaseDatos db)
 			:base(db)
 		{
-		}
-		public static RepositorioIndice Crear(BaseDatos db){
-			RepositorioIndice rta=new RepositorioIndice(db);
-			rta.CrearTablas();
-			return rta;
 		}
 		public override void CrearTablas(){
 			base.CrearTablas();
 			for(int i=0; i<=20; i++){
 				db.ExecuteNonQuery("INSERT INTO numeros (numero) VALUES ("+i.ToString()+");");
 			}
-		}
-		public static RepositorioIndice Abrir(BaseDatos db){
-			return new RepositorioIndice(db);			
-		}
-		public Productos AbrirProducto(string codigo){
-			Productos p=new Productos();
-			p.Leer(db,codigo);
-			return p;
-		}
-		public Productos CrearProducto(string codigo){
-			Productos p=new Productos();
-			using(Insertador ins=p.Insertar(db)){
-				p.cProducto[ins]=codigo;
-			}
-			return AbrirProducto(codigo);
-		}
-		public Grupos AbrirGrupo(string agrupacion,string codigo){
-			Grupos g=new Grupos();
-			g.Leer(db,agrupacion,codigo);
-			return g;
-		}
-		public Agrupaciones AbrirAgrupacion(string agrupacion){
-			Agrupaciones a=new Agrupaciones();
-			a.Leer(db,agrupacion);
-			return a;
-		}
-		public Grupos CrearGrupo(string codigo){
-			return CrearGrupo(codigo,codigo,"",1);
-		}
-		public Grupos CrearGrupo(string agrupacion,string codigo,string codigopadre,double ponderador){
-			Grupos g=new Grupos();
-			using(Insertador ins=g.Insertar(db)){
-				g.cGrupo[ins]=codigo;
-				g.cPonderador[ins]=ponderador;
-				if(codigopadre==""){
-				}else{
-					g.cGrupoPadre[ins]=codigopadre;
-				}
-				g.cAgrupacion[ins]=agrupacion;
-				// ins.InsertarSiHayCampos();
-			}
-			return AbrirGrupo(agrupacion,codigo);
-		}
-		public Grupos CrearGrupo(string codigo,Grupos padre,double ponderador){
-			return CrearGrupo(padre.cAgrupacion.Valor,codigo,padre.cGrupo.Valor,ponderador);
-		}
-		public Grupos CrearGrupo(string codigo,Agrupaciones raiz,double ponderador){
-			return CrearGrupo(raiz.cAgrupacion.Valor,codigo,raiz.cAgrupacion.Valor,ponderador);
-		}
-		public Agrupaciones CrearAgrupacion(string codigo){
-			Agrupaciones a=new Agrupaciones();
-			using(Insertador ins=a.Insertar(db)){
-				a.cAgrupacion[ins]=codigo;
-				// ins.InsertarSiHayCampos();
-			}
-			CrearGrupo(codigo,codigo,null,1);
-			return AbrirAgrupacion(codigo);
-		}
-		public void CrearHoja(Productos producto,Grupos grupo,double ponderador){
-			Grupos g=new Grupos();
-			using(Insertador ins=g.Insertar(db)){
-				g.cAgrupacion[ins]=grupo.cAgrupacion;
-				g.cGrupo[ins]=producto.cProducto;
-				g.cGrupoPadre[ins]=grupo.cGrupo;
-				g.cPonderador[ins]=ponderador;
-				g.cEsProducto[ins]=db.Verdadero;
-				// ins.InsertarSiHayCampos();
-			}			
-		}
-		public static Periodos CrearPeriodo(BaseDatos db,int ano, int mes){
-			Periodos p=new Periodos();
-			using(Insertador ins=p.Insertar(db)){
-				p.cPeriodo[ins]=ano.ToString()+mes.ToString("00");
-				p.cAno[ins]=ano;
-				p.cMes[ins]=mes;
-			}
-			return new Periodos(db,ano,mes);
-		}
-		public Periodos CrearPeriodo(int ano, int mes){
-			return CrearPeriodo(db,ano,mes);
-		}
-		public Periodos AbrirPeriodo(int ano, int mes){
-			Periodos p=new Periodos();
-			p.Leer(db,"ano",ano,"mes",mes);
-			return p;
-		}
-		public void RegistrarPromedio(Periodos per,Productos prod,double promedio){
-			CalProd t=new CalProd();
-			using(Insertador ins=t.Insertar(db)){
-				t.cPeriodo[ins]=per.cPeriodo;
-				t.cProducto[ins]=prod.cProducto;
-				t.cPromedio[ins]=promedio;
-				// ins.InsertarSiHayCampos();
-			}			
 		}
 		public void CalcularPonderadores(Agrupaciones agrupacion){
 			using(Ejecutador ej=new Ejecutador(db,agrupacion)){
@@ -491,9 +392,110 @@ namespace Indices
 			");
 		}
 	}
+	public class RepositorioPruebaIndice:RepositorioIndice{
+		public RepositorioPruebaIndice(BaseDatos db)
+			:base(db)
+		{}
+		public override void CrearTablas(){
+			RepositorioIndice repo=new RepositorioIndice(db);
+			repo.CrearTablas();
+			// base.CrearTablas();
+		}
+		public Productos AbrirProducto(string codigo){
+			Productos p=new Productos();
+			p.Leer(db,codigo);
+			return p;
+		}
+		public Productos CrearProducto(string codigo){
+			Productos p=new Productos();
+			using(Insertador ins=p.Insertar(db)){
+				p.cProducto[ins]=codigo;
+			}
+			return AbrirProducto(codigo);
+		}
+		public Grupos AbrirGrupo(string agrupacion,string codigo){
+			Grupos g=new Grupos();
+			g.Leer(db,agrupacion,codigo);
+			return g;
+		}
+		public Agrupaciones AbrirAgrupacion(string agrupacion){
+			Agrupaciones a=new Agrupaciones();
+			a.Leer(db,agrupacion);
+			return a;
+		}
+		public Grupos CrearGrupo(string codigo){
+			return CrearGrupo(codigo,codigo,"",1);
+		}
+		public Grupos CrearGrupo(string agrupacion,string codigo,string codigopadre,double ponderador){
+			Grupos g=new Grupos();
+			using(Insertador ins=g.Insertar(db)){
+				g.cGrupo[ins]=codigo;
+				g.cPonderador[ins]=ponderador;
+				if(codigopadre==""){
+				}else{
+					g.cGrupoPadre[ins]=codigopadre;
+				}
+				g.cAgrupacion[ins]=agrupacion;
+				// ins.InsertarSiHayCampos();
+			}
+			return AbrirGrupo(agrupacion,codigo);
+		}
+		public Grupos CrearGrupo(string codigo,Grupos padre,double ponderador){
+			return CrearGrupo(padre.cAgrupacion.Valor,codigo,padre.cGrupo.Valor,ponderador);
+		}
+		public Grupos CrearGrupo(string codigo,Agrupaciones raiz,double ponderador){
+			return CrearGrupo(raiz.cAgrupacion.Valor,codigo,raiz.cAgrupacion.Valor,ponderador);
+		}
+		public Agrupaciones CrearAgrupacion(string codigo){
+			Agrupaciones a=new Agrupaciones();
+			using(Insertador ins=a.Insertar(db)){
+				a.cAgrupacion[ins]=codigo;
+				// ins.InsertarSiHayCampos();
+			}
+			CrearGrupo(codigo,codigo,null,1);
+			return AbrirAgrupacion(codigo);
+		}
+		public void CrearHoja(Productos producto,Grupos grupo,double ponderador){
+			Grupos g=new Grupos();
+			using(Insertador ins=g.Insertar(db)){
+				g.cAgrupacion[ins]=grupo.cAgrupacion;
+				g.cGrupo[ins]=producto.cProducto;
+				g.cGrupoPadre[ins]=grupo.cGrupo;
+				g.cPonderador[ins]=ponderador;
+				g.cEsProducto[ins]=db.Verdadero;
+				// ins.InsertarSiHayCampos();
+			}			
+		}
+		public static Periodos CrearPeriodo(BaseDatos db,int ano, int mes){
+			Periodos p=new Periodos();
+			using(Insertador ins=p.Insertar(db)){
+				p.cPeriodo[ins]=ano.ToString()+mes.ToString("00");
+				p.cAno[ins]=ano;
+				p.cMes[ins]=mes;
+			}
+			return new Periodos(db,ano,mes);
+		}
+		public Periodos CrearPeriodo(int ano, int mes){
+			return CrearPeriodo(db,ano,mes);
+		}
+		public Periodos AbrirPeriodo(int ano, int mes){
+			Periodos p=new Periodos();
+			p.Leer(db,"ano",ano,"mes",mes);
+			return p;
+		}
+		public void RegistrarPromedio(Periodos per,Productos prod,double promedio){
+			CalProd t=new CalProd();
+			using(Insertador ins=t.Insertar(db)){
+				t.cPeriodo[ins]=per.cPeriodo;
+				t.cProducto[ins]=prod.cProducto;
+				t.cPromedio[ins]=promedio;
+				// ins.InsertarSiHayCampos();
+			}			
+		}
+	}
 	[TestFixture]
 	public class ProbarIndiceD3{
-		RepositorioIndice repo;
+		RepositorioPruebaIndice repo;
 		public ProbarIndiceD3(){
 			BaseDatos db;
 			#pragma warning disable 162
@@ -510,21 +512,24 @@ namespace Indices
 					db.EliminarTablaSiExiste("numeros");
 					db.EliminarTablaSiExiste("auxgrupos");
 					*/
-					repo=RepositorioIndice.Crear(db);
+					repo=new RepositorioPruebaIndice(db);
 					repo.EliminarTablas();
+					repo.CrearTablas();
 					break;
 				case 2: // probar con sqlite
 					string archivoSqLite="prueba_sqlite.db";
 					Archivo.Borrar(archivoSqLite);
 					db=SqLite.Abrir(archivoSqLite);
-					repo=RepositorioIndice.Crear(db);
+					repo=new RepositorioPruebaIndice(db);
+					repo.CrearTablas();
 					break;
 				case 3: // probar con access
 					string archivoMDB="indices_canastaD3.mdb";
 					Archivo.Borrar(archivoMDB);
 					BdAccess.Crear(archivoMDB);
 					db=BdAccess.Abrir(archivoMDB);
-					repo=RepositorioIndice.Crear(db);
+					repo=new RepositorioPruebaIndice(db);
+					repo.CrearTablas();
 					break;
 			}
 			#pragma warning restore 162
