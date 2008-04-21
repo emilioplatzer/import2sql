@@ -145,6 +145,12 @@ namespace Modelador
 			{
 				return CampoAsignado.ToSql(db)+"="+ValorAsignar.ToSql(db);
 			}
+			public override bool TieneVariables{ 
+				get{
+					Assert.Fail("No debería preguntar si un Set tiene variables");
+					return false;
+				}
+			}
 		}
 		public override Lista<Sqlizable> Partes(){
 			Lista<Sqlizable> todas=new Lista<Sqlizable>();
@@ -203,7 +209,7 @@ namespace Modelador
 					if(expresion!=null){
 						if(c.ExpresionBase.TipoAgrupada){
 							tieneAgrupados=true;
-						}else{
+						}else if(expresion.TieneVariables){
 							sepGB.AgregarEn(groupBy,expresion);
 						}
 						coma.AgregarEn(todas,expresion,new LiteralSql(" AS "),new CampoReceptorInsert(c));
@@ -244,6 +250,7 @@ namespace Modelador
 		{
 			return db.StuffCampo(CampoSinAlias.NombreCampo);
 		}
+		public override bool TieneVariables{ get{return CampoSinAlias.TieneVariables;} }
 	}
 	public class SentenciaInsert:SentenciaSelect{
 		Tabla TablaBase;
@@ -381,21 +388,24 @@ namespace Modelador
 	}
 	public class ExpresionSql:Sqlizable{
 		public bool TipoAgrupada=false;
+		bool tieneVariables;
+		public override bool TieneVariables{ get{ return tieneVariables; } }
 		public Lista<Sqlizable> Partes=new Lista<Sqlizable>();
-		void CalcularTipoAgruapada(){
+		void CalcularTipo(){
 			foreach(Sqlizable p in Partes){
 				if(p is ExpresionSql){
 					TipoAgrupada=TipoAgrupada || (p as ExpresionSql).TipoAgrupada;
 				}
+				tieneVariables=tieneVariables || p.TieneVariables;
 			}
 		}
 		public ExpresionSql(params Sqlizable[] Partes){
 			this.Partes.AddRange(Partes);
-			CalcularTipoAgruapada();
+			CalcularTipo();
 		}
 		public ExpresionSql(Lista<Sqlizable> Partes){
 			this.Partes=Partes;
-			CalcularTipoAgruapada();
+			CalcularTipo();
 		}
 		public virtual ExpresionSql And(ExpresionSql otra){
 			Lista<Sqlizable> nueva=new Lista<Sqlizable>();
@@ -493,6 +503,11 @@ namespace Modelador
 			}
 			public static implicit operator ExpresionSql(SelectSuma ss){
 				return new ExpresionSql(ss);
+			}
+			public override bool TieneVariables{ 
+				get{
+					return false;
+				} 
 			}
 		}
 	}

@@ -25,12 +25,12 @@ namespace TodoASql
 			// new CVP().CreacionTablas();
 			// new prTabla().Periodos();
 			// new prTabla().SentenciaInsert();
-			// new prTabla().UpdateSuma();
+			new prTabla().UpdateSuma();
 			// new prTabla().SentenciaCompuesta();
 			// new PruebasReflexion().NombresMiembros();
 		    // new ProbarSqLite().ConexionSqLite();
 		    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
-		    // /*
+		    /*
 		    ProbarIndiceD3 p=new ProbarIndiceD3();
 		    p.A01CalculosBase();
 		    p.VerCanasta();
