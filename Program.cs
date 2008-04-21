@@ -19,17 +19,22 @@ namespace TodoASql
 	{
 		public static void Main(string[] args)
 		{
+			/*
+			PruebasExternas p=new PruebasExternas();
+			p.ArmarBase();
+			p.Reponderar();
+			*/
 			// new Tareas.PrComparacionPadrones().PrExacta();
 			// new probarLibroExcel().UltimoFilasyColumnas();
 			// new ProcesoLevantarPlanillasCVP().TraerPlanillasRecepcion();
 			// new CVP().CreacionTablas();
 			// new prTabla().Periodos();
 			// new prTabla().SentenciaInsert();
-			new prTabla().UpdateSuma();
+			// new prTabla().UpdateSuma();
 			// new prTabla().SentenciaCompuesta();
 			// new PruebasReflexion().NombresMiembros();
 		    // new ProbarSqLite().ConexionSqLite();
-		    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
+		    new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
 		    /*
 		    ProbarIndiceD3 p=new ProbarIndiceD3();
 		    p.A01CalculosBase();
@@ -78,7 +83,6 @@ namespace TodoASql
 				);
 			
 			} // */
-			
 			Console.WriteLine("Listo!");
 			Console.Write("presione cualquier tecla . . . ");
 			Console.ReadKey(true);
