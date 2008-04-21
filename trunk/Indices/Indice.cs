@@ -28,6 +28,8 @@ namespace Indices
 	public class CampoIndice:CampoReal{};
 	public class CampoFactor:CampoReal{};
 	public class CampoPeriodo:CampoChar{ public CampoPeriodo():base(4+2){} }
+	public class CampoInformante:CampoEntero{};
+	public class CampoTipo:CampoChar{ public CampoTipo():base(1){} };
 	public class EjecutadorSql:BasesDatos.EjecutadorSql{
 		public EjecutadorSql(BaseDatos db,Parametros[] param)
 			:base(db,param)
@@ -139,6 +141,25 @@ namespace Indices
 			public CalGru(BaseDatos db,Periodos p,Agrupaciones a){
 				Leer(db,p.cPeriodo,a.cAgrupacion,a.cAgrupacion);
 			}
+		}
+		public class Informante:Tabla{
+			[Pk] public CampoInformante cInformante;
+			public CampoTipo cTipoInformante;
+		}
+		public class ProdTipoInf:Tabla{
+			[Pk] public CampoProducto cProducto;
+			[Pk] public CampoTipo cTipoInf;
+			public CampoPonderador cPonderadorTipoInf;
+			[Fk] public Productos fkProductos;
+		}
+		public class CalTipoInf:Tabla{
+			[Pk] public CampoPeriodo cPeriodo;
+			[Pk] public CampoProducto cProducto;
+			[Pk] public CampoTipo cTipoInf;
+			public CampoPrecio cPromedio;
+			[Fk] public Periodos fkPeriodos;
+			[Fk] public Productos fkProductos;
+			[Fk] public ProdTipoInf fkProdTipoInf;
 		}
 		RepositorioIndice(BaseDatos db)
 			:base(db)
@@ -566,6 +587,10 @@ namespace Indices
 			repo.CalcularCalGru(Per2,A);
 			Assert.AreEqual(110.0,new RepositorioIndice.CalGru(repo.db,Per2,A2).cIndice.Valor,Controlar.DeltaDouble);
 			Assert.AreEqual(110.0,new RepositorioIndice.CalGru(repo.db,Per2,A).cIndice.Valor,Controlar.DeltaDouble);
+		}
+		[Test]
+		public void A02CalculosTipoInf(){
+			
 		}
 		[Test]
 		public void zReglasDeIntegridad(){
