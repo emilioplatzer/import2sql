@@ -55,6 +55,14 @@ namespace Modelador
 				return this.TablaContenedora.Alias+"."+db.StuffCampo(NombreCampo);
 			}
 		}
+		public override bool TieneVariables{ 
+			get{
+				if(ExpresionBase!=null){
+					return ExpresionBase.TieneVariables;
+				}
+				return true;
+			}
+		}
 		public ExpresionSql Operado<T>(string OperadorTextual,T expresion){
 			return new ExpresionSql(this,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
 		}

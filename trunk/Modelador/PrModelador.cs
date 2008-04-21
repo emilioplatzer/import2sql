@@ -96,6 +96,10 @@ namespace PrModelador
 			Assert.AreEqual("INSERT INTO partesproductos (producto, cantidad, nombreparte) SELECT p.producto, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n FROM productos p, novedadesproductos n\n WHERE n.empresa=p.empresa\n AND n.productoauxiliar=p.producto\n GROUP BY p.producto, n.nuevoestado;\n",
 				new Ejecutador(dba)
 				.Dump(new SentenciaInsert(pp).Select(pr.cProducto,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado))));
+			Assert.AreEqual("INSERT INTO partesproductos (empresa, producto, cantidad, nombreparte) SELECT 1 AS empresa, p.producto, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n FROM productos p, novedadesproductos n\n WHERE n.empresa=p.empresa\n AND n.productoauxiliar=p.producto\n GROUP BY p.producto, n.nuevoestado;\n",
+				new Ejecutador(dba)
+				.Dump(new SentenciaInsert(pp).Select(pp.cEmpresa.Es(1),pr.cProducto,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado))));
+			
 		}
 		[Test]
 		public void SentenciaUpdate(){

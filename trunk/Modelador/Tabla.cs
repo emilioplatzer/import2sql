@@ -272,6 +272,12 @@ namespace Modelador
 		{
 			return db.StuffTabla(this.NombreTabla)+(this.Alias==null?"":" "+this.Alias);
 		}
+		public override bool TieneVariables{ 
+			get{
+				Assert.Fail("No debería preguntar si una tabla tiene variables");
+				return false; 
+			} 
+		} // No tiene en el sentido de que no es una expresión
 		/*
 		public ExpresionSql SelectSuma(Campo CampoSumar,ExpresionSql ExpresionWhere){
 			return new ExpresionSql.SelectSuma(this,CampoSumar,ExpresionWhere);
@@ -308,6 +314,7 @@ namespace Modelador
 	}
 	public abstract class Sqlizable{
 		public abstract string ToSql(BaseDatos db);
+		public abstract bool TieneVariables{ get; }
 	}
 	public class LiteralSql:Sqlizable{
 		public string Literal;
@@ -317,21 +324,25 @@ namespace Modelador
 		public override string ToSql(BaseDatos db){
 			return Literal;
 		}
+		public override bool TieneVariables{ get{return false;} }
 	}
 	public class OperadorConcatenacionIzquierda:Sqlizable{
 		public override string ToSql(BaseDatos db){
 			return db.OperadorConcatenacionIzquierda;
 		}
+		public override bool TieneVariables{ get{return false;} }
 	}
 	public class OperadorConcatenacionDerecha:Sqlizable{
 		public override string ToSql(BaseDatos db){
 			return db.OperadorConcatenacionDerecha;
 		}
+		public override bool TieneVariables{ get{return false;} }
 	}
 	public class OperadorConcatenacionMedio:Sqlizable{
 		public override string ToSql(BaseDatos db){
 			return db.OperadorConcatenacionMedio;
 		}
+		public override bool TieneVariables{ get{return false;} }
 	}
 	public class ValorSql<T>:Sqlizable{
 		public T Valor;
@@ -345,6 +356,14 @@ namespace Modelador
 			}
 			return db.StuffValor(Valor);
 		}
+		public override bool TieneVariables{ 
+			get{
+				if(Valor is Sqlizable){
+					return (Valor as Sqlizable).TieneVariables;
+				}
+				return false;
+			}
+		}
 	}
 	public class ValorSqlNulo:Sqlizable{
 		public ValorSqlNulo(){
@@ -352,5 +371,6 @@ namespace Modelador
 		public override string ToSql(BaseDatos db){
 			return "null";
 		}
+		public override bool TieneVariables{ get{return false;} }
 	}
 }
