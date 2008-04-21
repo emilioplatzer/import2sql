@@ -145,7 +145,7 @@ namespace Modelador
 			{
 				return CampoAsignado.ToSql(db)+"="+ValorAsignar.ToSql(db);
 			}
-			public override bool TieneVariables{ 
+			public override bool CandidatoAGroupBy{ 
 				get{
 					Assert.Fail("No debería preguntar si un Set tiene variables");
 					return false;
@@ -209,7 +209,7 @@ namespace Modelador
 					if(expresion!=null){
 						if(c.ExpresionBase.TipoAgrupada){
 							tieneAgrupados=true;
-						}else if(expresion.TieneVariables){
+						}else if(expresion.CandidatoAGroupBy){
 							sepGB.AgregarEn(groupBy,expresion);
 						}
 						coma.AgregarEn(todas,expresion,new LiteralSql(" AS "),new CampoReceptorInsert(c));
@@ -250,7 +250,7 @@ namespace Modelador
 		{
 			return db.StuffCampo(CampoSinAlias.NombreCampo);
 		}
-		public override bool TieneVariables{ get{return CampoSinAlias.TieneVariables;} }
+		public override bool CandidatoAGroupBy{ get{return CampoSinAlias.CandidatoAGroupBy;} }
 	}
 	public class SentenciaInsert:SentenciaSelect{
 		Tabla TablaBase;
@@ -388,15 +388,15 @@ namespace Modelador
 	}
 	public class ExpresionSql:Sqlizable{
 		public bool TipoAgrupada=false;
-		bool tieneVariables;
-		public override bool TieneVariables{ get{ return tieneVariables; } }
+		bool candidatoAGroupBy=false;
+		public override bool CandidatoAGroupBy{ get{ return candidatoAGroupBy; } }
 		public Lista<Sqlizable> Partes=new Lista<Sqlizable>();
 		void CalcularTipo(){
 			foreach(Sqlizable p in Partes){
 				if(p is ExpresionSql){
 					TipoAgrupada=TipoAgrupada || (p as ExpresionSql).TipoAgrupada;
 				}
-				tieneVariables=tieneVariables || p.TieneVariables;
+				candidatoAGroupBy=candidatoAGroupBy || p.CandidatoAGroupBy;
 			}
 		}
 		public ExpresionSql(params Sqlizable[] Partes){
@@ -504,7 +504,7 @@ namespace Modelador
 			public static implicit operator ExpresionSql(SelectSuma ss){
 				return new ExpresionSql(ss);
 			}
-			public override bool TieneVariables{ 
+			public override bool CandidatoAGroupBy{ 
 				get{
 					return false;
 				} 

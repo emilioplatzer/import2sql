@@ -55,10 +55,10 @@ namespace Modelador
 				return this.TablaContenedora.Alias+"."+db.StuffCampo(NombreCampo);
 			}
 		}
-		public override bool TieneVariables{ 
+		public override bool CandidatoAGroupBy{ 
 			get{
 				if(ExpresionBase!=null){
-					return ExpresionBase.TieneVariables;
+					return ExpresionBase.CandidatoAGroupBy;
 				}
 				return true;
 			}
