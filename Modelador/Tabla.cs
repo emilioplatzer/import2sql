@@ -12,6 +12,7 @@ using System.Reflection;
 using System.Text;
 using System.Data;
 using System.Data.Common;
+using System.Collections.Generic;
 using NUnit.Framework;
 
 using Comunes;
@@ -161,6 +162,10 @@ namespace Modelador
   			}
 			IDataReader SelectAbierto=db.ExecuteReader("SELECT * FROM "+db.StuffTabla(NombreTabla)+clausulaWhere+";");
 			SelectAbierto.Read();
+			LevantarCampos(SelectAbierto);
+			return this;
+		}
+		public void LevantarCampos(IDataReader SelectAbierto){
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
@@ -170,7 +175,6 @@ namespace Modelador
 					c.AsignarValor(SelectAbierto[c.NombreCampo]);
 				}
   			}
-			return this;
 		}
 		public virtual Lista<Campo> CamposPk(){
 			Lista<Campo> rta=new Lista<Campo>();
@@ -286,8 +290,57 @@ namespace Modelador
 		public ExpresionSql SelectSuma(Campo CampoSumar){
 			return new ExpresionSql.SelectSuma(this,CampoSumar);
 		}
+		public RegistrosEnumerables Todos(BaseDatos db){
+			return new RegistrosEnumerables(this,db);
+		}
 	}
-
+	public class RegistrosEnumerables{
+		BaseDatos db;
+		Tabla TablaARecorrer;
+		public RegistrosEnumerables(Tabla TablaARecorrer,BaseDatos db){
+			this.db=db;
+			this.TablaARecorrer=TablaARecorrer;
+		}
+		public IteradorRegistro GetEnumerator(){
+			return new IteradorRegistro(TablaARecorrer,db);
+		}
+	}
+	public class IteradorRegistro{
+		Tabla RegistroActual;
+		IDataReader SelectAbierto;
+		BaseDatos db;
+		bool HayActual;
+		string Sentencia;
+		public IteradorRegistro(Tabla TablaBase,BaseDatos db){
+			this.db=db;
+			this.RegistroActual=TablaBase;
+			Sentencia="SELECT * FROM "+db.StuffTabla(TablaBase.NombreTabla);
+			Reset();
+		}
+		public void Reset(){
+			SelectAbierto=db.ExecuteReader(Sentencia);
+			HayActual=false;
+		}
+		public bool MoveNext(){
+			HayActual=SelectAbierto.Read();
+			if(HayActual){
+				RegistroActual.LevantarCampos(SelectAbierto);
+			}
+			return HayActual;
+		}
+		public Tabla Current{
+			get{
+				if(HayActual){
+					return RegistroActual; 
+				}else{
+					throw new InvalidOperationException();
+				}
+			}
+		}
+		public void Dispose(){
+			SelectAbierto.Close();
+		}
+	}
 	/////////////
 	public class Vista:System.Attribute{}
 	public class Fk:System.Attribute{		

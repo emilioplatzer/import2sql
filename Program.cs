@@ -24,7 +24,7 @@ namespace TodoASql
 			p.ArmarBase();
 			p.Reponderar();
 			*/
-			// new Tareas.PrComparacionPadrones().PrExacta();
+			new Tareas.PrComparacionPadrones().PrExacta();
 			// new probarLibroExcel().UltimoFilasyColumnas();
 			// new ProcesoLevantarPlanillasCVP().TraerPlanillasRecepcion();
 			// new CVP().CreacionTablas();
@@ -34,7 +34,7 @@ namespace TodoASql
 			// new prTabla().SentenciaCompuesta();
 			// new PruebasReflexion().NombresMiembros();
 		    // new ProbarSqLite().ConexionSqLite();
-		    new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
+		    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
 		    /*
 		    ProbarIndiceD3 p=new ProbarIndiceD3();
 		    p.A01CalculosBase();

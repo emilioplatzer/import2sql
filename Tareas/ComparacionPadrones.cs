@@ -57,7 +57,16 @@ namespace Tareas
 		{
 		}
 		public void AsignacionExacta(){
-			
+			Asignacion a=new Asignacion();
+			Nombres n=new Nombres();
+			Nombres v=new Nombres();
+			using(Ejecutador ej=new Ejecutador(db)){
+				ej.Ejecutar(
+					new SentenciaInsert(a)
+						.Select(a.cNombreViejo.Es(v.cNombre),a.cNombreNuevo.Es(n.cNombre),a.cMetodo.Es("exacta"))
+						.Where(v.cNombre.Igual(n.cNombre).And(v.cConjunto.Igual("viejo")).And(n.cConjunto.Igual("nuevo")))
+				);
+			}
 		}
 	}
 	[TestFixture]
@@ -98,20 +107,19 @@ namespace Tareas
 			Cargar1(nuevos,"nuevo");
 		}
 		public void CompararCoincidencias(string[] viejosCoincidentes,string[] nuevosCoincidentes){
-			ComparacionPadrones.Asignacion a=new ComparacionPadrones.Asignacion();
 			int item=0;
-			/*
-			foreach(ComparacionPadrones.Asignacion a in ComparacionPadrones.Asignacion.Todas()){
+			foreach(ComparacionPadrones.Asignacion a in new ComparacionPadrones.Asignacion().Todos(db)){
 				Assert.AreEqual(viejosCoincidentes[item],a.cNombreViejo.Valor,"viejos coindicentes "+item);
 				Assert.AreEqual(nuevosCoincidentes[item],a.cNombreNuevo.Valor,"nuevos coindicentes "+item);
+				item++;
 			}
-			*/
+			Assert.AreEqual(viejosCoincidentes.Length,item,"Debe coincidir la cantidad");
 		}
 		[Test]
 		public void PrExacta(){
 			string[] viejos={"San Martín","Belgrano","Corrientes","No esta"," distinta "};
 			string[] nuevos={"San Martín","Belgrano","Corrientes","Tampoco esta","distinta"};
-			string[] coinciden={"Belgrano","Corrientes","San Martín"};
+			string[] coinciden={"San Martín","Belgrano","Corrientes"};
 			Cargar(viejos,nuevos);
 			cp.AsignacionExacta();
 			CompararCoincidencias(coinciden,coinciden);
