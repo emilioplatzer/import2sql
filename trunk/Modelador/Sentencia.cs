@@ -254,24 +254,46 @@ namespace Modelador
 	}
 	public class SentenciaInsert:SentenciaSelect{
 		Tabla TablaBase;
+		enum ConValuesOSelect {ConValues, ConSelect};
+		ConValuesOSelect conQue;
 		public SentenciaInsert(Tabla TablaBase){
 			this.TablaBase=TablaBase;	
 		}
 		public SentenciaInsert Select(params Campo[] Campos){
+			conQue=ConValuesOSelect.ConSelect;
 			this.Campos.AddRange(Campos);
+			return this;
+		}
+		public Sentencia Valores(params Campo[] CamposConValores){
+			conQue=ConValuesOSelect.ConValues;
+			this.Campos.AddRange(CamposConValores);
 			return this;
 		}
 		public override Lista<Sqlizable> Partes(){
 			Lista<Sqlizable> todas=new Lista<Sqlizable>();
+			Lista<Sqlizable> valores=new Lista<Sqlizable>();
 			todas.Add(new LiteralSql("INSERT INTO "));
 			todas.Add(TablaBase);
 			TablaBase.Alias=null;
 			ParteSeparadora coma=new ParteSeparadora(" (",", ");
+			ParteSeparadora vcoma=new ParteSeparadora("VALUES (",", ");
 			foreach(Campo c in Campos){
 				coma.AgregarEn(todas,new CampoReceptorInsert(c));
+				if(conQue==ConValuesOSelect.ConValues){
+					if(c.ExpresionBase!=null){
+						vcoma.AgregarEn(valores,c.ExpresionBase);
+					}else{
+						vcoma.AgregarEn(valores,new ValorSql<object>(c.ValorSinTipo));
+					}
+				}
 			}
 			todas.Add(new LiteralSql(") "));
-			todas.AddRange(base.Partes());
+			if(conQue==ConValuesOSelect.ConSelect){
+				todas.AddRange(base.Partes());
+			}else{
+				todas.AddRange(valores);
+				todas.Add(new LiteralSql(")"));
+			}
 			return todas;
 		}
 	}

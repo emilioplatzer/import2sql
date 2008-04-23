@@ -67,6 +67,10 @@ namespace BasesDatos
 	}
 	[TestFixture]
 	public class ProbarPostgreSql{
+		public static PostgreSql AbrirBase(){
+			System.Windows.Forms.Application.OleRequired();
+			return PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
+		}
 		#if SinPostgre
 		[Test]
 		public void A_SinPostgre(){
@@ -79,8 +83,7 @@ namespace BasesDatos
 		}
 		[Test]
 		public void Conexion(){
-			System.Windows.Forms.Application.OleRequired();
-			PostgreSql db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
+			PostgreSql db=AbrirBase();
 			ProbarBaseDatos.ObjEnTodasLasBases(db);
 		}
 		#endif

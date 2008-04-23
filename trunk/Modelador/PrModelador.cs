@@ -99,7 +99,10 @@ namespace PrModelador
 			Assert.AreEqual("INSERT INTO partesproductos (empresa, producto, cantidad, nombreparte) SELECT 1 AS empresa, p.producto, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n FROM productos p, novedadesproductos n\n WHERE n.empresa=p.empresa\n AND n.productoauxiliar=p.producto\n GROUP BY p.producto, n.nuevoestado;\n",
 				new Ejecutador(dba)
 				.Dump(new SentenciaInsert(pp).Select(pp.cEmpresa.Es(1),pr.cProducto,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado))));
-			
+			Assert.AreEqual("INSERT INTO partesproductos (empresa, producto) VALUES (1, 'PROD1');\n",
+			    new Ejecutador(dba)
+			    .Dump(new SentenciaInsert(pp).Valores(pp.cEmpresa.Es(1),pr.cProducto.Es("PROD1"))));
+			    	
 		}
 		[Test]
 		public void SentenciaUpdate(){
@@ -276,6 +279,15 @@ namespace PrModelador
 			                ,new Ejecutador(dba).Dump(su));
 			Assert.AreEqual("UPDATE productos SET costo=(SELECT SUM(n.nuevoestado) FROM novedadesproductos n WHERE n.empresa=empresa AND n.productoauxiliar=producto);\n"
 			                ,new Ejecutador(dbp).Dump(su));
+		}
+		[Test]
+		public void FkConDatos(){
+			BaseDatos db=ProbarPostgreSql.AbrirBase();
+			Ejecutador ej=new Ejecutador(db);
+			// ej.ExecuteNonQuery(new Empresas().SentenciaCreateTable(db));
+			// ej.ExecuteNonQuery(new Productos().SentenciaCreateTable(db));
+			// ej.ExecuteNonQuery(new PartesProductos().SentenciaCreateTable(db));
+			Empresas e=new Empresas();
 		}
 	}
 }
