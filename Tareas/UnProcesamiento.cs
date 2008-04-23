@@ -143,6 +143,10 @@ namespace Tareas
 		public void ImportarPrecios(){
 			
 		}
+		public void Generar(){
+			ArmarBase();
+			Reponderar();
+		}
 	}
 	public class ProcesoLevantarPlanillas{
 		BaseDatos db;

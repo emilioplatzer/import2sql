@@ -378,5 +378,8 @@ namespace BasesDatos
 			db.EliminarVistaSiExiste("v_temporaria_a_borrar");
 			db.EliminarTablaSiExiste("temporaria_a_borrar");
 		}
+		public void MostrarMensaje(){
+			System.Console.WriteLine("mensaje");
+		}
 	}
 }

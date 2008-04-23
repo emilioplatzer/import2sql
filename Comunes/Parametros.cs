@@ -68,6 +68,11 @@ namespace Comunes
 			string ArchivoINI=this.NombreAplicacion+".ini";
 			if(Archivo.Existe(ArchivoINI)){
 				LeerString(Archivo.Leer(ArchivoINI), Tipo.INI);
+			}else if(this.NombreAplicacion.IndexOf(".")>0){
+				ArchivoINI=this.NombreAplicacion;
+				if(Archivo.Existe(ArchivoINI)){
+					LeerString(Archivo.Leer(ArchivoINI), Tipo.INI);
+				}
 			}
 		}
 	}

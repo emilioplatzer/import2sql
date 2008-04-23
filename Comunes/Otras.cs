@@ -41,14 +41,25 @@ namespace Comunes
 			}else{
 				int anchoTab=3;
 				StringBuilder rta=new StringBuilder();
-				rta.AppendLine(o.GetType().Name+"{");
 				string margen=new string(' ',(identacion+1)*anchoTab);
-				FieldInfo[] fs=o.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-				foreach(FieldInfo f in fs){
-					Object objetoValor=f.GetValue(o);
-					rta.AppendLine(margen+f.Name+":"+ExpandirMiembros(objetoValor,identacion+1));
+				if(o.GetType().IsArray){
+					rta.AppendLine(o.GetType().Name+"=[");
+					object[] arreglo=(object[]) o;
+					int posicion=0;
+					foreach(object elemento in arreglo){
+						rta.AppendLine(margen+posicion+":"+ExpandirMiembros(elemento,identacion+1));
+						posicion++;
+					}
+					rta.AppendLine(new string(' ',identacion*anchoTab)+"]");
+				}else{
+					rta.AppendLine(o.GetType().Name+"{");
+					FieldInfo[] fs=o.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+					foreach(FieldInfo f in fs){
+						Object objetoValor=f.GetValue(o);
+						rta.AppendLine(margen+f.Name+":"+ExpandirMiembros(objetoValor,identacion+1));
+					}
+					rta.AppendLine(new string(' ',identacion*anchoTab)+"}");
 				}
-				rta.AppendLine(new string(' ',identacion*anchoTab)+"}");
 				return rta.ToString();
 			}
 		}
@@ -73,6 +84,9 @@ namespace Comunes
 			System.Console.WriteLine(Objeto.ExpandirMiembros(pSI));
 			Assert.AreEqual("ParametrosPrueba{\r\n   DirUno:\"c:\\temp\\aux\"\r\n   Frase:\"No hay futuro\"\r\n   Cantidad:-1\r\n   Fecha:01/02/2003 0:00:00\r\n}\r\n",Objeto.ExpandirMiembros(pSI));
 			// Assert.Ignore("Ojo que esto falla la primera vez que se usa");
+			string[] frases={"hola", "che"};
+			System.Console.WriteLine(Objeto.ExpandirMiembros(frases));
+			Assert.AreEqual(Cadena.Simplificar("String[]=[0:\"hola\" 1:\"che\"]"),Cadena.Simplificar(Objeto.ExpandirMiembros(frases)));
 		}
 	}
 	/// <summary>
