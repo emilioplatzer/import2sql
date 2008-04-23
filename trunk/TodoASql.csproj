@@ -17,7 +17,7 @@
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;SinPostgre</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -57,8 +57,8 @@
     <Compile Include="Comunes\Parametros.cs" />
     <Compile Include="DelOffice\Excel.cs" />
     <Compile Include="DelOffice\MatrizExcelASql.cs" />
-    <Compile Include="Comunes\Carpeta.cs" />
     <Compile Include="Comunes\Otras.cs" />
+    <Compile Include="Indices\Carpeta.cs" />
     <Compile Include="Indices\CVP.cs" />
     <Compile Include="Indices\Indice.cs" />
     <Compile Include="Interactivo\Formulario.cs" />
