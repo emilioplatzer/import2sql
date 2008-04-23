@@ -113,6 +113,12 @@ namespace Modelador
 			rta.AppendLine("\n);");
 			return rta.ToString();
 		}
+		public void InsertarUno(BaseDatos db,params Campo[] Campos){
+			Sentencia s=new SentenciaInsert(this).Valores(Campos);
+			Ejecutador ej=new Ejecutador(db);
+			ej.Ejecutar(s);
+		}
+		/*
 		public void Insertar(BaseDatos db,params object[] Valores){
 			using(InsertadorSql ins=new InsertadorSql(db,this.NombreTabla)){
       			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
@@ -128,6 +134,7 @@ namespace Modelador
       			// ins.InsertarSiHayCampos();
 			}
 		}
+		*/
 		public Insertador Insertar(BaseDatos db){
 			return new Insertador(db,this);
 		}
