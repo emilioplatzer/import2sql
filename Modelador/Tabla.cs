@@ -21,8 +21,8 @@ using Modelador;
 
 namespace Modelador
 {
-	public abstract class Tabla:Sqlizable
-	{
+	public delegate bool Filtro(Campo c);
+	public abstract class Tabla:Campable{
 		public string NombreTabla;
 		public BaseDatos db;
 		public int CantidadCamposPk;
@@ -34,6 +34,7 @@ namespace Modelador
 		public System.Collections.Generic.Dictionary<string, Campo> CamposFkAlias=new System.Collections.Generic.Dictionary<string, Campo>();
 		public Fk.Tipo TipoFk=Fk.Tipo.Obligatoria;
 		public bool LiberadaDelContextoDelEjecutador; // Del contexto del ejecutador
+		public bool LevantoCampos=false;
 		public Tabla()
 		{
 			Construir();
@@ -87,7 +88,7 @@ namespace Modelador
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
 					Campo c=(Campo)m.GetValue(this);
-					rta.AppendLine("\t"+c.NombreCampo+" "+c.TipoCampo+",");
+					rta.AppendLine("\t"+c.NombreCampo+" "+c.TipoCampo+c.Opcionalidad+",");
 					if(c.EsPk){
 						pk.Append(comapk+c.NombreCampo);
 					}
@@ -113,7 +114,7 @@ namespace Modelador
 			rta.AppendLine("\n);");
 			return rta.ToString();
 		}
-		public void InsertarUno(BaseDatos db,params Campo[] Campos){
+		public void InsertarValores(BaseDatos db,params Campable[] Campos){
 			Sentencia s=new SentenciaInsert(this).Valores(Campos);
 			Ejecutador ej=new Ejecutador(db);
 			ej.Ejecutar(s);
@@ -138,25 +139,52 @@ namespace Modelador
 		public Insertador Insertar(BaseDatos db){
 			return new Insertador(db,this);
 		}
-		public virtual Tabla Leer(BaseDatos db,params object[] Codigos){
+		public virtual void Leer(BaseDatos db,params object[] Codigos){
+			BuscarYLeer(db,true,Codigos);
+		}
+		public virtual bool Buscar(BaseDatos db,params object[] Codigos){
+			return BuscarYLeer(db,false,Codigos);
+		}
+		bool BuscarYLeer(BaseDatos db,bool LanzaExcepcion,params object[] Codigos){
 			this.db=db;
+			List<object> Valores=new List<object>();
+			foreach(object o in Codigos){
+				if(o is Campo){
+					Campo c=o as Campo;
+					if(c.ValorSinTipo!=null){
+						Valores.Add(c);
+					}else if(c.ExpresionBase!=null && c.ExpresionBase.CandidatoAGroupBy==false){
+						Valores.Add(c.ExpresionBase);
+					}
+				}else if(o is Tabla){
+					Tabla t=o as Tabla;
+					foreach(Campo c in t.CamposPk()){
+						Valores.Add(c.ValorSinTipo);
+					}
+				}else{
+					Valores.Add(o);
+				}
+			}
 			int i=0;
 			object[] parametros=new object[CantidadCamposPk*2];
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
-			if(i>=Codigos.Length) break;
+			if(i>=Valores.Count) break;
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
 					Campo c=(Campo)m.GetValue(this);
 					if(c.EsPk){
 						parametros[i*2]=c.NombreCampo;
-						parametros[i*2+1]=Codigos[i];
+						parametros[i*2+1]=Valores[i];
 					}
 				}
 				i++;
   			}
-  			return LeerNoPk(db,parametros);
+  			return BuscarYLeerNoPk(db,LanzaExcepcion,parametros);
 		}
-		public virtual Tabla LeerNoPk(BaseDatos db,params object[] parametros){
+		public virtual void LeerNoPk(BaseDatos db,params object[] parametros){
+			BuscarYLeerNoPk(db,true,parametros);
+		}
+		bool BuscarYLeerNoPk(BaseDatos db,bool LanzaExcepcion,params object[] parametros){
 			this.db=db;
 			Separador whereAnd=new Separador("\n WHERE ","\n AND ");
 			StringBuilder clausulaWhere=new StringBuilder();
@@ -168,9 +196,15 @@ namespace Modelador
 				clausulaWhere.Append(whereAnd+parametros[i]+"="+db.StuffValor(valor));
   			}
 			IDataReader SelectAbierto=db.ExecuteReader("SELECT * FROM "+db.StuffTabla(NombreTabla)+clausulaWhere+";");
-			SelectAbierto.Read();
-			LevantarCampos(SelectAbierto);
-			return this;
+			LevantoCampos=SelectAbierto.Read();
+			if(LevantoCampos){
+				LevantarCampos(SelectAbierto);
+			}else{
+				if(LanzaExcepcion){
+					throw new SystemException("No existe el campo descripto por "+Objeto.ExpandirMiembros(parametros));
+				}
+			}
+			return LevantoCampos;
 		}
 		public void LevantarCampos(IDataReader SelectAbierto){
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
@@ -180,10 +214,29 @@ namespace Modelador
 					System.Console.WriteLine("ver "+c.NombreCampo);
 					System.Console.WriteLine("valor "+SelectAbierto[c.NombreCampo]);
 					c.AsignarValor(SelectAbierto[c.NombreCampo]);
+					c.ExpresionBase=null;
 				}
   			}
 		}
+		public override Lista<Campo> Campos(){
+			return Campos(null);
+		}
+		public virtual Lista<Campo> Campos(Filtro filtro){
+			Lista<Campo> rta=new Lista<Campo>();
+  			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+			foreach(FieldInfo m in ms){
+				if(m.FieldType.IsSubclassOf(typeof(Campo))){
+					Campo c=(Campo)m.GetValue(this);
+					if(filtro==null || filtro(c)){
+						rta.Add(c);
+					}
+				}
+  			}
+  			return rta;
+		}
 		public virtual Lista<Campo> CamposPk(){
+			return Campos(delegate(Campo c){ return c.EsPk; });
+			/*
 			Lista<Campo> rta=new Lista<Campo>();
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
@@ -195,6 +248,7 @@ namespace Modelador
 				}
   			}
   			return rta;
+  			*/
 		}
 		public virtual bool TieneElCampo(Campo campo){
 			Lista<Campo> rta=new Lista<Campo>();
@@ -375,6 +429,9 @@ namespace Modelador
 	public abstract class Sqlizable{
 		public abstract string ToSql(BaseDatos db);
 		public abstract bool CandidatoAGroupBy{ get; }
+	}
+	public abstract class Campable:Sqlizable{
+		public abstract Lista<Campo> Campos();
 	}
 	public class LiteralSql:Sqlizable{
 		public string Literal;

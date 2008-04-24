@@ -20,9 +20,10 @@ namespace PrModelador
 	public class Periodos:Tabla{
 		[Pk] public CampoEntero cAno;
 		[Pk] public CampoEntero cMes;
-		public CampoEntero cAnoAnt;
-		public CampoEntero cMesAnt;
+		public CampoEnteroOpcional cAnoAnt;
+		public CampoEnteroOpcional cMesAnt;
 	}
+	public class CampoPieza:CampoProducto{};
 	[TestFixture]
 	public class prTabla{
 		#pragma warning disable 649
@@ -32,28 +33,28 @@ namespace PrModelador
 			[Pk] public CampoEntero cEmpresa;
 			public CampoNombre cNombreEmpresa;
 		}
-		class Productos:Tabla{
+		class Piezas:Tabla{
 			[Pk] public CampoEntero cEmpresa;
-			[Pk] public CampoProducto cProducto;
-			public CampoNombre cNombreProducto;
+			[Pk] public CampoPieza cPieza;
+			public CampoNombre cNombrePieza;
 			public CampoEntero cEstado;
-			public CampoReal cCosto;
+			public CampoRealOpcional cCosto;
 			[Fk] public Empresas fkEmpresas;
 		}
-		class PartesProductos:Tabla{
+		class PartesPiezas:Tabla{
 			[Pk] public CampoEntero cEmpresa;
-			[Pk] public CampoProducto cProducto;
+			[Pk] public CampoPieza cPieza;
 			[Pk] public CampoEntero cParte;
 			public CampoNombre cNombreParte;
-			public CampoEntero cCantidad;
-			[FkMixta("ant")] public CampoEntero cParteAnterior;
-			[Fk] public Productos fkProductos;
-			[FkMixta("ant")] public PartesProductos fkParteAnterior;
+			public CampoEnteroOpcional cCantidad;
+			[FkMixta("ant")] public CampoEnteroOpcional cParteAnterior;
+			[Fk] public Piezas fkPiezas;
+			[FkMixta("ant")] public PartesPiezas fkParteAnterior;
 		}
-		class NovedadesProductos:Tabla{
+		class NovedadesPiezas:Tabla{
 			[Pk] public CampoEntero cEmpresa;
-			[Pk] public CampoProducto cProductoAuxiliar;
-			public CampoEntero cNuevoEstado;
+			[Pk] public CampoPieza cPiezaAuxiliar;
+			public CampoEnteroOpcional cNuevoEstado;
 		}
 		class Numeros:Tabla{
 			[Pk] public CampoEntero cNumero;
@@ -66,67 +67,67 @@ namespace PrModelador
 			Periodos p=new Periodos();
 			Assert.AreEqual(0,p.cAno.Valor);
 			Assert.AreEqual("Ano",p.cAno.Nombre);
-			Assert.AreEqual("create table periodos(ano integer,mes integer,anoant integer,mesant integer,primary key(ano,mes));"
+			Assert.AreEqual("create table periodos(ano integer not null,mes integer not null,anoant integer,mesant integer,primary key(ano,mes));"
 			                ,Cadena.Simplificar(p.SentenciaCreateTable(dba)));
-			Productos pr=new Productos();
-			Assert.AreEqual("create table productos(empresa integer,producto varchar(4),nombreproducto varchar(250),estado integer,costo double precision,primary key(empresa,producto),foreign key(empresa)references empresas(empresa));"
+			Piezas pr=new Piezas();
+			Assert.AreEqual("create table piezas(empresa integer not null,pieza varchar(4),nombrepieza varchar(250),estado integer not null,costo double precision,primary key(empresa,pieza),foreign key(empresa)references empresas(empresa));"
 			                ,Cadena.Simplificar(pr.SentenciaCreateTable(dba)));
-			PartesProductos pa=new PartesProductos();
+			PartesPiezas pa=new PartesPiezas();
 			Assert.AreEqual(false,dba.SoportaFkMixta);
 			pa.UsarFk();
-			Assert.AreEqual("partesproductos",pa.TablasFk[1].NombreTabla);
+			Assert.AreEqual("partespiezas",pa.TablasFk[1].NombreTabla);
 			Assert.AreEqual(Fk.Tipo.Mixta,pa.TablasFk[1].TipoFk);
-			Assert.AreEqual("create table partesproductos(empresa integer,producto varchar(4),parte integer,nombreparte varchar(250),cantidad integer,parteanterior integer,primary key(empresa,producto,parte),foreign key(empresa,producto)references productos(empresa,producto));"
+			Assert.AreEqual("create table partespiezas(empresa integer not null,pieza varchar(4),parte integer not null,nombreparte varchar(250),cantidad integer,parteanterior integer,primary key(empresa,pieza,parte),foreign key(empresa,pieza)references piezas(empresa,pieza));"
 			                ,Cadena.Simplificar(pa.SentenciaCreateTable(dba)));
-			Assert.AreEqual("create table partesproductos(empresa integer,producto varchar(4),parte integer,nombreparte varchar(250),cantidad integer,parteanterior integer,primary key(empresa,producto,parte),foreign key(empresa,producto)references productos(empresa,producto),foreign key(empresa,producto,parteanterior)references partesproductos(empresa,producto,parte));"
+			Assert.AreEqual("create table partespiezas(empresa integer not null,pieza varchar(4),parte integer not null,nombreparte varchar(250),cantidad integer,parteanterior integer,primary key(empresa,pieza,parte),foreign key(empresa,pieza)references piezas(empresa,pieza),foreign key(empresa,pieza,parteanterior)references partespiezas(empresa,pieza,parte));"
 			                ,Cadena.Simplificar(pa.SentenciaCreateTable(dbp)));
 		}
 		[Test]
 		public void SentenciaInsert(){
-			Productos p=new Productos();
+			Piezas p=new Piezas();
 			BaseDatos dba=BdAccess.SinAbrir();
-			Assert.AreEqual("INSERT INTO productos (producto, nombreproducto) SELECT p.producto, p.producto AS nombreproducto\n FROM productos p;\n",
+			Assert.AreEqual("INSERT INTO piezas (pieza, nombrepieza) SELECT p.pieza, p.pieza AS nombrepieza\n FROM piezas p;\n",
 				new Ejecutador(dba)
-				.Dump(new SentenciaInsert(new Productos()).Select(p.cProducto,p.cNombreProducto.Es(p.cProducto))));
-			PartesProductos pp=new PartesProductos();
+				.Dump(new SentenciaInsert(new Piezas()).Select(p.cPieza,p.cNombrePieza.Es(p.cPieza))));
+			PartesPiezas pp=new PartesPiezas();
 			pp.UsarFk();
-			Productos pr=pp.fkProductos;
-			NovedadesProductos np=new NovedadesProductos();
-			np.EsFkDe(pr,pr.cProducto);
-			Assert.AreEqual("INSERT INTO partesproductos (producto, cantidad, nombreparte) SELECT p.producto, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n FROM productos p, novedadesproductos n\n WHERE n.empresa=p.empresa\n AND n.productoauxiliar=p.producto\n GROUP BY p.producto, n.nuevoestado;\n",
+			Piezas pr=pp.fkPiezas;
+			NovedadesPiezas np=new NovedadesPiezas();
+			np.EsFkDe(pr,pr.cPieza);
+			Assert.AreEqual("INSERT INTO partespiezas (pieza, cantidad, nombreparte) SELECT p.pieza, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n FROM piezas p, novedadespiezas n\n WHERE n.empresa=p.empresa\n AND n.piezaauxiliar=p.pieza\n GROUP BY p.pieza, n.nuevoestado;\n",
 				new Ejecutador(dba)
-				.Dump(new SentenciaInsert(pp).Select(pr.cProducto,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado))));
-			Assert.AreEqual("INSERT INTO partesproductos (empresa, producto, cantidad, nombreparte) SELECT 1 AS empresa, p.producto, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n FROM productos p, novedadesproductos n\n WHERE n.empresa=p.empresa\n AND n.productoauxiliar=p.producto\n GROUP BY p.producto, n.nuevoestado;\n",
+				.Dump(new SentenciaInsert(pp).Select(pr.cPieza,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado))));
+			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza, cantidad, nombreparte) SELECT 1 AS empresa, p.pieza, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n FROM piezas p, novedadespiezas n\n WHERE n.empresa=p.empresa\n AND n.piezaauxiliar=p.pieza\n GROUP BY p.pieza, n.nuevoestado;\n",
 				new Ejecutador(dba)
-				.Dump(new SentenciaInsert(pp).Select(pp.cEmpresa.Es(1),pr.cProducto,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado))));
-			Assert.AreEqual("INSERT INTO partesproductos (empresa, producto) VALUES (1, 'PROD1');\n",
+				.Dump(new SentenciaInsert(pp).Select(pp.cEmpresa.Es(1),pr.cPieza,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado))));
+			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza) VALUES (1, 'PROD1');\n",
 			    new Ejecutador(dba)
-			    .Dump(new SentenciaInsert(pp).Valores(pp.cEmpresa.Es(1),pr.cProducto.Es("PROD1"))));
+			    .Dump(new SentenciaInsert(pp).Valores(pp.cEmpresa.Es(1),pr.cPieza.Es("PROD1"))));
 			    	
 		}
 		[Test]
 		public void SentenciaUpdate(){
-			Productos p=new Productos();
+			Piezas p=new Piezas();
 			BaseDatos dba=BdAccess.SinAbrir();
 			dba.TipoStuffActual=BaseDatos.TipoStuff.Siempre;
-			Assert.AreEqual("UPDATE [productos] SET [producto]='P1',\n [nombreproducto]='Producto 1';\n",
+			Assert.AreEqual("UPDATE [piezas] SET [pieza]='P1',\n [nombrepieza]='Pieza 1';\n",
 			                new Ejecutador(dba)
-			                .Dump(new SentenciaUpdate(p,p.cProducto.Set("P1"),p.cNombreProducto.Set("Producto 1"))));
-			string Esperado="UPDATE [productos] SET [producto]='P1',\n [nombreproducto]='Producto 1'\n WHERE [producto]='P3'\n AND ([nombreproducto] IS NULL OR [nombreproducto]<>[producto])";
+			                .Dump(new SentenciaUpdate(p,p.cPieza.Set("P1"),p.cNombrePieza.Set("Pieza 1"))));
+			string Esperado="UPDATE [piezas] SET [pieza]='P1',\n [nombrepieza]='Pieza 1'\n WHERE [pieza]='P3'\n AND ([nombrepieza] IS NULL OR [nombrepieza]<>[pieza])";
 			Assert.AreEqual(Esperado+";\n",
 			                new Ejecutador(dba)
-			                .Dump(new SentenciaUpdate(p,p.cProducto.Set("P1"),p.cNombreProducto.Set("Producto 1"))
-			                      .Where(p.cProducto.Igual("P3")
-			                             .And(p.cNombreProducto.EsNulo()
-			                                  .Or(p.cNombreProducto.Distinto(p.cProducto))))));
-			SentenciaUpdate sentencia=new SentenciaUpdate(p,p.cProducto.Set("P1"),p.cNombreProducto.Set("Producto 1"));
-			sentencia.Where(p.cProducto.Igual("P3")
-			                .And(p.cNombreProducto.EsNulo()
-			                     .Or(p.cNombreProducto.Distinto(p.cProducto))));
+			                .Dump(new SentenciaUpdate(p,p.cPieza.Set("P1"),p.cNombrePieza.Set("Pieza 1"))
+			                      .Where(p.cPieza.Igual("P3")
+			                             .And(p.cNombrePieza.EsNulo()
+			                                  .Or(p.cNombrePieza.Distinto(p.cPieza))))));
+			SentenciaUpdate sentencia=new SentenciaUpdate(p,p.cPieza.Set("P1"),p.cNombrePieza.Set("Pieza 1"));
+			sentencia.Where(p.cPieza.Igual("P3")
+			                .And(p.cNombrePieza.EsNulo()
+			                     .Or(p.cNombrePieza.Distinto(p.cPieza))));
 			Assert.AreEqual(1,sentencia.Tablas().Count);
-			Assert.AreEqual("productos",sentencia.Tablas()[0].NombreTabla);
-			sentencia.Where(p.cNombreProducto.Distinto("P0"));
-			Esperado+="\n AND [nombreproducto]<>'P0'";
+			Assert.AreEqual("piezas",sentencia.Tablas()[0].NombreTabla);
+			sentencia.Where(p.cNombrePieza.Distinto("P0"));
+			Esperado+="\n AND [nombrepieza]<>'P0'";
 			Assert.AreEqual(Esperado+";\n",new Ejecutador(dba).Dump(sentencia));
 			Assert.AreEqual(Esperado+";\n",new Ejecutador(dba).Dump(sentencia));
 			Empresas contexto=new Empresas();
@@ -138,7 +139,7 @@ namespace PrModelador
 		}	
 		[Test]
 		public void SentenciaCompuesta(){
-			Productos p=new Productos();
+			Piezas p=new Piezas();
 			BaseDatos dba=BdAccess.SinAbrir();
 			BaseDatos dbp=PostgreSql.SinAbrir();
 			dba.TipoStuffActual=BaseDatos.TipoStuff.Siempre;
@@ -150,61 +151,61 @@ namespace PrModelador
 					new SentenciaSelect(e.cEmpresa,e.cNombreEmpresa);
 				Assert.AreEqual("SELECT e.[empresa], e.[nombreempresa]\n FROM [empresas] e\n WHERE e.[empresa]=13;\n",
 				                ej.Dump(s));
-				PartesProductos pp=new PartesProductos(); 
+				PartesPiezas pp=new PartesPiezas(); 
 				pp.UsarFk();
-				Productos pr=pp.fkProductos;
-				Assert.AreEqual(pp,pr.TablaRelacionada);
+				Piezas pi=pp.fkPiezas;
+				Assert.AreEqual(pp,pi.TablaRelacionada);
 				Sentencia s2=
-					new SentenciaSelect(pr.cProducto,pr.cNombreProducto,cCantidadPartes.EsSuma(pp.cCantidad));
-				Assert.AreEqual("SELECT p.[producto], p.[nombreproducto], SUM(pa.[cantidad]) AS [cantidadpartes]\n FROM [productos] p, [partesproductos] pa\n WHERE p.[empresa]=pa.[empresa]\n AND p.[producto]=pa.[producto]\n AND p.[empresa]=13\n AND pa.[empresa]=13\n GROUP BY p.[producto], p.[nombreproducto];\n"
+					new SentenciaSelect(pi.cPieza,pi.cNombrePieza,cCantidadPartes.EsSuma(pp.cCantidad));
+				Assert.AreEqual("SELECT p.[pieza], p.[nombrepieza], SUM(pa.[cantidad]) AS [cantidadpartes]\n FROM [piezas] p, [partespiezas] pa\n WHERE p.[empresa]=pa.[empresa]\n AND p.[pieza]=pa.[pieza]\n AND p.[empresa]=13\n AND pa.[empresa]=13\n GROUP BY p.[pieza], p.[nombrepieza];\n"
 				                ,ej.Dump(s2));
-				Assert.AreEqual("SELECT SUM(p.[cantidad]) AS [cantidadpartes]\n FROM [partesproductos] p, [productos] pr\n WHERE pr.[producto]<>pr.[nombreproducto]\n AND pr.[empresa]=p.[empresa]\n AND pr.[producto]=p.[producto]\n AND p.[empresa]=13\n AND pr.[empresa]=13;\n"
-				                ,ej.Dump(new SentenciaSelect(cCantidadPartes.EsSuma(pp.cCantidad)).Where(pr.cProducto.Distinto(pr.cNombreProducto))));
+				Assert.AreEqual("SELECT SUM(p.[cantidad]) AS [cantidadpartes]\n FROM [partespiezas] p, [piezas] pi\n WHERE pi.[pieza]<>pi.[nombrepieza]\n AND pi.[empresa]=p.[empresa]\n AND pi.[pieza]=p.[pieza]\n AND p.[empresa]=13\n AND pi.[empresa]=13;\n"
+				                ,ej.Dump(new SentenciaSelect(cCantidadPartes.EsSuma(pp.cCantidad)).Where(pi.cPieza.Distinto(pi.cNombrePieza))));
 				Sentencia su=
-					new SentenciaUpdate(pp,pp.cNombreParte.Set(pr.cNombreProducto.Concatenado(pp.cParte))).Where(pp.cNombreParte.EsNulo());
-				Assert.AreEqual("UPDATE [partesproductos] p INNER JOIN [productos] pr ON p.[empresa]=pr.[empresa] AND p.[producto]=pr.[producto]\n " +
-				                "SET p.[nombreparte]=(pr.[nombreproducto] & p.[parte])\n WHERE p.[nombreparte] IS NULL\n AND p.[empresa]=13\n AND pr.[empresa]=13;\n",
+					new SentenciaUpdate(pp,pp.cNombreParte.Set(pi.cNombrePieza.Concatenado(pp.cParte))).Where(pp.cNombreParte.EsNulo());
+				Assert.AreEqual("UPDATE [partespiezas] p INNER JOIN [piezas] pi ON p.[empresa]=pi.[empresa] AND p.[pieza]=pi.[pieza]\n " +
+				                "SET p.[nombreparte]=(pi.[nombrepieza] & p.[parte])\n WHERE p.[nombreparte] IS NULL\n AND p.[empresa]=13\n AND pi.[empresa]=13;\n",
 				                ej.Dump(su));
-				Assert.AreEqual("UPDATE [partesproductos] p INNER JOIN [productos] pr ON p.[empresa]=pr.[empresa] AND p.[producto]=pr.[producto]\n " +
-				                "SET p.[nombreparte]=(pr.[nombreproducto] & p.[parte])\n WHERE p.[nombreparte] IS NULL\n AND p.[empresa]=13\n AND pr.[empresa]=13;\n",
+				Assert.AreEqual("UPDATE [partespiezas] p INNER JOIN [piezas] pi ON p.[empresa]=pi.[empresa] AND p.[pieza]=pi.[pieza]\n " +
+				                "SET p.[nombreparte]=(pi.[nombrepieza] & p.[parte])\n WHERE p.[nombreparte] IS NULL\n AND p.[empresa]=13\n AND pi.[empresa]=13;\n",
 				                ej.Dump(su));
-				Assert.AreEqual("UPDATE partesproductos " +
-				                "SET nombreparte=(SELECT (pr.nombreproducto||parte) FROM productos pr WHERE pr.empresa=empresa AND pr.producto=producto)\n WHERE nombreparte IS NULL\n AND empresa=13;\n",
+				Assert.AreEqual("UPDATE partespiezas " +
+				                "SET nombreparte=(SELECT (pi.nombrepieza||parte) FROM piezas pi WHERE pi.empresa=empresa AND pi.pieza=pieza)\n WHERE nombreparte IS NULL\n AND empresa=13;\n",
 				                ejp.Dump(su));
 				dba.TipoStuffActual=BaseDatos.TipoStuff.Inteligente;
-				su=new SentenciaUpdate(pr,pr.cEstado.Set(0)).Where(pr.cEstado.EsNulo());
-				Assert.AreEqual("UPDATE productos SET estado=0\n WHERE estado IS NULL\n AND empresa=13;\n",
+				su=new SentenciaUpdate(pi,pi.cEstado.Set(0)).Where(pi.cEstado.EsNulo());
+				Assert.AreEqual("UPDATE piezas SET estado=0\n WHERE estado IS NULL\n AND empresa=13;\n",
 				                ej.Dump(su));
-				Assert.AreEqual("UPDATE productos SET estado=0\n WHERE estado IS NULL\n AND empresa=13;\n",
+				Assert.AreEqual("UPDATE piezas SET estado=0\n WHERE estado IS NULL\n AND empresa=13;\n",
 				                ejp.Dump(su));
 				su=new SentenciaUpdate(pp,pp.cCantidad.Set(pp.cCantidad.Mas(1))).Where(pp.cCantidad.EsNulo());
-				Assert.AreEqual("UPDATE partesproductos SET cantidad=cantidad+1\n WHERE cantidad IS NULL\n AND empresa=13;\n",
+				Assert.AreEqual("UPDATE partespiezas SET cantidad=cantidad+1\n WHERE cantidad IS NULL\n AND empresa=13;\n",
 				                ej.Dump(su));
-				Assert.AreEqual("UPDATE partesproductos SET cantidad=cantidad+1\n WHERE cantidad IS NULL\n AND empresa=13;\n",
+				Assert.AreEqual("UPDATE partespiezas SET cantidad=cantidad+1\n WHERE cantidad IS NULL\n AND empresa=13;\n",
 				                ejp.Dump(su));
-				su=new SentenciaSelect(p.cProducto,p.cNombreProducto,pr.cNombreProducto).Where(p.cProducto.Igual(pr.cProducto.Concatenado("2")));
-				Assert.AreEqual("SELECT p.producto, p.nombreproducto, pr.nombreproducto\n FROM productos p, productos pr\n WHERE p.producto=(pr.producto & '2')\n AND p.empresa=13\n AND pr.empresa=13;\n",
+				su=new SentenciaSelect(p.cPieza,p.cNombrePieza,pi.cNombrePieza).Where(p.cPieza.Igual(pi.cPieza.Concatenado("2")));
+				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pi.nombrepieza\n FROM piezas p, piezas pi\n WHERE p.pieza=(pi.pieza & '2')\n AND p.empresa=13\n AND pi.empresa=13;\n",
 				                ej.Dump(su));
-				NovedadesProductos np=new NovedadesProductos();
-				np.EsFkDe(pr,pr.cProducto);
-				pr.LiberadaDelContextoDelEjecutador=true;
-				Assert.AreEqual(pr,np.TablaRelacionada);
-				su=new SentenciaUpdate(pr,pr.cEstado.Set(np.cNuevoEstado),pr.cNombreProducto.Set(pr.cNombreProducto.Concatenado(np.cNuevoEstado))).Where(pr.cProducto.Distinto("P_este"));
-				Assert.AreEqual("UPDATE productos p INNER JOIN novedadesproductos n ON p.empresa=n.empresa AND p.producto=n.productoauxiliar\n" +
-				                " SET p.estado=n.nuevoestado,\n p.nombreproducto=(p.nombreproducto & n.nuevoestado)\n" +
-				                " WHERE p.producto<>'P_este'\n AND n.empresa=13;\n",
+				NovedadesPiezas np=new NovedadesPiezas();
+				np.EsFkDe(pi,pi.cPieza);
+				pi.LiberadaDelContextoDelEjecutador=true;
+				Assert.AreEqual(pi,np.TablaRelacionada);
+				su=new SentenciaUpdate(pi,pi.cEstado.Set(np.cNuevoEstado),pi.cNombrePieza.Set(pi.cNombrePieza.Concatenado(np.cNuevoEstado))).Where(pi.cPieza.Distinto("P_este"));
+				Assert.AreEqual("UPDATE piezas p INNER JOIN novedadespiezas n ON p.empresa=n.empresa AND p.pieza=n.piezaauxiliar\n" +
+				                " SET p.estado=n.nuevoestado,\n p.nombrepieza=(p.nombrepieza & n.nuevoestado)\n" +
+				                " WHERE p.pieza<>'P_este'\n AND n.empresa=13;\n",
 				                ej.Dump(su));
-				Assert.AreEqual("UPDATE productos " +
-				                "SET estado=(SELECT n.nuevoestado FROM novedadesproductos n WHERE n.empresa=empresa AND n.productoauxiliar=producto),\n" +
-				                " nombreproducto=(SELECT (nombreproducto||n.nuevoestado) FROM novedadesproductos n WHERE n.empresa=empresa AND n.productoauxiliar=producto)\n" +
-				                " WHERE producto<>'P_este';\n",
+				Assert.AreEqual("UPDATE piezas " +
+				                "SET estado=(SELECT n.nuevoestado FROM novedadespiezas n WHERE n.empresa=empresa AND n.piezaauxiliar=pieza),\n" +
+				                " nombrepieza=(SELECT (nombrepieza||n.nuevoestado) FROM novedadespiezas n WHERE n.empresa=empresa AND n.piezaauxiliar=pieza)\n" +
+				                " WHERE pieza<>'P_este';\n",
 				                ejp.Dump(su));
-				su=new SentenciaUpdate(pr,pr.cEstado.Set(np.cNuevoEstado),pr.cCosto.SetNull()).Where(pr.cProducto.Distinto("P_este"));
-				Assert.AreEqual("UPDATE productos p INNER JOIN novedadesproductos n ON p.empresa=n.empresa AND p.producto=n.productoauxiliar\n SET p.estado=n.nuevoestado,\n p.costo=null\n WHERE p.producto<>'P_este'\n AND n.empresa=13;\n",
+				su=new SentenciaUpdate(pi,pi.cEstado.Set(np.cNuevoEstado),pi.cCosto.SetNull()).Where(pi.cPieza.Distinto("P_este"));
+				Assert.AreEqual("UPDATE piezas p INNER JOIN novedadespiezas n ON p.empresa=n.empresa AND p.pieza=n.piezaauxiliar\n SET p.estado=n.nuevoestado,\n p.costo=null\n WHERE p.pieza<>'P_este'\n AND n.empresa=13;\n",
 				                ej.Dump(su));
 				
 				/* Falta programar
-				Assert.AreEqual("UPDATE productos SET estado=(SELECT n.nuevoestado FROM novedadesproductos n WHERE n.empresa=empresa AND n.productoauxiliar=producto),\n p.costo=null\n WHERE p.producto<>'P_este'\n AND p.empresa=13\n;\n",
+				Assert.AreEqual("UPDATE piezas SET estado=(SELECT n.nuevoestado FROM novedadespiezas n WHERE n.empresa=empresa AND n.piezaauxiliar=pieza),\n p.costo=null\n WHERE p.pieza<>'P_este'\n AND p.empresa=13\n;\n",
 				                ejp.Dump(su));
 				*/
 			}
@@ -213,47 +214,47 @@ namespace PrModelador
 		public void MultiFk(){
 			BaseDatos dba=BdAccess.SinAbrir();
 			BaseDatos dbp=PostgreSql.SinAbrir();
-			Productos p=new Productos();
+			Piezas p=new Piezas();
 			Numeros num=new Numeros();
 			{
-				PartesProductos pp=new PartesProductos();
+				PartesPiezas pp=new PartesPiezas();
 				pp.EsFkDe(p,pp.cParte.Es(num.cNumero));
 				Sentencia s=
-					new SentenciaSelect(p.cProducto,p.cNombreProducto,num.cNumero,pp.cNombreParte).Where(num.cNumero.Operado("<=",3));
-				Assert.AreEqual("SELECT p.producto, p.nombreproducto, n.numero, pa.nombreparte\n" +
-				                " FROM productos p, numeros n, partesproductos pa\n" +
-				                " WHERE n.numero<=3\n AND pa.empresa=p.empresa\n AND pa.producto=p.producto\n AND pa.parte=n.numero;\n",
+					new SentenciaSelect(p.cPieza,p.cNombrePieza,num.cNumero,pp.cNombreParte).Where(num.cNumero.Operado("<=",3));
+				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, n.numero, pa.nombreparte\n" +
+				                " FROM piezas p, numeros n, partespiezas pa\n" +
+				                " WHERE n.numero<=3\n AND pa.empresa=p.empresa\n AND pa.pieza=p.pieza\n AND pa.parte=n.numero;\n",
 				                new Ejecutador(dba).Dump(s));
 			}
 			{
-				PartesProductos pp=new PartesProductos();
+				PartesPiezas pp=new PartesPiezas();
 				pp.EsFkDe(p,pp.cParte.Es(7));
 				Sentencia s=
-					new SentenciaSelect(p.cProducto,p.cNombreProducto,pp.cNombreParte);
-				Assert.AreEqual("SELECT p.producto, p.nombreproducto, pa.nombreparte\n" +
-				                " FROM productos p, partesproductos pa\n" +
-				                " WHERE pa.empresa=p.empresa\n AND pa.producto=p.producto\n AND pa.parte=7;\n",
+					new SentenciaSelect(p.cPieza,p.cNombrePieza,pp.cNombreParte);
+				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pa.nombreparte\n" +
+				                " FROM piezas p, partespiezas pa\n" +
+				                " WHERE pa.empresa=p.empresa\n AND pa.pieza=p.pieza\n AND pa.parte=7;\n",
 				                new Ejecutador(dba).Dump(s));
 			}
 			{
-				PartesProductos pp=new PartesProductos();
+				PartesPiezas pp=new PartesPiezas();
 				pp.EsFkDe(p,pp.cParte.Es(num.cNumero),pp.cEmpresa.Es(1));
 				Sentencia s=
-					new SentenciaSelect(p.cProducto,p.cNombreProducto,num.cNumero,pp.cNombreParte);
-				Assert.AreEqual("SELECT p.producto, p.nombreproducto, n.numero, pa.nombreparte\n" +
-				                " FROM productos p, numeros n, partesproductos pa\n" +
-				                " WHERE pa.empresa=1\n AND pa.producto=p.producto\n AND pa.parte=n.numero;\n",
+					new SentenciaSelect(p.cPieza,p.cNombrePieza,num.cNumero,pp.cNombreParte);
+				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, n.numero, pa.nombreparte\n" +
+				                " FROM piezas p, numeros n, partespiezas pa\n" +
+				                " WHERE pa.empresa=1\n AND pa.pieza=p.pieza\n AND pa.parte=n.numero;\n",
 				                new Ejecutador(dba).Dump(s));
 			}
 			{
-				PartesProductos pp=new PartesProductos();
+				PartesPiezas pp=new PartesPiezas();
 				pp.EsFkDe(p,pp.cParte.Es(num.cNumero),pp.cEmpresa.Es(1));
 				Sentencia s=
-					new SentenciaSelect(p.cProducto,p.cNombreProducto,pp.cNombreParte);
+					new SentenciaSelect(p.cPieza,p.cNombrePieza,pp.cNombreParte);
 				Assert.Ignore("Falta considerar tablas que sirvan para los joins y no estén en los campos del select");
-				Assert.AreEqual("SELECT p.producto, p.nombreproducto, pa.nombreparte\n" +
-				                " FROM productos p, numeros n, partesproductos pa\n" +
-				                " WHERE pa.empresa=1\n AND pa.producto=p.producto\n AND pa.parte=n.numero;\n",
+				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pa.nombreparte\n" +
+				                " FROM piezas p, numeros n, partespiezas pa\n" +
+				                " WHERE pa.empresa=1\n AND pa.pieza=p.pieza\n AND pa.parte=n.numero;\n",
 				                new Ejecutador(dba).Dump(s));
 			}
 		}
@@ -261,33 +262,55 @@ namespace PrModelador
 		public void UpdateSuma(){
 			BaseDatos dba=BdAccess.SinAbrir();
 			BaseDatos dbp=PostgreSql.SinAbrir();
-			PartesProductos pp=new PartesProductos();
+			PartesPiezas pp=new PartesPiezas();
 			pp.UsarFk();
-			Productos pr=pp.fkProductos;
+			Piezas pr=pp.fkPiezas;
 			Assert.AreEqual(pr.TablaRelacionada,pp);
 			SentenciaUpdate su=
 				new SentenciaUpdate(pr,pr.cCosto.Set(pr.SelectSuma(pp.cCantidad)));
-			Assert.AreEqual("UPDATE productos SET costo=DSum('cantidad','partesproductos','empresa=''' & empresa & ''' AND producto=''' & producto & '''');\n"
+			Assert.AreEqual("UPDATE piezas SET costo=DSum('cantidad','partespiezas','empresa=''' & empresa & ''' AND pieza=''' & pieza & '''');\n"
 			                ,new Ejecutador(dba).Dump(su));
-			Assert.AreEqual("UPDATE productos SET costo=(SELECT SUM(pa.cantidad) FROM partesproductos pa WHERE pa.empresa=empresa AND pa.producto=producto);\n"
+			Assert.AreEqual("UPDATE piezas SET costo=(SELECT SUM(pa.cantidad) FROM partespiezas pa WHERE pa.empresa=empresa AND pa.pieza=pieza);\n"
 			                ,new Ejecutador(dbp).Dump(su));
-			NovedadesProductos np=new NovedadesProductos();
+			NovedadesPiezas np=new NovedadesPiezas();
 			np.UsarFk();
-			pr.EsFkDe(np,np.cProductoAuxiliar);
+			pr.EsFkDe(np,np.cPiezaAuxiliar);
 			su=new SentenciaUpdate(pr,pr.cCosto.Set(pr.SelectSuma(np.cNuevoEstado)));
-			Assert.AreEqual("UPDATE productos SET costo=DSum('nuevoestado','novedadesproductos','empresa=''' & empresa & ''' AND productoauxiliar=''' & producto & '''');\n"
+			Assert.AreEqual("UPDATE piezas SET costo=DSum('nuevoestado','novedadespiezas','empresa=''' & empresa & ''' AND piezaauxiliar=''' & pieza & '''');\n"
 			                ,new Ejecutador(dba).Dump(su));
-			Assert.AreEqual("UPDATE productos SET costo=(SELECT SUM(n.nuevoestado) FROM novedadesproductos n WHERE n.empresa=empresa AND n.productoauxiliar=producto);\n"
+			Assert.AreEqual("UPDATE piezas SET costo=(SELECT SUM(n.nuevoestado) FROM novedadespiezas n WHERE n.empresa=empresa AND n.piezaauxiliar=pieza);\n"
 			                ,new Ejecutador(dbp).Dump(su));
 		}
 		[Test]
 		public void FkConDatos(){
-			BaseDatos db=ProbarPostgreSql.AbrirBase();
+			BaseDatos db=ProbarBdAccess.AbrirBase();
+			Empresas e=new Empresas();
+			Piezas p=new Piezas();
+			PartesPiezas pp=new PartesPiezas();
+			db.ExecuteNonQuery(e.SentenciaCreateTable(db));
+			db.ExecuteNonQuery(p.SentenciaCreateTable(db));
+			db.ExecuteNonQuery(pp.SentenciaCreateTable(db));
 			Ejecutador ej=new Ejecutador(db);
 			// ej.ExecuteNonQuery(new Empresas().SentenciaCreateTable(db));
-			// ej.ExecuteNonQuery(new Productos().SentenciaCreateTable(db));
-			// ej.ExecuteNonQuery(new PartesProductos().SentenciaCreateTable(db));
-			Empresas e=new Empresas();
+			// ej.ExecuteNonQuery(new Piezas().SentenciaCreateTable(db));
+			// ej.ExecuteNonQuery(new PartesPiezas().SentenciaCreateTable(db));
+			if(!e.Buscar(db,7)){
+				e.InsertarValores(db,e.cEmpresa.Es(7),e.cNombreEmpresa.Es("Siete"));
+			}
+			Empresas e2=new Empresas();
+			e2.Leer(db,7);
+			e.Leer(db,7);
+			Assert.AreEqual("Siete",e2.cNombreEmpresa.Valor);
+			p.InsertarValores(db,e,p.cPieza.Es("P11"),p.cNombrePieza.Es("El once"),p.cEstado.Es(1));
+			p.InsertarValores(db,e,p.cPieza.Es("P12"),p.cNombrePieza.Es("El doce"),p.cEstado.Es(1));
+			p.Leer(db,e,"P11");
+			Assert.AreEqual("P11",p.cPieza.Valor);
+			pp.InsertarValores(db,p,pp.cParte.Es(1),pp.cNombreParte.Es("parte 11, 1"));
+			Assert.AreEqual("P11",p.cPieza.Valor);
+			PartesPiezas pp2=new PartesPiezas();
+			Assert.AreEqual("P11",p.cPieza.Valor);
+			pp2.Leer(db,p,1);
+			Assert.AreEqual("parte 11, 1",pp2.cNombreParte.Valor);
 		}
 	}
 }

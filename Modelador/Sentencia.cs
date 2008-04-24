@@ -264,9 +264,15 @@ namespace Modelador
 			this.Campos.AddRange(Campos);
 			return this;
 		}
-		public Sentencia Valores(params Campo[] CamposConValores){
+		public Sentencia Valores(params Campable[] CamposConValores){
 			conQue=ConValuesOSelect.ConValues;
-			this.Campos.AddRange(CamposConValores);
+			foreach(Campable cc in CamposConValores){
+				foreach(Campo c in cc.Campos()){
+					if(TablaBase.TieneElCampo(c)){
+						this.Campos.Add(c);
+					}
+				}
+			}
 			return this;
 		}
 		public override Lista<Sqlizable> Partes(){

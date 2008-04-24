@@ -20,11 +20,12 @@ using Modelador;
 
 namespace Modelador
 {
-	public abstract class Campo:Sqlizable{
+	public abstract class Campo:Campable{
 		public string Nombre;
 		public string NombreCampo;
 		public abstract string TipoCampo{ get; }
 		public bool EsPk;
+		public bool Obligatorio;
 		public Tabla TablaContenedora;
 		public Campo(){
 		}
@@ -46,6 +47,9 @@ namespace Modelador
 		*/
 		public virtual ExpresionSql EsNulo(){
 			return new ExpresionSql(this,new LiteralSql(" IS NULL"));
+		}
+		public virtual string Opcionalidad{ 
+			get{ if(Obligatorio){ return " not null"; }else{ return ""; } }
 		}
 		public override string ToSql(BaseDatos db)
 		{
@@ -80,22 +84,33 @@ namespace Modelador
 		public Campo Es(Campo campo){
 			return Es(new ExpresionSql(campo));
 		}
+		public override Lista<Campo> Campos()
+		{
+			Lista<Campo> rta=new Lista<Campo>();
+			rta.Add(this);
+			return rta;
+		}
 	}
 	public class CampoTipo<T>:Campo{
 		protected T valor;
 		public virtual T Valor{ get{ return valor;} set{ valor=value; } }
 		public override object ValorSinTipo{ get{ return valor;} }
+		string TipoCampoS(Type tipo){
+			if(tipo==typeof(int)){
+				return "integer";
+			}else if(tipo==typeof(string)){
+				return "varchar";
+	         }else if(tipo==typeof(double)){
+				return "double precision";
+			}else if(tipo.IsGenericType){
+				return TipoCampoS(tipo.GetGenericArguments()[0]);
+			}else{
+				return tipo.Name; 
+			}
+		}
 		public override string TipoCampo{ 
 			get {
-				if(valor is int || valor is int?){
-					return "integer";
-				}else if(valor is string){
-					return "varchar";
-				}else if(valor is double){
-					return "double precision";
-				}else{
-					return typeof(T).Name; 
-				}
+				return TipoCampoS(typeof(T));
 			} 
 		}
 		public CampoTipo()
@@ -161,14 +176,11 @@ namespace Modelador
 		}
 	}
 	public class CampoEntero:CampoNumericoTipo<int>{
-		public override string TipoCampo{ 
-			get { return "integer"; }
+		public CampoEntero(){
+			Obligatorio=true;
 		}
 	};
-	public class CampoEnteroOpcional:CampoTipo<int?>{
-		public override string TipoCampo{ 
-			get { return "integer"; }
-		}
+	public class CampoEnteroOpcional:CampoNumericoTipo<int?>{
 	};
 	public class CampoChar:CampoTipo<string>{
 		public int Largo;
@@ -184,7 +196,10 @@ namespace Modelador
 			                        ,new ValorSql<T>(expresion),new OperadorConcatenacionDerecha());
 		}
 	};
-	public class CampoReal:CampoNumericoTipo<double>{};
+	public class CampoReal:CampoNumericoTipo<double>{
+		public CampoReal(){ Obligatorio=true; }
+	};
+	public class CampoRealOpcional:CampoNumericoTipo<double?>{};
 	public class CampoLogico:CampoChar{
 		public CampoLogico():base(1){}
 	}
