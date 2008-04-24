@@ -103,7 +103,14 @@ namespace PrModelador
 			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza) VALUES (1, 'PROD1');\n",
 			    new Ejecutador(dba)
 			    .Dump(new SentenciaInsert(pp).Valores(pp.cEmpresa.Es(1),pr.cPieza.Es("PROD1"))));
-			    	
+			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza, parte) SELECT p.empresa, p.pieza, 1 AS parte\n FROM piezas p;\n",
+                new Ejecutador(dba)
+                .Dump(new SentenciaInsert(pp).Select(p,pp.cParte.Es(1))));
+			p.UsarFk();
+			Empresas e=p.fkEmpresas;
+			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza, parte) SELECT e.empresa, p.pieza, 1 AS parte\n FROM empresas e, piezas p\n WHERE e.empresa=p.empresa;\n",
+                new Ejecutador(dba)
+                .Dump(new SentenciaInsert(pp).Select(e,p,pp.cParte.Es(1))));
 		}
 		[Test]
 		public void SentenciaUpdate(){
@@ -314,6 +321,10 @@ namespace PrModelador
 			Assert.AreEqual("P11",p.cPieza.Valor);
 			pp2.Leer(db,p,1);
 			Assert.AreEqual("parte 11, 1",pp2.cNombreParte.Valor);
+			PartesPiezas pp3=new PartesPiezas();
+			pp3.Leer(db,7,"P11",1);
+			pp3.UsarFk();
+			Assert.AreEqual("P11",pp3.fkPiezas.cPieza.Valor);
 		}
 	}
 }
