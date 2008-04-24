@@ -119,6 +119,18 @@ namespace Modelador
 			Ejecutador ej=new Ejecutador(db);
 			ej.Ejecutar(s);
 		}
+		public virtual Tabla InsertarDirecto(BaseDatos db,params object[] Valores){
+			int i=0;
+			using(Insertador ins=new Insertador(db,this)){
+				foreach(Campo c in this.Campos()){
+				if(i>=Valores.Length) break;
+					c[ins]=Valores[i];
+					i++;
+				}
+			}
+			Leer(db,Valores);
+			return this;
+		}
 		/*
 		public void Insertar(BaseDatos db,params object[] Valores){
 			using(InsertadorSql ins=new InsertadorSql(db,this.NombreTabla)){

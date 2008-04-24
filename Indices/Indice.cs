@@ -54,207 +54,12 @@ namespace Indices
 	}
 	public class RepositorioIndice:Repositorio
 	{
-		public class Productos:Tabla{
-			[Pk] public CampoProducto cProducto;
-			public CampoNombre	cNombreProducto;
-			public double Ponderador(Grupos grupo){
-				Grupos hoja=new Grupos();
-				hoja.Leer(grupo.db,grupo.cAgrupacion,cProducto);
-				return hoja.cPonderador.Valor/grupo.cPonderador.Valor;
-			}
-		}
-		public class Agrupaciones:Tabla{
-			[Pk] public CampoAgrupacion cAgrupacion;
-			public CampoNombre cNombreAgrupacion;
-		}
-		public class Grupos:Tabla{
-			[Pk] public CampoAgrupacion cAgrupacion;
-			[Pk] public CampoGrupo cGrupo;
-			public CampoNombre cNombreGrupo;
-			[FkMixta("padre")] public CampoGrupo cGrupoPadre;
-			public CampoPonderador cPonderador;
-			public CampoNivel cNivel;
-			public CampoLogico cEsProducto;
-			[Fk] public Agrupaciones fkAgrupaciones;
-			[FkMixta("padre")] public Grupos fkGrupoPadre;
-			public ExpresionSql InPadresWhere(ExpresionSql e){
-				return new ExpresionSql(
-					this.cGrupoPadre,
-					new LiteralSql(" IN (SELECT "),
-					this.cGrupo,
-					new LiteralSql(" FROM grupos WHERE "),
-					e,
-					new LiteralSql(")"));
-			}
-		}
-		public class Numeros:Tabla{
-			[Pk] public CampoEntero cNumero;
-		}
-		public class AuxGrupos:Tabla{
-			[Pk] public CampoAgrupacion cAgrupacion;
-			[Pk] public CampoGrupo cGrupo;
-			public CampoPonderador cPonderadorOriginal;
-			public CampoPonderador cSumaPonderadorHijos;	
-		}
-		public class Periodos:Tabla{
-			[Pk] public CampoPeriodo cPeriodo;
-			public CampoPeriodo cPeriodoAnterior;
-			public CampoEntero cAno;
-			public CampoEntero cMes;
-			public Periodos(BaseDatos db,int ano, int mes){
-				LeerNoPk(db,"ano",ano,"mes",mes);
-			}
-			public Periodos(){}
-			public Periodos CrearProximo(){
-				int ano=cAno.Valor;
-				int mes=cMes.Valor+1;
-				if(mes==13){
-					mes=1; 
-					ano++;
-				}
-				Periodos p=new Periodos();
-				using(Insertador ins=p.Insertar(db)){
-					p.cPeriodo[ins]=ano.ToString()+((int)mes).ToString("00");
-					p.cAno[ins]=ano;
-					p.cMes[ins]=mes;
-					p.cPeriodoAnterior[ins]=cPeriodo;
-				}
-				return new Periodos(db,ano,mes);
-			}
-		}
-		public class Calculos:Tabla{
-			[Pk] public CampoPeriodo cPeriodo;
-			[Pk] public CampoVersion cCalculo;
-			[Fk] public Periodos fkPeriodos;
-			public Calculos CrearProximo(){
-				Periodos p=new Periodos();
-				p.Leer(db,cPeriodo);
-				Periodos pProx=p.CrearProximo();
-				Calculos c=new Calculos();
-				using(Insertador ins=c.Insertar(db)){
-					c.cPeriodo[ins]=pProx.cPeriodo.Valor;
-					c.cCalculo[ins]=cCalculo.Valor;
-				}
-				c.Leer(db,pProx.cPeriodo.Valor,cCalculo.Valor);
-				return c;
-			}
-		}
-		public class CalProd:Tabla{
-			[Pk] public CampoPeriodo cPeriodo;
-			[Pk] public CampoVersion cCalculo;
-			[Pk] public CampoProducto cProducto;
-			public CampoPrecio cPromedio;
-			[Fk] public Periodos fkPeriodos;
-			[Fk] public Calculos fkCalculo;
-			[Fk] public Productos fkProductos;
-		}
-		public class CalGru:Tabla{
-			[Pk] public CampoPeriodo cPeriodo;
-			[Pk] public CampoVersion cCalculo;
-			[Pk] public CampoAgrupacion cAgrupacion;
-			[Pk] public CampoGrupo cGrupo;
-			public CampoIndice cIndice;
-			public CampoFactor cFactor;
-			[Fk] public Periodos fkPeriodos;
-			[Fk] public Calculos fkCalculo;
-			[Fk] public Grupos fkGrupos;
-			public CalGru(){}
-			public CalGru(BaseDatos db,Calculos p,Grupos g){
-				Leer(db,p.cPeriodo,g.cAgrupacion,g.cGrupo);
-			}
-			public CalGru(BaseDatos db,Calculos p,Agrupaciones a){
-				Leer(db,p.cPeriodo,p.cCalculo,a.cAgrupacion,a.cAgrupacion);
-			}
-		}
-		public class Informantes:Tabla{
-			[Pk] public CampoInformante cInformante;
-			public CampoNombre cNombreInformante;
-			public CampoTipo cTipoInformante;
-			public CampoNombre cRubro;
-			public CampoNombre cCadena;
-			public CampoNombre cDireccion;
-		}
-		public class ProdTipoInf:Tabla{
-			[Pk] public CampoProducto cProducto;
-			[Pk] public CampoTipo cTipoInf;
-			public CampoPonderador cPonderadorTipoInf;
-			[Fk] public Productos fkProductos;
-		}
-		public class CalTipoInf:Tabla{
-			[Pk] public CampoPeriodo cPeriodo;
-			[Pk] public CampoVersion cCalculo;
-			[Pk] public CampoProducto cProducto;
-			[Pk] public CampoTipo cTipoInf;
-			public CampoPrecio cPromedio;
-			[Fk] public Periodos fkPeriodos;
-			[Fk] public Calculos fkCalculo;
-			[Fk] public Productos fkProductos;
-			[Fk] public ProdTipoInf fkProdTipoInf;
-		}
-		public class Especificaciones:Tabla{
-			[Pk] public CampoEspecificacion cEspecificacion;
-			public CampoNombre cNombreEspecificacion;
-			public CampoReal cTamannoNormal;
-			public CampoProducto cProducto;
-			[Fk] public Productos fkProductos;
-		}
-		public class CalEsp:Tabla{
-			[Pk] public CampoPeriodo cPeriodo;
-			[Pk] public CampoVersion cCalculo;
-			[Pk] public CampoProducto cProducto;
-			[Pk] public CampoTipo cTipoInf;
-			[Pk] public CampoEspecificacion cEspecificacion;
-			public CampoPrecio cPromedio;
-			[Fk] public Periodos fkPeriodos;
-			[Fk] public Calculos fkCalculo;
-			[Fk] public Productos fkProductos;
-			[Fk] public ProdTipoInf fkProdTipoInf;
-			[Fk] public Especificaciones fkEspecificaciones;
-		}
-		public class Variedades:Tabla{
-			[Pk] public CampoVariedad cVariedad;
-			public CampoNombre cNombreVariedad;
-			public CampoReal cTamanno;
-			public CampoNombre cUnidad;
-			public CampoEspecificacion cEspecificacion;
-			[Fk] public Especificaciones fkEspecificaciones;
-		}
-		public class RelVar:Tabla{
-			[Pk] public CampoPeriodo cPeriodo;
-			[Pk] public CampoVersion cCalculo;
-			[Pk] public CampoVariedad cVariedad;
-			[Pk] public CampoInformante cInformante;
-			public CampoPrecio cPrecio;
-			[Fk] public Periodos fkPeriodos;
-			[Fk] public Calculos fkCalculo;
-			[Fk] public Variedades fkVariedades;
-			[Fk] public Informantes fkInformantes;
-		}
-		public class CalVar:Tabla{
-			[Pk] public CampoPeriodo cPeriodo;
-			[Pk] public CampoVersion cCalculo;
-			public CampoProducto cProducto;
-			public CampoTipo cTipoInf;
-			public CampoEspecificacion cEspecificacion;
-			[Pk] public CampoVariedad cVariedad;
-			[Pk] public CampoInformante cInformante;
-			public CampoPrecio cPrecio;
-			public CampoTipo cTipoImputacion;
-			public CampoEntero cAntiguedad;
-			[Fk] public Periodos fkPeriodos;
-			[Fk] public Calculos fkCalculo;
-			[Fk] public Productos fkProductos;
-			[Fk] public ProdTipoInf fkProdTipoInf;
-			[Fk] public Especificaciones fkEspecificaciones;
-			[Fk] public Variedades fkVariedades;
-			[Fk] public Informantes fkInformantes;
-		}
 		public RepositorioIndice(BaseDatos db)
 			:base(db)
 		{
 		}
 		public override void CrearTablas(){
-			base.CrearTablas();
+			CrearTablas(db,this.GetType().Namespace);
 			for(int i=0; i<=20; i++){
 				db.ExecuteNonQuery("INSERT INTO numeros (numero) VALUES ("+i.ToString()+");");
 			}
@@ -646,14 +451,14 @@ namespace Indices
 					break;
 			}
 			#pragma warning restore 162
-			RepositorioIndice.Productos P100=repo.CrearProducto("P100");
-			RepositorioIndice.Productos P101=repo.CrearProducto("P101");
-			RepositorioIndice.Productos P102=repo.CrearProducto("P102");
-			RepositorioIndice.Agrupaciones A=repo.CrearAgrupacion("A");
-			RepositorioIndice.Grupos A1=repo.CrearGrupo("A1",A,60);
-			RepositorioIndice.Grupos A2=repo.CrearGrupo("A2",A,40);
-			RepositorioIndice.Agrupaciones T=repo.CrearAgrupacion("T");
-			RepositorioIndice.Grupos TU=repo.AbrirGrupo("T","T");
+			Productos P100=new Productos(); P100.InsertarDirecto(db,"P100");
+			Productos P101=repo.CrearProducto("P101");
+			Productos P102=repo.CrearProducto("P102");
+			Agrupaciones A=repo.CrearAgrupacion("A");
+			Grupos A1=repo.CrearGrupo("A1",A,60);
+			Grupos A2=repo.CrearGrupo("A2",A,40);
+			Agrupaciones T=repo.CrearAgrupacion("T");
+			Grupos TU=repo.AbrirGrupo("T","T");
 			repo.CrearHoja(P100,A1,60);
 			repo.CrearHoja(P101,A1,40);
 			repo.CrearHoja(P102,A2,100);
@@ -665,9 +470,9 @@ namespace Indices
 		}
 		[Test]
 		public void VerCanasta(){
-			RepositorioIndice.Grupos A=repo.AbrirGrupo("A","A");
-			RepositorioIndice.Grupos A1=repo.AbrirGrupo("A","A1");
-			RepositorioIndice.Productos P100=repo.AbrirProducto("P100");
+			Grupos A=repo.AbrirGrupo("A","A");
+			Grupos A1=repo.AbrirGrupo("A","A1");
+			Productos P100=repo.AbrirProducto("P100");
 			Assert.AreEqual(1.0,A.cPonderador.Valor,Controlar.DeltaDouble);
 			Assert.AreEqual(0.6,A1.cPonderador.Valor,Controlar.DeltaDouble);
 			Assert.AreEqual(0.36,P100.Ponderador(A),Controlar.DeltaDouble);
@@ -675,37 +480,37 @@ namespace Indices
 		}
 		[Test]
 		public void A01CalculosBase(){
-			RepositorioIndice.Calculos pAnt=repo.CrearCalculo(2001,12,0);
-			RepositorioIndice.Productos P100=repo.AbrirProducto("P100");
-			RepositorioIndice.Productos P101=repo.AbrirProducto("P101");
-			RepositorioIndice.Productos P102=repo.AbrirProducto("P102");
-			RepositorioIndice.Agrupaciones A=repo.AbrirAgrupacion("A");
+			Calculos pAnt=repo.CrearCalculo(2001,12,0);
+			Productos P100=repo.AbrirProducto("P100");
+			Productos P101=repo.AbrirProducto("P101");
+			Productos P102=repo.AbrirProducto("P102");
+			Agrupaciones A=repo.AbrirAgrupacion("A");
 			repo.RegistrarPromedio(pAnt,P100,2.0);
 			repo.RegistrarPromedio(pAnt,P101,10.0);
 			repo.RegistrarPromedio(pAnt,P102,20.0);
 			repo.CalcularMesBase(pAnt,A);
-			Assert.AreEqual(100.0,new RepositorioIndice.CalGru(repo.db,pAnt,A).cIndice.Valor);
-			RepositorioIndice.Calculos Per1=pAnt.CrearProximo();
+			Assert.AreEqual(100.0,new CalGru(repo.db,pAnt,A).cIndice.Valor);
+			Calculos Per1=pAnt.CrearProximo();
 			Per1.UsarFk();
 			Assert.AreEqual("200112",Per1.fkPeriodos.cPeriodoAnterior.Valor);
 			Assert.AreEqual("200201",Per1.cPeriodo.Valor);
 			Assert.AreEqual(2002,Per1.fkPeriodos.cAno.Valor);
 			Assert.AreEqual(1,Per1.fkPeriodos.cMes.Valor);
-			RepositorioIndice.Grupos A1=repo.AbrirGrupo("A","A1");
-			RepositorioIndice.Grupos A2=repo.AbrirGrupo("A","A2");
+			Grupos A1=repo.AbrirGrupo("A","A1");
+			Grupos A2=repo.AbrirGrupo("A","A2");
 			repo.RegistrarPromedio(Per1,P100,2.0);
 			repo.RegistrarPromedio(Per1,P101,10.0);
 			repo.RegistrarPromedio(Per1,P102,22.0);
 			repo.CalcularCalGru(Per1,A);
-			Assert.AreEqual(110.0,new RepositorioIndice.CalGru(repo.db,Per1,A2).cIndice.Valor,Controlar.DeltaDouble);
-			Assert.AreEqual(104.0,new RepositorioIndice.CalGru(repo.db,Per1,A).cIndice.Valor,Controlar.DeltaDouble);
-			RepositorioIndice.Calculos Per2=Per1.CrearProximo();
+			Assert.AreEqual(110.0,new CalGru(repo.db,Per1,A2).cIndice.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(104.0,new CalGru(repo.db,Per1,A).cIndice.Valor,Controlar.DeltaDouble);
+			Calculos Per2=Per1.CrearProximo();
 			repo.RegistrarPromedio(Per2,P100,2.2);
 			repo.RegistrarPromedio(Per2,P101,11.0);
 			repo.RegistrarPromedio(Per2,P102,22.0);
 			repo.CalcularCalGru(Per2,A);
-			Assert.AreEqual(110.0,new RepositorioIndice.CalGru(repo.db,Per2,A2).cIndice.Valor,Controlar.DeltaDouble);
-			Assert.AreEqual(110.0,new RepositorioIndice.CalGru(repo.db,Per2,A).cIndice.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A2).cIndice.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A).cIndice.Valor,Controlar.DeltaDouble);
 		}
 		[Test]
 		public void A02CalculosTipoInf(){

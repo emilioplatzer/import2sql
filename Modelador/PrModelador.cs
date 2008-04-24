@@ -17,49 +17,49 @@ using Indices;
 
 namespace PrModelador
 {
+	#pragma warning disable 649
 	public class Periodos:Tabla{
 		[Pk] public CampoEntero cAno;
 		[Pk] public CampoEntero cMes;
 		public CampoEnteroOpcional cAnoAnt;
 		public CampoEnteroOpcional cMesAnt;
 	}
+	public class Empresas:Tabla{
+		[Pk] public CampoEntero cEmpresa;
+		public CampoNombre cNombreEmpresa;
+	}
+	public class Piezas:Tabla{
+		[Pk] public CampoEntero cEmpresa;
+		[Pk] public CampoPieza cPieza;
+		public CampoNombre cNombrePieza;
+		public CampoEntero cEstado;
+		public CampoRealOpcional cCosto;
+		[Fk] public Empresas fkEmpresas;
+	}
+	public class PartesPiezas:Tabla{
+		[Pk] public CampoEntero cEmpresa;
+		[Pk] public CampoPieza cPieza;
+		[Pk] public CampoEntero cParte;
+		public CampoNombre cNombreParte;
+		public CampoEnteroOpcional cCantidad;
+		[FkMixta("ant")] public CampoEnteroOpcional cParteAnterior;
+		[Fk] public Piezas fkPiezas;
+		[FkMixta("ant")] public PartesPiezas fkParteAnterior;
+	}
+	public class NovedadesPiezas:Tabla{
+		[Pk] public CampoEntero cEmpresa;
+		[Pk] public CampoPieza cPiezaAuxiliar;
+		public CampoEnteroOpcional cNuevoEstado;
+	}
+	public class Numeros:Tabla{
+		[Pk] public CampoEntero cNumero;
+	}
+	#pragma warning restore 649
 	public class CampoPieza:CampoProducto{};
 	[TestFixture]
 	public class prTabla{
-		#pragma warning disable 649
 		public prTabla(){
 		}
-		class Empresas:Tabla{
-			[Pk] public CampoEntero cEmpresa;
-			public CampoNombre cNombreEmpresa;
-		}
-		class Piezas:Tabla{
-			[Pk] public CampoEntero cEmpresa;
-			[Pk] public CampoPieza cPieza;
-			public CampoNombre cNombrePieza;
-			public CampoEntero cEstado;
-			public CampoRealOpcional cCosto;
-			[Fk] public Empresas fkEmpresas;
-		}
-		class PartesPiezas:Tabla{
-			[Pk] public CampoEntero cEmpresa;
-			[Pk] public CampoPieza cPieza;
-			[Pk] public CampoEntero cParte;
-			public CampoNombre cNombreParte;
-			public CampoEnteroOpcional cCantidad;
-			[FkMixta("ant")] public CampoEnteroOpcional cParteAnterior;
-			[Fk] public Piezas fkPiezas;
-			[FkMixta("ant")] public PartesPiezas fkParteAnterior;
-		}
-		class NovedadesPiezas:Tabla{
-			[Pk] public CampoEntero cEmpresa;
-			[Pk] public CampoPieza cPiezaAuxiliar;
-			public CampoEnteroOpcional cNuevoEstado;
-		}
-		class Numeros:Tabla{
-			[Pk] public CampoEntero cNumero;
-		}
-		#pragma warning restore 649
 		[Test]
 		public void CreacionTablas(){
 			BdAccess dba=BdAccess.SinAbrir();
@@ -284,12 +284,15 @@ namespace PrModelador
 		[Test]
 		public void FkConDatos(){
 			BaseDatos db=ProbarBdAccess.AbrirBase();
+			Repositorio.CrearTablas(db,this.GetType().Namespace);
 			Empresas e=new Empresas();
 			Piezas p=new Piezas();
 			PartesPiezas pp=new PartesPiezas();
+			/*
 			db.ExecuteNonQuery(e.SentenciaCreateTable(db));
 			db.ExecuteNonQuery(p.SentenciaCreateTable(db));
 			db.ExecuteNonQuery(pp.SentenciaCreateTable(db));
+			*/
 			Ejecutador ej=new Ejecutador(db);
 			// ej.ExecuteNonQuery(new Empresas().SentenciaCreateTable(db));
 			// ej.ExecuteNonQuery(new Piezas().SentenciaCreateTable(db));

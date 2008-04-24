@@ -60,6 +60,7 @@
     <Compile Include="DelOffice\MatrizExcelASql.cs" />
     <Compile Include="Comunes\Otras.cs" />
     <Compile Include="Indices\CVP.cs" />
+    <Compile Include="Indices\DerIndices.cs" />
     <Compile Include="Indices\Indice.cs" />
     <Compile Include="Interactivo\Formulario.cs" />
     <Compile Include="Interactivo\PruebaFormularios.cs" />
