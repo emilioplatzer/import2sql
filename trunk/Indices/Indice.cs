@@ -125,6 +125,7 @@ namespace Indices
 				CalProd cp=new CalProd();
 				cp.UsarFk();
 				Periodos per=cp.fkPeriodos;
+				Calculos c=cp.fkCalculos;
 				CalProd cp0=new CalProd();
 				cp0.EsFkDe(cp,cp0.cPeriodo.Es(per.cPeriodoAnterior));
 				cp0.LiberadaDelContextoDelEjecutador=true;
@@ -133,17 +134,17 @@ namespace Indices
 				cg0.LiberadaDelContextoDelEjecutador=true;
 				ej.Ejecutar(
 					new SentenciaInsert(cg)
-					.Select(per.cPeriodo,cg0.cAgrupacion,cg0.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedio.Dividido(cp0.cPromedio))),cg0.cFactor)
+					.Select(per,c,cg0.cAgrupacion,cg0.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedio.Dividido(cp0.cPromedio))),cg0.cFactor)
 				);
 				Grupos gh=new Grupos();
-				cg.EsFkDe(gh,cg.cPeriodo.Es(cal.cPeriodo.Valor));
+				cg.EsFkDe(gh,cg.cPeriodo.Es(cal.cPeriodo.Valor),cg.cCalculo.Es(cal.cCalculo.Valor));
 				Grupos gp=new Grupos();
 				gp.EsFkDe(gh,gp.cGrupo.Es(gh.cGrupoPadre));
 				CalGru cgp=new CalGru();
 				for(int i=9;i>=0;i--){
 					ej.Ejecutar(
 						new SentenciaInsert(cgp)
-						.Select(cg.cPeriodo,gp.cAgrupacion,gp.cGrupo,
+						.Select(c,gp.cAgrupacion,gp.cGrupo,
 						        cgp.cIndice.Es(ExpresionSql.Sum(cg.cIndice.Por(gh.cPonderador)).Dividido(ExpresionSql.Sum(gh.cPonderador))),
 						        cgp.cFactor.Es(ExpresionSql.Sum(cg.cFactor.Por(gh.cPonderador)).Dividido(ExpresionSql.Sum(gh.cPonderador))))
 						.Where(gh.cNivel.Igual(i))

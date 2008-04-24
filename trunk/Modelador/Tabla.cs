@@ -34,7 +34,7 @@ namespace Modelador
 		public System.Collections.Generic.Dictionary<string, Campo> CamposFkAlias=new System.Collections.Generic.Dictionary<string, Campo>();
 		public Fk.Tipo TipoFk=Fk.Tipo.Obligatoria;
 		public bool LiberadaDelContextoDelEjecutador; // Del contexto del ejecutador
-		public bool LevantoCampos=false;
+		public bool RegistroConDatos=false;
 		public Tabla()
 		{
 			Construir();
@@ -208,17 +208,18 @@ namespace Modelador
 				clausulaWhere.Append(whereAnd+parametros[i]+"="+db.StuffValor(valor));
   			}
 			IDataReader SelectAbierto=db.ExecuteReader("SELECT * FROM "+db.StuffTabla(NombreTabla)+clausulaWhere+";");
-			LevantoCampos=SelectAbierto.Read();
-			if(LevantoCampos){
+			RegistroConDatos=SelectAbierto.Read();
+			if(RegistroConDatos){
 				LevantarCampos(SelectAbierto);
 			}else{
 				if(LanzaExcepcion){
 					throw new SystemException("No existe el campo descripto por "+Objeto.ExpandirMiembros(parametros));
 				}
 			}
-			return LevantoCampos;
+			return RegistroConDatos;
 		}
 		public void LevantarCampos(IDataReader SelectAbierto){
+			RegistroConDatos=true;
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
@@ -286,7 +287,7 @@ namespace Modelador
 					}
 				}
   			}
-  			Assert.Fail("Debió encontrar el campo");
+  			Assert.Fail("Debió encontrar el campo "+campoNombre);
   			return null;
 		}
 		public virtual Campo CampoIndirecto(Campo campo){
@@ -325,7 +326,7 @@ namespace Modelador
 			EsFkDe(maestra,Fk.Tipo.Sugerida,CampoReemplazo);
 		}
 		public void UsarFk(){
-			if(!IniciadasFk){
+			if(!IniciadasFk || RegistroConDatos){
 				TablasFk=new Lista<Tabla>();
       			Assembly assem = Assembly.GetExecutingAssembly();
 	  			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
@@ -334,10 +335,21 @@ namespace Modelador
 	  					foreach (System.Attribute attr in m.GetCustomAttributes(true)){
 	  						if(attr is Fk){
 	  							Fk fk=attr as Fk;
-      							Tabla nueva=(Tabla)assem.CreateInstance(m.FieldType.FullName);
-      							nueva.EsFkDe(this,fk.TipoFk,(fk.Alias!=null?this.CamposFkAlias[fk.Alias]:null));
-      							m.SetValue(this,nueva);
-      							TablasFk.Add(nueva);
+	  							if(!IniciadasFk){
+	      							Tabla nueva=(Tabla)assem.CreateInstance(m.FieldType.FullName);
+	      							nueva.EsFkDe(this,fk.TipoFk,(fk.Alias!=null?this.CamposFkAlias[fk.Alias]:null));
+	      							m.SetValue(this,nueva);
+	      							TablasFk.Add(nueva);
+	  							}
+	  							if(RegistroConDatos){
+	  								Tabla fkTabla=(Tabla) this.GetType().GetField(m.Name).GetValue(this);
+	  								Lista<object> Campos=new Lista<object>();
+	  								foreach(Campo c in fkTabla.CamposPk()){
+	  									Campos.Add((fkTabla.CamposRelacionadosFk[c]).UnicoCampo().ValorSinTipo);
+	  								}
+	  								System.Console.WriteLine("Leyendo fkTabla {0} \n{1}",m.Name,Objeto.ExpandirMiembros(Campos.ToArray()));
+	  								fkTabla.Buscar(db,Campos.ToArray());
+	  							}
 	  						}
 	  					}
 	  				}

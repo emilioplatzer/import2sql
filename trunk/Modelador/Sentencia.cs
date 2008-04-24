@@ -259,9 +259,15 @@ namespace Modelador
 		public SentenciaInsert(Tabla TablaBase){
 			this.TablaBase=TablaBase;	
 		}
-		public SentenciaInsert Select(params Campo[] Campos){
+		public SentenciaInsert Select(params Campable[] CamposOTablas){
 			conQue=ConValuesOSelect.ConSelect;
-			this.Campos.AddRange(Campos);
+			foreach(Campable cc in CamposOTablas){
+				foreach(Campo c in cc.Campos()){
+					if(TablaBase.TieneElCampo(c) && Campos.FindIndex(delegate(Campo campo){return campo.NombreCampo==c.NombreCampo;})<0){
+						Campos.Add(c);
+					}
+				}
+			}
 			return this;
 		}
 		public Sentencia Valores(params Campable[] CamposConValores){
@@ -269,7 +275,7 @@ namespace Modelador
 			foreach(Campable cc in CamposConValores){
 				foreach(Campo c in cc.Campos()){
 					if(TablaBase.TieneElCampo(c)){
-						this.Campos.Add(c);
+						Campos.Add(c);
 					}
 				}
 			}

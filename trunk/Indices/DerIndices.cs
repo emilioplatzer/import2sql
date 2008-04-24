@@ -105,7 +105,7 @@ namespace Indices
 		[Pk] public CampoProducto cProducto;
 		public CampoPrecio cPromedio;
 		[Fk] public Periodos fkPeriodos;
-		[Fk] public Calculos fkCalculo;
+		[Fk] public Calculos fkCalculos;
 		[Fk] public Productos fkProductos;
 	}
 	public class CalGru:Tabla{
@@ -116,11 +116,11 @@ namespace Indices
 		public CampoIndice cIndice;
 		public CampoFactor cFactor;
 		[Fk] public Periodos fkPeriodos;
-		[Fk] public Calculos fkCalculo;
+		[Fk] public Calculos fkCalculos;
 		[Fk] public Grupos fkGrupos;
 		public CalGru(){}
 		public CalGru(BaseDatos db,Calculos p,Grupos g){
-			Leer(db,p.cPeriodo,g.cAgrupacion,g.cGrupo);
+			Leer(db,p,g);
 		}
 		public CalGru(BaseDatos db,Calculos p,Agrupaciones a){
 			Leer(db,p.cPeriodo,p.cCalculo,a.cAgrupacion,a.cAgrupacion);
@@ -147,7 +147,7 @@ namespace Indices
 		[Pk] public CampoTipo cTipoInf;
 		public CampoPrecio cPromedio;
 		[Fk] public Periodos fkPeriodos;
-		[Fk] public Calculos fkCalculo;
+		[Fk] public Calculos fkCalculos;
 		[Fk] public Productos fkProductos;
 		[Fk] public ProdTipoInf fkProdTipoInf;
 	}
@@ -166,7 +166,7 @@ namespace Indices
 		[Pk] public CampoEspecificacion cEspecificacion;
 		public CampoPrecio cPromedio;
 		[Fk] public Periodos fkPeriodos;
-		[Fk] public Calculos fkCalculo;
+		[Fk] public Calculos fkCalculos;
 		[Fk] public Productos fkProductos;
 		[Fk] public ProdTipoInf fkProdTipoInf;
 		[Fk] public Especificaciones fkEspecificaciones;
@@ -186,7 +186,7 @@ namespace Indices
 		[Pk] public CampoInformante cInformante;
 		public CampoPrecio cPrecio;
 		[Fk] public Periodos fkPeriodos;
-		[Fk] public Calculos fkCalculo;
+		[Fk] public Calculos fkCalculos;
 		[Fk] public Variedades fkVariedades;
 		[Fk] public Informantes fkInformantes;
 	}
@@ -202,7 +202,7 @@ namespace Indices
 		public CampoTipo cTipoImputacion;
 		public CampoEntero cAntiguedad;
 		[Fk] public Periodos fkPeriodos;
-		[Fk] public Calculos fkCalculo;
+		[Fk] public Calculos fkCalculos;
 		[Fk] public Productos fkProductos;
 		[Fk] public ProdTipoInf fkProdTipoInf;
 		[Fk] public Especificaciones fkEspecificaciones;
