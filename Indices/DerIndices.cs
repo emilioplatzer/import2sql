@@ -14,6 +14,23 @@ using BasesDatos;
 
 namespace Indices
 {
+	/********************* CAMPOS ***************************/
+	public class CampoProducto:CampoChar{ public CampoProducto():base(4){} };
+	public class CampoEspecificacion:CampoChar{ public CampoEspecificacion():base(8){} };
+	public class CampoVariedad:CampoChar{ public CampoVariedad():base(12){} };
+	public class CampoNombre:CampoChar{ public CampoNombre():base(250){} };
+	public class CampoAgrupacion:CampoChar{ public CampoAgrupacion():base(9){} };
+	public class CampoGrupo:CampoChar{ public CampoGrupo():base(9){} };
+	public class CampoPonderador:CampoReal{};
+	public class CampoNivel:CampoEnteroOpcional{}
+	public class CampoPrecio:CampoReal{};
+	public class CampoIndice:CampoReal{};
+	public class CampoFactor:CampoReal{};
+	public class CampoPeriodo:CampoChar{ public CampoPeriodo():base(4+2){} }
+	public class CampoVersion:CampoEntero{};
+	public class CampoInformante:CampoEntero{};
+	public class CampoTipo:CampoChar{ public CampoTipo():base(1){} };
+	/********************* TABLAS ***************************/
 	public class Productos:Tabla{
 		[Pk] public CampoProducto cProducto;
 		public CampoNombre	cNombreProducto;
