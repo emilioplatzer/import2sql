@@ -249,11 +249,16 @@ namespace Modelador
 				}
   			}
 		}
-		public override Lista<Campo> Campos(){
+		public override ConjuntoTablas Tablas(){
+			ConjuntoTablas rta=new ConjuntoTablas();
+			rta.Add(this);
+			return rta;
+		}
+		public override ListaSqlizable<Campo> Campos(){
 			return Campos(null);
 		}
-		public virtual Lista<Campo> Campos(Filtro filtro){
-			Lista<Campo> rta=new Lista<Campo>();
+		public virtual ListaSqlizable<Campo> Campos(Filtro filtro){
+			ListaSqlizable<Campo> rta=new ListaSqlizable<Campo>();
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
@@ -265,10 +270,10 @@ namespace Modelador
   			}
   			return rta;
 		}
-		public virtual Lista<Campo> CamposPk(){
+		public virtual ListaSqlizable<Campo> CamposPk(){
 			return Campos(delegate(Campo c){ return c.EsPk; });
 			/*
-			Lista<Campo> rta=new Lista<Campo>();
+			ListaSqlizable<Campo> rta=new ListaSqlizable<Campo>();
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
@@ -282,7 +287,7 @@ namespace Modelador
   			*/
 		}
 		public virtual bool TieneElCampo(Campo campo){
-			Lista<Campo> rta=new Lista<Campo>();
+			ListaSqlizable<Campo> rta=new ListaSqlizable<Campo>();
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
@@ -295,7 +300,7 @@ namespace Modelador
   			return false;
 		}
 		public virtual Campo CampoIndirecto(string campoNombre){
-			Lista<Campo> rta=new Lista<Campo>();
+			ListaSqlizable<Campo> rta=new ListaSqlizable<Campo>();
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
@@ -314,7 +319,7 @@ namespace Modelador
 		public void EsFkDe(Tabla maestra,Fk.Tipo TipoFk,params Campo[] CamposReemplazo){
 			this.TablaRelacionada=maestra;
 			int cantidadCamposFk=CamposPk().Count;
-			Lista<Campo> CampoAReemplazar=new Lista<Campo>();
+			ListaSqlizable<Campo> CampoAReemplazar=new ListaSqlizable<Campo>();
 			Lista<ExpresionSql> ExpresionDeReemplazo=new Lista<ExpresionSql>();
 			CamposRelacionadosFk=new Diccionario<Campo,ExpresionSql>();
 			foreach(Campo CampoReemplazo in CamposReemplazo){
@@ -325,6 +330,7 @@ namespace Modelador
 					}else{
 						CampoAReemplazar.Add(CampoReemplazo);
 						ExpresionDeReemplazo.Add(CampoReemplazo.ExpresionBase);
+						CampoReemplazo.ExpresionBase=null;
 					}
 				}
 			}
@@ -470,10 +476,11 @@ namespace Modelador
 	}
 	public abstract class Sqlizable{
 		public abstract string ToSql(BaseDatos db);
+		public abstract ConjuntoTablas Tablas();
 		public abstract bool CandidatoAGroupBy{ get; }
 	}
 	public abstract class Campable:Sqlizable{
-		public abstract Lista<Campo> Campos();
+		public abstract ListaSqlizable<Campo> Campos();
 	}
 	public class LiteralSql:Sqlizable{
 		public string Literal;
@@ -484,24 +491,31 @@ namespace Modelador
 			return Literal;
 		}
 		public override bool CandidatoAGroupBy{ get{return false;} }
+		public override ConjuntoTablas Tablas(){
+			return new ConjuntoTablas();
+		}
 	}
-	public class OperadorConcatenacionIzquierda:Sqlizable{
+	public abstract class OperadorDependienteDeLaBase:Sqlizable{
+		public override bool CandidatoAGroupBy{ get{return false;} }
+		public override ConjuntoTablas Tablas(){
+			ConjuntoTablas rta=new ConjuntoTablas();
+			return rta;
+		}
+	}
+	public class OperadorConcatenacionIzquierda:OperadorDependienteDeLaBase{
 		public override string ToSql(BaseDatos db){
 			return db.OperadorConcatenacionIzquierda;
 		}
-		public override bool CandidatoAGroupBy{ get{return false;} }
 	}
-	public class OperadorConcatenacionDerecha:Sqlizable{
+	public class OperadorConcatenacionDerecha:OperadorDependienteDeLaBase{
 		public override string ToSql(BaseDatos db){
 			return db.OperadorConcatenacionDerecha;
 		}
-		public override bool CandidatoAGroupBy{ get{return false;} }
 	}
-	public class OperadorConcatenacionMedio:Sqlizable{
+	public class OperadorConcatenacionMedio:OperadorDependienteDeLaBase{
 		public override string ToSql(BaseDatos db){
 			return db.OperadorConcatenacionMedio;
 		}
-		public override bool CandidatoAGroupBy{ get{return false;} }
 	}
 	public class ValorSql<T>:Sqlizable{
 		public T Valor;
@@ -523,6 +537,12 @@ namespace Modelador
 				return false;
 			}
 		}
+		public override ConjuntoTablas Tablas(){
+			if(Valor is Sqlizable){
+				return (Valor as Sqlizable).Tablas();
+			}
+			return new ConjuntoTablas();
+		}
 	}
 	public class ValorSqlNulo:Sqlizable{
 		public ValorSqlNulo(){
@@ -531,5 +551,8 @@ namespace Modelador
 			return "null";
 		}
 		public override bool CandidatoAGroupBy{ get{return false;} }
+		public override ConjuntoTablas Tablas(){
+			return new ConjuntoTablas();
+		}
 	}
 }

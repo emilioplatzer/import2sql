@@ -69,10 +69,16 @@ namespace Modelador
 			}
 		}
 		public ExpresionSql Operado<T>(string OperadorTextual,T expresion){
+			if(this.ExpresionBase!=null){
+				return new ExpresionSql(this.ExpresionBase,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
+			}
 			return new ExpresionSql(this,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
 		}
 		public ExpresionSql Igual<T>(T expresion){
 			return Operado<T>("=",expresion);
+		}
+		public ExpresionSql MayorOIgual<T>(T expresion){
+			return Operado<T>(">=",expresion);
 		}
 		public ExpresionSql Distinto<T>(T expresion){
 			return Operado<T>("<>",expresion);
@@ -85,10 +91,18 @@ namespace Modelador
 		public Campo Es(Campo campo){
 			return Es(new ExpresionSql(campo));
 		}
-		public override Lista<Campo> Campos()
-		{
-			Lista<Campo> rta=new Lista<Campo>();
+		public override ListaSqlizable<Campo> Campos(){
+			ListaSqlizable<Campo> rta=new ListaSqlizable<Campo>();
 			rta.Add(this);
+			return rta;
+		}
+		public override ConjuntoTablas Tablas(){
+			ConjuntoTablas rta=new ConjuntoTablas();
+			if(ExpresionBase!=null){
+				rta.AddRange(ExpresionBase.Tablas());
+			}else if(TablaContenedora!=null){
+				rta.Add(TablaContenedora);
+			}
 			return rta;
 		}
 	}
@@ -126,7 +140,7 @@ namespace Modelador
 					valor=null;
 				}
 			}else if(this.valor is bool){
-				valor=valor=="S";
+				valor=(valor=="S");
 			}
 			this.valor=(T)valor;
 		}
@@ -152,6 +166,32 @@ namespace Modelador
 		public Campo Es(T valor){
 			return Es(new ExpresionSql(new ValorSql<T>(valor)));
 		}
+		public Campo EsExpresionAgrupada(string operador,ExpresionSql expresion){
+			ListaSqlizable<Sqlizable> nueva=new ListaSqlizable<Sqlizable>();
+			nueva.Add(new LiteralSql(operador+"("));
+			nueva.AddRange(expresion.Partes);
+			nueva.Add(new LiteralSql(")"));
+			ExpresionBase=new ExpresionSql(nueva);
+			ExpresionBase.TipoAgrupada=true;
+			return this;	
+		}
+		public Campo EsMax(ExpresionSql expresion){
+			return EsExpresionAgrupada("MAX",expresion);
+		}
+		public Campo EsMax(Campo campo){
+			return EsExpresionAgrupada("MAX",new ExpresionSql(campo));
+		}
+		public Campo EsCount(){
+			ExpresionBase=new ExpresionSql(new LiteralSql("COUNT(*)"));
+			ExpresionBase.TipoAgrupada=true;
+			return this;
+		}
+		public Campo EsCount(ExpresionSql expresion){
+			return EsExpresionAgrupada("COUNT",expresion);
+		}
+		public Campo EsCount(Campo campo){
+			return EsExpresionAgrupada("COUNT",new ExpresionSql(campo));
+		}
 	}
 	public class CampoPkTipo<T>:CampoTipo<T>{
 		public CampoPkTipo()
@@ -165,15 +205,6 @@ namespace Modelador
 		}
 	}
 	public class CampoNumericoTipo<T>:CampoTipo<T>{
-		public Campo EsExpresionAgrupada(string operador,ExpresionSql expresion){
-			Lista<Sqlizable> nueva=new Lista<Sqlizable>();
-			nueva.Add(new LiteralSql(operador+"("));
-			nueva.AddRange(expresion.Partes);
-			nueva.Add(new LiteralSql(")"));
-			ExpresionBase=new ExpresionSql(nueva);
-			ExpresionBase.TipoAgrupada=true;
-			return this;	
-		}
 		public Campo EsSuma(ExpresionSql expresion){
 			return EsExpresionAgrupada("SUM",expresion);
 		}

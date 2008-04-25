@@ -18,21 +18,6 @@ using Modelador;
 
 namespace Indices
 {
-	public class CampoProducto:CampoChar{ public CampoProducto():base(4){} };
-	public class CampoEspecificacion:CampoChar{ public CampoEspecificacion():base(8){} };
-	public class CampoVariedad:CampoChar{ public CampoVariedad():base(12){} };
-	public class CampoNombre:CampoChar{ public CampoNombre():base(250){} };
-	public class CampoAgrupacion:CampoChar{ public CampoAgrupacion():base(9){} };
-	public class CampoGrupo:CampoChar{ public CampoGrupo():base(9){} };
-	public class CampoPonderador:CampoReal{};
-	public class CampoNivel:CampoEnteroOpcional{}
-	public class CampoPrecio:CampoReal{};
-	public class CampoIndice:CampoReal{};
-	public class CampoFactor:CampoReal{};
-	public class CampoPeriodo:CampoChar{ public CampoPeriodo():base(4+2){} }
-	public class CampoVersion:CampoEntero{};
-	public class CampoInformante:CampoEntero{};
-	public class CampoTipo:CampoChar{ public CampoTipo():base(1){} };
 	public class EjecutadorSql:BasesDatos.EjecutadorSql{
 		public EjecutadorSql(BaseDatos db,Parametros[] param)
 			:base(db,param)
@@ -132,6 +117,10 @@ namespace Indices
 				CalGru cg0=new CalGru();
 				cg0.EsFkDe(cp0,cg0.cGrupo.Es(cp0.cProducto),cg0.cAgrupacion.Es(agrupacion.cAgrupacion.Valor));
 				cg0.LiberadaDelContextoDelEjecutador=true;
+				Sentencia s=
+					new SentenciaInsert(cg)
+					.Select(per,c,cg0.cAgrupacion,cg0.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedio.Dividido(cp0.cPromedio))),cg0.cFactor);
+				ej.Ejecutar(s);
 				ej.Ejecutar(
 					new SentenciaInsert(cg)
 					.Select(per,c,cg0.cAgrupacion,cg0.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedio.Dividido(cp0.cPromedio))),cg0.cFactor)
@@ -189,6 +178,18 @@ namespace Indices
 				}
 				*/
 			}
+		}
+		public void CalcularMatrizBase(int CantidadPeriodosMinima){
+			CalVar cv=new CalVar();
+			Calculos c=new Calculos();
+			RelVar rv=new RelVar();
+			c.EsFkDe(rv,c.cCalculo.Es(-1));
+			new Ejecutador(db).Ejecutar(
+				new SentenciaInsert(cv)
+				.Select(cv.cPeriodo.EsMax(c.cPeriodo),c.cCalculo,rv.cInformante,rv.cVariedad)
+				.Where(c.cEsPeriodoBase.Igual(true))
+				.Having(cv.cPeriodo.EsCount().MayorOIgual(CantidadPeriodosMinima))
+			);
 		}
 		public void ReglasDeIntegridad(){
 			db.AssertSinRegistros(
@@ -503,16 +504,18 @@ namespace Indices
 			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A2).cIndice.Valor,Controlar.DeltaDouble);
 			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A).cIndice.Valor,Controlar.DeltaDouble);
 		}
+		public void CargarPrecio(string periodo, string producto, int informante, double precio){
+			RelVar r=new RelVar();
+			r.InsertarValores(repo.db,r.cPeriodo.Es(periodo),r.cCalculo.Es(-1),r.cInformante.Es(informante),r.cPrecio.Es(precio));
+		}
 		[Test]
 		public void A02CalculosTipoInf(){
-			object[,] datos={
-				{"200112","P100"	,1,2.0},
-				{"200112","P100"	,2,2.0},
-				{"200201","P100"	,1,2.0},
-				{"200202","P100"	,1,2.0},
-				{"200202","P100"	,2,2.2},
-				{"200202","P100"	,3,2.4},
-			};
+			CargarPrecio("200112","P100"	,1,2.0);
+			CargarPrecio("200112","P100"	,2,2.0);
+			CargarPrecio("200201","P100"	,1,2.0);
+			CargarPrecio("200202","P100"	,1,2.0);
+			CargarPrecio("200202","P100"	,2,2.2);
+			CargarPrecio("200202","P100"	,3,2.4);
 			Periodos p=new Periodos(); 
 			Calculos c=new Calculos();
 			p.LeerNoPk(repo.db,p.cAno.Es(2002),p.cMes.Es(2));
@@ -523,6 +526,7 @@ namespace Indices
 				c.InsertarValores(repo.db,p,c);
 			}
 			Assert.IsTrue(c.Buscar(repo.db,"200112",-1));
+			repo.CalcularMatrizBase(2);
 		}
 		[Test]
 		public void VerCanasta(){

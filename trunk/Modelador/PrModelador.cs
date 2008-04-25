@@ -97,6 +97,19 @@ namespace PrModelador
 			Assert.AreEqual("INSERT INTO partespiezas (pieza, cantidad, nombreparte) SELECT p.pieza, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n FROM piezas p, novedadespiezas n\n WHERE n.empresa=p.empresa\n AND n.piezaauxiliar=p.pieza\n GROUP BY p.pieza, n.nuevoestado;\n",
 				new Ejecutador(dba)
 				.Dump(new SentenciaInsert(pp).Select(pr.cPieza,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado))));
+			Assert.AreEqual("INSERT INTO partespiezas (pieza, cantidad, nombreparte) " +
+			                "SELECT p.pieza, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n " +
+			                "FROM piezas p, novedadespiezas n\n " +
+			                "WHERE n.empresa=p.empresa\n AND n.piezaauxiliar=p.pieza\n " +
+			                "GROUP BY p.pieza, n.nuevoestado\n " +
+			                "HAVING COUNT(*)>=2\n AND COUNT(p.costo)>=1;\n",
+				new Ejecutador(dba)
+				.Dump(new SentenciaInsert(pp)
+				      .Select(pr.cPieza,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado))
+				      .Having(new CampoDestino<int>("cantidad_registros").EsCount().MayorOIgual(2),
+				              new CampoDestino<int>("suma_costos").EsCount(p.cCosto).MayorOIgual(1))
+				     )
+			);
 			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza, cantidad, nombreparte) SELECT 1 AS empresa, p.pieza, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n FROM piezas p, novedadespiezas n\n WHERE n.empresa=p.empresa\n AND n.piezaauxiliar=p.pieza\n GROUP BY p.pieza, n.nuevoestado;\n",
 				new Ejecutador(dba)
 				.Dump(new SentenciaInsert(pp).Select(pp.cEmpresa.Es(1),pr.cPieza,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado))));
@@ -132,7 +145,7 @@ namespace PrModelador
 			                .And(p.cNombrePieza.EsNulo()
 			                     .Or(p.cNombrePieza.Distinto(p.cPieza))));
 			Assert.AreEqual(1,sentencia.Tablas().Count);
-			Assert.AreEqual("piezas",sentencia.Tablas()[0].NombreTabla);
+			//Assert.AreEqual("piezas",(sentencia.Tablas().Keys)[0].NombreTabla);
 			sentencia.Where(p.cNombrePieza.Distinto("P0"));
 			Esperado+="\n AND [nombrepieza]<>'P0'";
 			Assert.AreEqual(Esperado+";\n",new Ejecutador(dba).Dump(sentencia));
@@ -191,7 +204,17 @@ namespace PrModelador
 				Assert.AreEqual("UPDATE partespiezas SET cantidad=cantidad+1\n WHERE cantidad IS NULL\n AND empresa=13;\n",
 				                ejp.Dump(su));
 				su=new SentenciaSelect(p.cPieza,p.cNombrePieza,pi.cNombrePieza).Where(p.cPieza.Igual(pi.cPieza.Concatenado("2")));
-				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pi.nombrepieza\n FROM piezas p, piezas pi\n WHERE p.pieza=(pi.pieza & '2')\n AND p.empresa=13\n AND pi.empresa=13;\n",
+				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pi.nombrepieza\n" +
+				                " FROM piezas p, piezas pi\n" +
+				                " WHERE p.pieza=(pi.pieza & '2')\n AND p.empresa=13\n AND pi.empresa=13;\n",
+				                ej.Dump(su));
+				CampoDestino<string> d=new CampoDestino<string>("otro_nombre");
+				CampoDestino<int> d2=new CampoDestino<int>("otro_estado");
+				su=new SentenciaSelect(p.cPieza,p.cNombrePieza,pi.cNombrePieza,d.Es(pi.cNombrePieza.Concatenado(p.cPieza)))
+					.Where(p.cPieza.Igual(pi.cPieza.Concatenado("2")),d.Distinto("A"),d2.Es(pi.cEstado).Distinto(3));
+				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pi.nombrepieza, (pi.nombrepieza & p.pieza) AS [otro_nombre]\n" +
+				                " FROM piezas p, piezas pi\n" +
+				                " WHERE p.pieza=(pi.pieza & '2')\n AND (pi.nombrepieza & p.pieza)<>'A'\n AND pi.estado<>3\n AND p.empresa=13\n AND pi.empresa=13;\n",
 				                ej.Dump(su));
 				NovedadesPiezas np=new NovedadesPiezas();
 				np.EsFkDe(pi,pi.cPieza);
@@ -277,7 +300,7 @@ namespace PrModelador
 				new SentenciaUpdate(pr,pr.cCosto.Set(pr.SelectSuma(pp.cCantidad)));
 			Assert.AreEqual("UPDATE piezas SET costo=DSum('cantidad','partespiezas','empresa=''' & empresa & ''' AND pieza=''' & pieza & '''');\n"
 			                ,new Ejecutador(dba).Dump(su));
-			Assert.AreEqual("UPDATE piezas SET costo=(SELECT SUM(pa.cantidad) FROM partespiezas pa WHERE pa.empresa=empresa AND pa.pieza=pieza);\n"
+			Assert.AreEqual("UPDATE piezas SET costo=(SELECT SUM(zz.cantidad) FROM partespiezas zz WHERE zz.empresa=empresa AND zz.pieza=pieza);\n"
 			                ,new Ejecutador(dbp).Dump(su));
 			NovedadesPiezas np=new NovedadesPiezas();
 			np.UsarFk();
@@ -285,7 +308,7 @@ namespace PrModelador
 			su=new SentenciaUpdate(pr,pr.cCosto.Set(pr.SelectSuma(np.cNuevoEstado)));
 			Assert.AreEqual("UPDATE piezas SET costo=DSum('nuevoestado','novedadespiezas','empresa=''' & empresa & ''' AND piezaauxiliar=''' & pieza & '''');\n"
 			                ,new Ejecutador(dba).Dump(su));
-			Assert.AreEqual("UPDATE piezas SET costo=(SELECT SUM(n.nuevoestado) FROM novedadespiezas n WHERE n.empresa=empresa AND n.piezaauxiliar=pieza);\n"
+			Assert.AreEqual("UPDATE piezas SET costo=(SELECT SUM(zz.nuevoestado) FROM novedadespiezas zz WHERE zz.empresa=empresa AND zz.piezaauxiliar=pieza);\n"
 			                ,new Ejecutador(dbp).Dump(su));
 		}
 		[Test]

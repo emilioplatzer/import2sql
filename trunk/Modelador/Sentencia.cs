@@ -22,38 +22,94 @@ namespace Modelador
 {
 	public class Diccionario<TKey, TValue>:System.Collections.Generic.Dictionary<TKey, TValue>{};
 	public class Lista<T>:System.Collections.Generic.List<T>{};
+	public class ConjuntoTablas:System.Collections.Generic.Dictionary<Tabla, int>{
+		ConjuntoTablas AddAdd(Tabla t,int cuanto){
+			if(this.ContainsKey(t)){
+				this[t]+=cuanto;
+			}else{
+				this.Add(t,cuanto);
+			}
+			return this;
+		}
+		public ConjuntoTablas Add(Tabla t){
+			return AddAdd(t,1);
+		}
+		public ConjuntoTablas AddRange(ConjuntoTablas conj){
+			foreach(System.Collections.Generic.KeyValuePair<Tabla, int> t in conj){
+				this.AddAdd(t.Key,t.Value);
+			}
+			return this;
+		}
+		public bool Contains(Tabla t){
+			return ContainsKey(t);
+		}
+	}
+	public class ListaSqlizable<TSqlizable>:Lista<TSqlizable> where TSqlizable : Sqlizable{
+		public ListaSqlizable(){}
+		public ListaSqlizable(params TSqlizable[] elementos){
+			foreach(TSqlizable s in elementos){
+				this.Add(s);
+			}
+		}
+		public ConjuntoTablas Tablas(){
+			ConjuntoTablas rta=new ConjuntoTablas();
+			foreach(TSqlizable s in this){
+				rta.AddRange(s.Tablas());
+			}
+			return rta;
+		}
+	}
 	public abstract class Sentencia{
-		Lista<Sqlizable> ParteWhere=new Lista<Sqlizable>();
+		ListaSqlizable<Sqlizable> ParteWhere=new ListaSqlizable<Sqlizable>();
+		ListaSqlizable<Sqlizable> ParteHaving=new ListaSqlizable<Sqlizable>();
 		protected System.Collections.Generic.Dictionary<string, string> AliasTablas=new System.Collections.Generic.Dictionary<string, string>();
-		protected Lista<Tabla> TablasUsadas;
 		protected virtual void ClonarMiembros(Sentencia s){
-			ParteWhere=new Lista<Sqlizable>();
+			ParteWhere=new ListaSqlizable<Sqlizable>();
 			ParteWhere.AddRange(s.ParteWhere);
+			ParteHaving=new ListaSqlizable<Sqlizable>();
+			ParteHaving.AddRange(s.ParteHaving);
 			AliasTablas=new System.Collections.Generic.Dictionary<string, string>(s.AliasTablas);
-			if(s.TablasUsadas==null){
+			/*
+			if(s.Tablas()Usadas==null){
 				TablasUsadas=null;
 			}else{
 				TablasUsadas=new Lista<Tabla>();
 				TablasUsadas.AddRange(s.TablasUsadas);
 			}
+			*/
 		}
-		public abstract Lista<Sqlizable> Partes();
-		public abstract Lista<Tabla> Tablas();
-		public Sentencia Where(ExpresionSql expresion){
-			if(ParteWhere.Count>0){
-				ParteWhere.Add(new LiteralSql("\n AND "));
+		public abstract ListaSqlizable<Sqlizable> Partes();
+		public abstract ConjuntoTablas Tablas();
+		Sentencia AgregarParte(ListaSqlizable<Sqlizable> ListaPartes,params ExpresionSql[]expresiones){
+			foreach(ExpresionSql expresion in expresiones){
+				if(ListaPartes.Count>0){
+					ListaPartes.Add(new LiteralSql("\n AND "));
+				}
+				ListaPartes.Add(expresion);
 			}
-			ParteWhere.Add(expresion);
 			return this;
 		}
-		public Lista<Sqlizable> PartesWhere(){
-			Lista<Sqlizable> rta=new Lista<Sqlizable>();
-			if(ParteWhere.Count>0){
-				rta.Add(new LiteralSql("\n WHERE "));
-				rta.AddRange(ParteWhere);
+		public Sentencia Where(params ExpresionSql[] expresiones){
+			return AgregarParte(ParteWhere,expresiones);
+		}
+		public Sentencia Having(params ExpresionSql[] expresiones){
+			return AgregarParte(ParteHaving,expresiones);
+		}
+		public ListaSqlizable<Sqlizable> DevolverParte(string clausula,ListaSqlizable<Sqlizable> ListaPartes){
+			ListaSqlizable<Sqlizable> rta=new ListaSqlizable<Sqlizable>();
+			if(ListaPartes.Count>0){
+				rta.Add(new LiteralSql("\n "+clausula+" "));
+				rta.AddRange(ListaPartes);
 			}
 			return rta;
 		}
+		public ListaSqlizable<Sqlizable> PartesWhere(){
+			return DevolverParte("WHERE",ParteWhere);
+		}
+		public ListaSqlizable<Sqlizable> PartesHaving(){
+			return DevolverParte("HAVING",ParteHaving);
+		}
+		/*
 		protected void RegistrarTablas(Campo c){
 			ExpresionSql expresion=c.ExpresionBase;
 			if(expresion!=null){
@@ -62,7 +118,7 @@ namespace Modelador
 				RegistrarTabla(c.TablaContenedora);
 			}
 		}
-		protected void RegistrarTablas(Lista<Campo> Campos){
+		protected void RegistrarTablas(ListaSqlizable<Campo> Campos){
 			foreach(Campo c in Campos){
 				RegistrarTablas(c);
 			}
@@ -70,7 +126,7 @@ namespace Modelador
 		protected void RegistrarTablas(ExpresionSql expresion){
 			RegistrarTablas(expresion.Partes);
 		}
-		protected void RegistrarTablas(Lista<Sqlizable> Partes){
+		protected void RegistrarTablas(ListaSqlizable<Sqlizable> Partes){
 			foreach(Sqlizable s in Partes){
 				if(s is Campo){
 					RegistrarTablas(s as Campo);
@@ -87,7 +143,8 @@ namespace Modelador
 				}
 			}
 		}
-		protected void AsignarAlias(Tabla t){
+		*/
+		public void AsignarAlias(Tabla t){
 			int Largo=1;
 			int Sufijo=0;
 			string Alias=t.NombreTabla.Substring(0,Largo);
@@ -107,6 +164,13 @@ namespace Modelador
 			AliasTablas.Add(Alias,t.NombreTabla);
 			t.Alias=Alias;
 		}
+		public void AsignarAlias(){
+			AliasTablas=new System.Collections.Generic.Dictionary<string, string>();
+			foreach(Tabla t in Tablas().Keys){
+				AsignarAlias(t);
+			}
+		}
+		/*
 		protected void RegistrarTabla(Tabla t){
 			if(t!=null){
 				if(TablasUsadas.IndexOf(t)<0){
@@ -115,6 +179,7 @@ namespace Modelador
 				}
 			}
 		}
+		*/
 		public virtual Sentencia Clonate(){
 			Sentencia rta=(Sentencia) this.MemberwiseClone();
 			rta.ClonarMiembros(this);
@@ -123,7 +188,7 @@ namespace Modelador
 	}
 	public class SentenciaUpdate:Sentencia{
 		public Tabla TablaBase;
-		public Lista<Sqlizable> ParteSet=new Lista<Sqlizable>();
+		public ListaSqlizable<Sqlizable> ParteSet=new ListaSqlizable<Sqlizable>();
 		public SentenciaUpdate(Tabla tabla,Sets primerSet,params Sets[] sets){
 			TablaBase=tabla;
 			ParteSet.Add(primerSet);
@@ -151,20 +216,22 @@ namespace Modelador
 					return false;
 				}
 			}
+			public override ConjuntoTablas Tablas(){
+				return ValorAsignar.Tablas();
+			}
 		}
-		public override Lista<Sqlizable> Partes(){
-			Lista<Sqlizable> todas=new Lista<Sqlizable>();
+		public override ListaSqlizable<Sqlizable> Partes(){
+			ListaSqlizable<Sqlizable> todas=new ListaSqlizable<Sqlizable>();
 			todas.AddRange(ParteSet);
 			todas.AddRange(PartesWhere());
 			return todas;
 		}
-		public override Lista<Tabla> Tablas(){
-			if(TablasUsadas==null){
-				TablasUsadas=new Lista<Tabla>();
-				RegistrarTabla(TablaBase);
-				RegistrarTablas(ParteSet);
-				RegistrarTablas(PartesWhere());
-			}
+		public override ConjuntoTablas Tablas(){
+			ConjuntoTablas TablasUsadas=new ConjuntoTablas();
+			TablasUsadas.Add(TablaBase);
+			TablasUsadas.AddRange(ParteSet.Tablas());
+			TablasUsadas.AddRange(PartesWhere().Tablas());
+			TablasUsadas.AddRange(PartesHaving().Tablas());
 			return TablasUsadas;
 		}
 	}
@@ -179,7 +246,7 @@ namespace Modelador
 		public ParteSeparadora(string Separador){
 			this.Separador=Separador;
 		}
-		public void AgregarEn(Lista<Sqlizable> Partes,params Sqlizable[] Parte){
+		public void AgregarEn(ListaSqlizable<Sqlizable> Partes,params Sqlizable[] Parte){
 			if(esPrimero){
 				if(Comenzador!=null){
 					Partes.Add(new LiteralSql(Comenzador));
@@ -192,13 +259,13 @@ namespace Modelador
 		}
 	}
 	public class SentenciaSelect:Sentencia{
-		protected Lista<Campo> Campos=new Lista<Campo>();
+		protected ListaSqlizable<Campo> Campos=new ListaSqlizable<Campo>();
 		public SentenciaSelect(params Campo[] Campos){
 			this.Campos.AddRange(Campos);
 		}
-		public override Lista<Sqlizable> Partes(){
-			Lista<Sqlizable> todas=new Lista<Sqlizable>();
-			Lista<Sqlizable> groupBy=new Lista<Sqlizable>();
+		public override ListaSqlizable<Sqlizable> Partes(){
+			ListaSqlizable<Sqlizable> todas=new ListaSqlizable<Sqlizable>();
+			ListaSqlizable<Sqlizable> groupBy=new ListaSqlizable<Sqlizable>();
 			bool tieneAgrupados=false;
 			todas.Add(new LiteralSql("SELECT "));
 			{
@@ -222,23 +289,22 @@ namespace Modelador
 			{
 				ParteSeparadora coma=new ParteSeparadora(", ");
 				todas.Add(new LiteralSql("\n FROM "));
-				foreach(Tabla t in TablasUsadas){
+				foreach(Tabla t in Tablas().Keys){
 					coma.AgregarEn(todas,t);
 				}
 			}
 			todas.AddRange(PartesWhere());
 			if(tieneAgrupados){
 				todas.AddRange(groupBy);
+				todas.AddRange(PartesHaving());
 			}
 			return todas;
 		}
-		public override Lista<Tabla> Tablas(){
-			if(TablasUsadas==null){
-				TablasUsadas=new Lista<Tabla>();
-				RegistrarTablas(Campos);
-				RegistrarTablas(PartesWhere());
-			}
-			return TablasUsadas;
+		public override ConjuntoTablas Tablas(){
+			ConjuntoTablas rta=new ConjuntoTablas();
+			rta.AddRange(Campos.Tablas());
+			rta.AddRange(PartesWhere().Tablas());
+			return rta;
 		}
 	}
 	public class CampoReceptorInsert:Sqlizable{
@@ -251,6 +317,9 @@ namespace Modelador
 			return db.StuffCampo(CampoSinAlias.NombreCampo);
 		}
 		public override bool CandidatoAGroupBy{ get{return CampoSinAlias.CandidatoAGroupBy;} }
+		public override ConjuntoTablas Tablas(){
+			return CampoSinAlias.Tablas();
+		}
 	}
 	public class SentenciaInsert:SentenciaSelect{
 		Tabla TablaBase;
@@ -281,9 +350,9 @@ namespace Modelador
 			}
 			return this;
 		}
-		public override Lista<Sqlizable> Partes(){
-			Lista<Sqlizable> todas=new Lista<Sqlizable>();
-			Lista<Sqlizable> valores=new Lista<Sqlizable>();
+		public override ListaSqlizable<Sqlizable> Partes(){
+			ListaSqlizable<Sqlizable> todas=new ListaSqlizable<Sqlizable>();
+			ListaSqlizable<Sqlizable> valores=new ListaSqlizable<Sqlizable>();
 			todas.Add(new LiteralSql("INSERT INTO "));
 			todas.Add(TablaBase);
 			TablaBase.Alias=null;
@@ -310,7 +379,7 @@ namespace Modelador
 		}
 	}
 	public class Ejecutador:BasesDatos.EjecutadorSql{
-		Lista<Campo> CamposContexto=new Lista<Campo>();
+		ListaSqlizable<Campo> CamposContexto=new ListaSqlizable<Campo>();
 		public Ejecutador(BaseDatos db,params Tabla[] TablasContexto)
 			:base(db)
 		{
@@ -328,10 +397,11 @@ namespace Modelador
 		public string Dump(Sentencia laSentencia){
 			Sentencia s=laSentencia.Clonate();
 			StringBuilder rta=new StringBuilder();
+			s.AsignarAlias();
 			if(s is SentenciaUpdate){
 				rta.Append("UPDATE ");
 				SentenciaUpdate su=s as SentenciaUpdate;
-				Lista<Tabla> suTablas=su.Tablas();
+				ConjuntoTablas suTablas=su.Tablas();
 				if(suTablas.Count<=1 || !db.UpdateConJoin){
 					su.TablaBase.Alias=null;
 				}
@@ -339,7 +409,7 @@ namespace Modelador
 				string prefijoSet="";
 				string sufijoSet="";
 				if(db.UpdateConJoin){
-					foreach(Tabla t in su.Tablas()){
+					foreach(Tabla t in su.Tablas().Keys){
 						if(t!=su.TablaBase){
 							if(t.TablaRelacionada!=null && su.Tablas().Contains(t.TablaRelacionada)){
 								rta.Append(" INNER JOIN "+t.ToSql(db)+" ON ");
@@ -351,7 +421,7 @@ namespace Modelador
 							}
 						}
 					}
-					foreach(Tabla t in s.Tablas()){
+					foreach(Tabla t in s.Tablas().Keys){
 						if(!t.LiberadaDelContextoDelEjecutador){
 							foreach(Campo c in CamposContexto){
 								if(t.TieneElCampo(c)){
@@ -365,7 +435,7 @@ namespace Modelador
 					StringBuilder parteWhere=new StringBuilder();
 					Separador and=new Separador(" WHERE "," AND ");
 					Separador coma=new Separador(" FROM ",", ");
-					foreach(Tabla t in su.Tablas()){
+					foreach(Tabla t in su.Tablas().Keys){
 						if(t!=su.TablaBase){
 							if(t.TablaRelacionada!=null && su.Tablas().Contains(t.TablaRelacionada)){
 								parteFrom.Append(coma+t.ToSql(db));
@@ -395,15 +465,17 @@ namespace Modelador
 					rta.Append(p.ToSql(db));
 				}
 			}else{
-				foreach(Tabla t in s.Tablas()){
+				foreach(Tabla t in s.Tablas().Keys){
+					System.Console.WriteLine("reviso "+t.NombreTabla);
 					if(t.TablaRelacionada!=null && s.Tablas().Contains(t.TablaRelacionada)){
+						System.Console.WriteLine("inducir relación "+t.TablaRelacionada);
 					// if(t.TablaRelacionada!=null){
 						foreach(Campo c in t.CamposPk()){
 							s.Where(c.Igual(t.CamposRelacionadosFk[c]));
 						}
 					}
 				}
-				foreach(Tabla t in s.Tablas()){
+				foreach(Tabla t in s.Tablas().Keys){
 					if(!t.LiberadaDelContextoDelEjecutador){
 						foreach(Campo c in CamposContexto){
 							if(t.TieneElCampo(c)){
@@ -424,7 +496,7 @@ namespace Modelador
 		public bool TipoAgrupada=false;
 		bool candidatoAGroupBy=false;
 		public override bool CandidatoAGroupBy{ get{ return candidatoAGroupBy; } }
-		public Lista<Sqlizable> Partes=new Lista<Sqlizable>();
+		public ListaSqlizable<Sqlizable> Partes=new ListaSqlizable<Sqlizable>();
 		void CalcularTipo(){
 			foreach(Sqlizable p in Partes){
 				if(p is ExpresionSql){
@@ -437,19 +509,19 @@ namespace Modelador
 			this.Partes.AddRange(Partes);
 			CalcularTipo();
 		}
-		public ExpresionSql(Lista<Sqlizable> Partes){
+		public ExpresionSql(ListaSqlizable<Sqlizable> Partes){
 			this.Partes=Partes;
 			CalcularTipo();
 		}
 		public virtual ExpresionSql And(ExpresionSql otra){
-			Lista<Sqlizable> nueva=new Lista<Sqlizable>();
+			ListaSqlizable<Sqlizable> nueva=new ListaSqlizable<Sqlizable>();
 			nueva.AddRange(Partes);
 			nueva.Add(new LiteralSql("\n AND "));
 			nueva.AddRange(otra.Partes);
 			return new ExpresionSql(nueva);
 		}
 		public virtual ExpresionSql Or(ExpresionSql otra){
-			Lista<Sqlizable> nueva=new Lista<Sqlizable>();
+			ListaSqlizable<Sqlizable> nueva=new ListaSqlizable<Sqlizable>();
 			nueva.Add(new LiteralSql("("));
 			nueva.AddRange(Partes);
 			nueva.Add(new LiteralSql(" OR "));
@@ -464,6 +536,14 @@ namespace Modelador
 			}
 			return rta.ToString();
 		}
+		public override ConjuntoTablas Tablas()
+		{
+			ConjuntoTablas rta=new ConjuntoTablas();
+			foreach(Sqlizable s in Partes){
+				rta.AddRange(s.Tablas());
+			}
+			return rta;
+		}
 		public Campo UnicoCampo(){
 			Assert.AreEqual(1,Partes.Count);
 			return (Campo)Partes[0];
@@ -476,7 +556,7 @@ namespace Modelador
 		}
 		public static ExpresionSql Agrupada<T>(string Operador, T expresion){
 			/*
-			Lista<Sqlizable> nuevasPartes=new Lista<Sqlizable>();
+			ListaSqlizable<Sqlizable> nuevasPartes=new ListaSqlizable<Sqlizable>();
 			nuevasPartes.Add(Operador+"(");
 			nuevasPartes.AddRange(expresion.Partes);
 			nuevasPartes.Add(")");
@@ -523,6 +603,9 @@ namespace Modelador
 					return rta.ToString();
 				}else{
 					Tabla TablaSumandis=CampoSumar.TablaContenedora;
+					if(TablaSumandis.Alias==null){
+						TablaSumandis.Alias="zz";
+					}
 					rta.Append("(SELECT SUM("+CampoSumar.ToSql(db)+") FROM "
 					           +TablaSumandis.ToSql(db));
 					if(TablaSumandis==TablaBase.TablaRelacionada){
@@ -542,6 +625,12 @@ namespace Modelador
 				get{
 					return false;
 				} 
+			}
+			public override ConjuntoTablas Tablas()
+			{
+				ConjuntoTablas rta=new ConjuntoTablas();
+				// rta.Add(CampoSumar.TablaContenedora);
+				return rta;
 			}
 		}
 	}
