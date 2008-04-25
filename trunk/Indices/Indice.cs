@@ -117,10 +117,6 @@ namespace Indices
 				CalGru cg0=new CalGru();
 				cg0.EsFkDe(cp0,cg0.cGrupo.Es(cp0.cProducto),cg0.cAgrupacion.Es(agrupacion.cAgrupacion.Valor));
 				cg0.LiberadaDelContextoDelEjecutador=true;
-				Sentencia s=
-					new SentenciaInsert(cg)
-					.Select(per,c,cg0.cAgrupacion,cg0.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedio.Dividido(cp0.cPromedio))),cg0.cFactor);
-				ej.Ejecutar(s);
 				ej.Ejecutar(
 					new SentenciaInsert(cg)
 					.Select(per,c,cg0.cAgrupacion,cg0.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedio.Dividido(cp0.cPromedio))),cg0.cFactor)
@@ -412,6 +408,18 @@ namespace Indices
 				t.cPromedio[ins]=promedio;
 			}		
 		}
+		public void ExpandirEspecificacionesYVariedades(){
+			Productos p=new Productos();
+			Especificaciones e=new Especificaciones();
+			Variedades v=new Variedades();
+			Ejecutador ej=new Ejecutador(db);
+			ej.Ejecutar(
+				new SentenciaInsert(e).Select(e.cEspecificacion.Es(p.cProducto),p.cProducto)
+			);
+			ej.Ejecutar(
+				new SentenciaInsert(v).Select(v.cVariedad.Es(e.cEspecificacion),e.cEspecificacion)
+			);
+		}
 	}
 	[TestFixture]
 	public class ProbarIndiceD3{
@@ -503,13 +511,18 @@ namespace Indices
 			repo.CalcularCalGru(Per2,A);
 			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A2).cIndice.Valor,Controlar.DeltaDouble);
 			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A).cIndice.Valor,Controlar.DeltaDouble);
+			repo.ExpandirEspecificacionesYVariedades();
 		}
 		public void CargarPrecio(string periodo, string producto, int informante, double precio){
 			RelVar r=new RelVar();
-			r.InsertarValores(repo.db,r.cPeriodo.Es(periodo),r.cCalculo.Es(-1),r.cInformante.Es(informante),r.cPrecio.Es(precio));
+			r.InsertarValores(repo.db,r.cPeriodo.Es(periodo),r.cInformante.Es(informante),r.cVariedad.Es(producto),r.cPrecio.Es(precio));
 		}
 		[Test]
 		public void A02CalculosTipoInf(){
+			Informantes inf=new Informantes();
+			inf.InsertarDirecto(repo.db,1);
+			inf.InsertarDirecto(repo.db,2);
+			inf.InsertarDirecto(repo.db,3);
 			CargarPrecio("200112","P100"	,1,2.0);
 			CargarPrecio("200112","P100"	,2,2.0);
 			CargarPrecio("200201","P100"	,1,2.0);
@@ -519,7 +532,8 @@ namespace Indices
 			Periodos p=new Periodos(); 
 			Calculos c=new Calculos();
 			p.LeerNoPk(repo.db,p.cAno.Es(2002),p.cMes.Es(2));
-			c.InsertarValores(repo.db,p,c.cCalculo.Es(-1),c.cEsPeriodoBase.Es(true));
+			c.cCalculo.AsignarValor(-1);
+			c.InsertarValores(repo.db,p,c.cCalculo,c.cEsPeriodoBase.Es(true));
 			for(int i=0; i<2; i++){
 				p.UsarFk();
 				p=p.fkPeriodoAnterior;

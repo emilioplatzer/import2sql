@@ -272,9 +272,9 @@ namespace Modelador
 				ParteSeparadora coma=new ParteSeparadora(", ");
 				ParteSeparadora sepGB=new ParteSeparadora("\n GROUP BY ",", ");
 				foreach(Campo c in Campos){
-					ExpresionSql expresion=c.ExpresionBase;
-					if(expresion!=null){
-						if(c.ExpresionBase.TipoAgrupada){
+					if(c is CampoAlias){
+						ExpresionSql expresion=(c as CampoAlias).ExpresionBase;
+						if(expresion.TipoAgrupada){
 							tieneAgrupados=true;
 						}else if(expresion.CandidatoAGroupBy){
 							sepGB.AgregarEn(groupBy,expresion);
@@ -326,7 +326,7 @@ namespace Modelador
 		enum ConValuesOSelect {ConValues, ConSelect};
 		ConValuesOSelect conQue;
 		public SentenciaInsert(Tabla TablaBase){
-			this.TablaBase=TablaBase;	
+			this.TablaBase=TablaBase;
 		}
 		public SentenciaInsert Select(params Campable[] CamposOTablas){
 			conQue=ConValuesOSelect.ConSelect;
@@ -361,8 +361,8 @@ namespace Modelador
 			foreach(Campo c in Campos){
 				coma.AgregarEn(todas,new CampoReceptorInsert(c));
 				if(conQue==ConValuesOSelect.ConValues){
-					if(c.ExpresionBase!=null){
-						vcoma.AgregarEn(valores,c.ExpresionBase);
+					if(c is CampoAlias){
+						vcoma.AgregarEn(valores,(c as CampoAlias).ExpresionBase);
 					}else{
 						vcoma.AgregarEn(valores,new ValorSql<object>(c.ValorSinTipo));
 					}
@@ -555,13 +555,6 @@ namespace Modelador
 			return Operado<T2>("/",Valor);
 		}
 		public static ExpresionSql Agrupada<T>(string Operador, T expresion){
-			/*
-			ListaSqlizable<Sqlizable> nuevasPartes=new ListaSqlizable<Sqlizable>();
-			nuevasPartes.Add(Operador+"(");
-			nuevasPartes.AddRange(expresion.Partes);
-			nuevasPartes.Add(")");
-			ExpresionSql nueva=new ExpresionSql(nuevasPartes);
-			*/
 			ExpresionSql nueva=new ExpresionSql(new LiteralSql(Operador+"("),new ValorSql<T>(expresion),new LiteralSql(")"));
 			nueva.TipoAgrupada=true;
 			return nueva;

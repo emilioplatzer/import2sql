@@ -165,8 +165,8 @@ namespace Modelador
 					Campo c=o as Campo;
 					if(c.ValorSinTipo!=null){
 						Valores.Add(c);
-					}else if(c.ExpresionBase!=null && c.ExpresionBase.CandidatoAGroupBy==false){
-						Valores.Add(c.ExpresionBase);
+					}else if(c is CampoAlias && (c as CampoAlias).ExpresionBase.CandidatoAGroupBy==false){
+						Valores.Add((c as CampoAlias).ExpresionBase);
 					}
 				}else if(o is Tabla){
 					Tabla t=o as Tabla;
@@ -206,8 +206,8 @@ namespace Modelador
 				if(campo is Campo){
 					Campo c=campo as Campo;
 					campo=c.NombreCampo;
-					if(c.ExpresionBase!=null){
-						valor=c.ExpresionBase.ToSql(db);
+					if(c is CampoAlias){
+						valor=(c as CampoAlias).ExpresionBase.ToSql(db);
 					}else{
 						valor=db.StuffValor(c.ValorSinTipo);
 					}
@@ -245,7 +245,6 @@ namespace Modelador
 					System.Console.WriteLine("ver "+c.NombreCampo);
 					System.Console.WriteLine("valor "+SelectAbierto[c.NombreCampo]);
 					c.AsignarValor(SelectAbierto[c.NombreCampo]);
-					c.ExpresionBase=null;
 				}
   			}
 		}
@@ -327,10 +326,9 @@ namespace Modelador
 					if(CampoReemplazo.TablaContenedora==maestra){
 						CampoAReemplazar.Add(CamposPk()[cantidadCamposFk-1]);
 						ExpresionDeReemplazo.Add(new ExpresionSql(CampoReemplazo));
-					}else{
-						CampoAReemplazar.Add(CampoReemplazo);
-						ExpresionDeReemplazo.Add(CampoReemplazo.ExpresionBase);
-						CampoReemplazo.ExpresionBase=null;
+					}else if(CampoReemplazo is CampoAlias){
+						CampoAReemplazar.Add((CampoReemplazo as CampoAlias).CampoReceptor);
+						ExpresionDeReemplazo.Add((CampoReemplazo as CampoAlias).ExpresionBase);
 					}
 				}
 			}

@@ -106,7 +106,7 @@ namespace BasesDatos
 			controlar.Uso();
 			if(campos.Length>0){
 				Sentencia="INSERT INTO "+db.StuffTabla(NombreTabla)
-					+@" ("+campos.ToString()+") VALUES ("+valores.ToString()+")";
+					+@" ("+campos.ToString()+") VALUES ("+valores.ToString()+");\n";
 				db.ExecuteNonQuery(Sentencia);
 				return true;
 			}else{
