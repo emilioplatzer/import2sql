@@ -69,9 +69,11 @@ namespace Tareas
 			}
 		}
 		public void SepararPalabras(){
+			/*
 			Nombres n=new Nombres();
 			Palabras p=new NombresPalabras();
 			Numeros num=new Numeros();
+			*/
 			
 		}
 	}

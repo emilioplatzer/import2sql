@@ -49,6 +49,9 @@ namespace Indices
 				db.ExecuteNonQuery("INSERT INTO numeros (numero) VALUES ("+i.ToString()+");");
 			}
 		}
+		public override void EliminarTablas(){
+			EliminarTablas(db,this.GetType().Namespace);
+		}
 		public void CalcularPonderadores(Agrupaciones agrupacion){
 			using(Ejecutador ej=new Ejecutador(db,agrupacion)){
 				Grupos grupos=new Grupos();
