@@ -68,6 +68,12 @@ namespace Tareas
 				);
 			}
 		}
+		public void SepararPalabras(){
+			Nombres n=new Nombres();
+			Palabras p=new NombresPalabras();
+			Numeros num=new Numeros();
+			
+		}
 	}
 	[TestFixture]
 	public class PrComparacionPadrones{
@@ -123,6 +129,7 @@ namespace Tareas
 			Cargar(viejos,nuevos);
 			cp.AsignacionExacta();
 			CompararCoincidencias(coinciden,coinciden);
+			cp.SepararPalabras();
 		}
 	}
 }
