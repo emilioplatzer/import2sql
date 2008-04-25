@@ -58,9 +58,10 @@ namespace Indices
 	}
 	public class Periodos:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
-		public CampoPeriodo cPeriodoAnterior;
+		[FkMixta("ant")] public CampoPeriodo cPeriodoAnterior;
 		public CampoEntero cAno;
 		public CampoEntero cMes;
+		[FkMixta("ant")] public Periodos fkPeriodoAnterior;
 		public Periodos(BaseDatos db,int ano, int mes){
 			LeerNoPk(db,"ano",ano,"mes",mes);
 		}
@@ -85,6 +86,7 @@ namespace Indices
 	public class Calculos:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
+		public CampoLogico cEsPeriodoBase;
 		[Fk] public Periodos fkPeriodos;
 		public Calculos CrearProximo(){
 			Periodos p=new Periodos();

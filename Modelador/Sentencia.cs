@@ -274,7 +274,7 @@ namespace Modelador
 			conQue=ConValuesOSelect.ConValues;
 			foreach(Campable cc in CamposConValores){
 				foreach(Campo c in cc.Campos()){
-					if(TablaBase.TieneElCampo(c)){
+					if(TablaBase.TieneElCampo(c) && Campos.FindIndex(delegate(Campo campo){return campo.NombreCampo==c.NombreCampo;})<0){
 						Campos.Add(c);
 					}
 				}

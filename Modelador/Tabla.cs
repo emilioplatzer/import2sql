@@ -88,7 +88,7 @@ namespace Modelador
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
 					Campo c=(Campo)m.GetValue(this);
-					rta.AppendLine("\t"+c.NombreCampo+" "+c.TipoCampo+c.Opcionalidad+",");
+					rta.AppendLine("\t"+c.NombreCampo+" "+c.TipoCampo+c.Opcionalidad+c.DefinicionPorDefecto(db)+",");
 					if(c.EsPk){
 						pk.Append(comapk+c.NombreCampo);
 					}
@@ -200,12 +200,30 @@ namespace Modelador
 			this.db=db;
 			Separador whereAnd=new Separador("\n WHERE ","\n AND ");
 			StringBuilder clausulaWhere=new StringBuilder();
-			for(int i=0;i<parametros.Length;i+=2){
-				object valor=parametros[i+1];
-				if(valor is Campo){
-					valor=(valor as Campo).ValorSinTipo;
+			for(int i=0;i<parametros.Length;i++){
+				object campo=parametros[i];
+				object valor=null;
+				if(campo is Campo){
+					Campo c=campo as Campo;
+					campo=c.NombreCampo;
+					if(c.ExpresionBase!=null){
+						valor=c.ExpresionBase.ToSql(db);
+					}else{
+						valor=db.StuffValor(c.ValorSinTipo);
+					}
+				}else if(campo is string){
+					i++;
+					valor=parametros[i];
+					if(valor is Campo){
+						Campo c=valor as Campo;
+						valor=db.StuffValor(c.ValorSinTipo);
+					}else{
+						valor=db.StuffValor(valor);
+					}
+				}else{
+					Assert.Fail("El parámetro no tiene el tipo string o campo.Es "+Objeto.ExpandirMiembros(campo));
 				}
-				clausulaWhere.Append(whereAnd+parametros[i]+"="+db.StuffValor(valor));
+				clausulaWhere.Append(whereAnd+campo+"="+valor);
   			}
 			IDataReader SelectAbierto=db.ExecuteReader("SELECT * FROM "+db.StuffTabla(NombreTabla)+clausulaWhere+";");
 			RegistroConDatos=SelectAbierto.Read();
