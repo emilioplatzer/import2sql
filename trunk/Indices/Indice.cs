@@ -470,16 +470,6 @@ namespace Indices
 			repo.CalcularPonderadores(T);
 		}
 		[Test]
-		public void VerCanasta(){
-			Grupos A=repo.AbrirGrupo("A","A");
-			Grupos A1=repo.AbrirGrupo("A","A1");
-			Productos P100=repo.AbrirProducto("P100");
-			Assert.AreEqual(1.0,A.cPonderador.Valor,Controlar.DeltaDouble);
-			Assert.AreEqual(0.6,A1.cPonderador.Valor,Controlar.DeltaDouble);
-			Assert.AreEqual(0.36,P100.Ponderador(A),Controlar.DeltaDouble);
-			Assert.AreEqual(0.6,P100.Ponderador(A1),Controlar.DeltaDouble);
-		}
-		[Test]
 		public void A01CalculosBase(){
 			Calculos pAnt=repo.CrearCalculo(2001,12,0);
 			Productos P100=repo.AbrirProducto("P100");
@@ -523,6 +513,26 @@ namespace Indices
 				{"200202","P100"	,2,2.2},
 				{"200202","P100"	,3,2.4},
 			};
+			Periodos p=new Periodos(); 
+			Calculos c=new Calculos();
+			p.LeerNoPk(repo.db,p.cAno.Es(2002),p.cMes.Es(2));
+			c.InsertarValores(repo.db,p,c.cCalculo.Es(-1),c.cEsPeriodoBase.Es(true));
+			for(int i=0; i<2; i++){
+				p.UsarFk();
+				p=p.fkPeriodoAnterior;
+				c.InsertarValores(repo.db,p,c);
+			}
+			Assert.IsTrue(c.Buscar(repo.db,"200112",-1));
+		}
+		[Test]
+		public void VerCanasta(){
+			Grupos A=repo.AbrirGrupo("A","A");
+			Grupos A1=repo.AbrirGrupo("A","A1");
+			Productos P100=repo.AbrirProducto("P100");
+			Assert.AreEqual(1.0,A.cPonderador.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(0.6,A1.cPonderador.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(0.36,P100.Ponderador(A),Controlar.DeltaDouble);
+			Assert.AreEqual(0.6,P100.Ponderador(A1),Controlar.DeltaDouble);
 		}
 		[Test]
 		public void zReglasDeIntegridad(){

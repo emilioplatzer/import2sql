@@ -164,6 +164,9 @@ namespace BasesDatos
 			if(valor is String){
 				string s=valor as string;
 				return "'"+s.Replace("'","''")+"'";
+			}else if(valor is bool){
+				bool b=(bool)(object)valor;
+				return b?"'S'":"'N'";
 			}else if(valor is DateTime){
 				DateTime d=((DateTime)(object) valor);
 				return StuffFecha(d);

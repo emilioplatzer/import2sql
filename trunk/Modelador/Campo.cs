@@ -51,6 +51,7 @@ namespace Modelador
 		public virtual string Opcionalidad{ 
 			get{ if(Obligatorio){ return " not null"; }else{ return ""; } }
 		}
+		public abstract string DefinicionPorDefecto(BaseDatos db);
 		public override string ToSql(BaseDatos db)
 		{
 			if(this.TablaContenedora==null || this.TablaContenedora.Alias==null){
@@ -93,6 +94,7 @@ namespace Modelador
 	}
 	public class CampoTipo<T>:Campo{
 		protected T valor;
+		public object ValorPorDefecto;
 		public virtual T Valor{ get{ return valor;} set{ valor=value; } }
 		public override object ValorSinTipo{ get{ return valor;} }
 		string TipoCampoS(Type tipo){
@@ -118,9 +120,22 @@ namespace Modelador
 		}
 		public override void AsignarValor(object valor){
 			if(valor is DBNull){
-				valor=null;
+				if(ValorPorDefecto!=null){
+					valor=(T)ValorPorDefecto;
+				}else{
+					valor=null;
+				}
+			}else if(this.valor is bool){
+				valor=valor=="S";
 			}
 			this.valor=(T)valor;
+		}
+		public override string DefinicionPorDefecto(BaseDatos db){
+			if(ValorPorDefecto!=null){
+				return " default "+db.StuffValor(ValorPorDefecto);
+			}else{
+				return "";
+			}
 		}
 		public virtual SentenciaUpdate.Sets Set(T valor){
 			return new SentenciaUpdate.Sets(this,new ExpresionSql(new ValorSql<T>(valor)));
@@ -200,8 +215,16 @@ namespace Modelador
 		public CampoReal(){ Obligatorio=true; }
 	};
 	public class CampoRealOpcional:CampoNumericoTipo<double?>{};
-	public class CampoLogico:CampoChar{
-		public CampoLogico():base(1){}
+	public class CampoLogicoTriestado:CampoTipo<bool>{
+		public override string TipoCampo {
+			get { return "varchar(1)"; }
+		}
+	}
+	public class CampoLogico:CampoLogicoTriestado{
+		public CampoLogico(){
+			Obligatorio=true;
+			ValorPorDefecto=false;
+		}
 	}
 	public abstract class AplicadorCampo:System.Attribute{
 	   	public abstract void Aplicar(ref Campo campo);
