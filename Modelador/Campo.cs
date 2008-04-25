@@ -40,6 +40,11 @@ namespace Modelador
 		}
 		public abstract object ValorSinTipo{ get; }
 		public abstract void AsignarValor(object valor);
+		public virtual ExpresionSql Expresion{
+			get{
+				return new ExpresionSql(this);
+			}
+		}
 		/*
 		public void Entablar(Tabla tabla){ // marcarlo como perteneciente a la tabla
 			TablaContenedora=tabla;
@@ -62,17 +67,11 @@ namespace Modelador
 		}
 		public override bool CandidatoAGroupBy{ 
 			get{
-				if(ExpresionBase!=null){
-					return ExpresionBase.CandidatoAGroupBy;
-				}
 				return true;
 			}
 		}
 		public ExpresionSql Operado<T>(string OperadorTextual,T expresion){
-			if(this.ExpresionBase!=null){
-				return new ExpresionSql(this.ExpresionBase,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
-			}
-			return new ExpresionSql(this,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
+			return new ExpresionSql(this.Expresion,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
 		}
 		public ExpresionSql Igual<T>(T expresion){
 			return Operado<T>("=",expresion);
@@ -83,12 +82,10 @@ namespace Modelador
 		public ExpresionSql Distinto<T>(T expresion){
 			return Operado<T>("<>",expresion);
 		}
-		public ExpresionSql ExpresionBase;
-		public Campo Es(ExpresionSql expresion){
-			ExpresionBase=expresion;
-			return this;
+		public CampoAlias Es(ExpresionSql expresion){
+			return new CampoAlias(this,expresion);
 		}
-		public Campo Es(Campo campo){
+		public CampoAlias Es(Campo campo){
 			return Es(new ExpresionSql(campo));
 		}
 		public override ListaSqlizable<Campo> Campos(){
@@ -98,11 +95,73 @@ namespace Modelador
 		}
 		public override ConjuntoTablas Tablas(){
 			ConjuntoTablas rta=new ConjuntoTablas();
-			if(ExpresionBase!=null){
-				rta.AddRange(ExpresionBase.Tablas());
-			}else if(TablaContenedora!=null){
+			if(TablaContenedora!=null){
 				rta.Add(TablaContenedora);
 			}
+			return rta;
+		}
+	}
+	public class CampoAlias:Campo{
+		public Campo CampoReceptor;
+		public ExpresionSql ExpresionBase;
+		public CampoAlias(Campo CampoReceptor,bool EsAgrupada,ExpresionSql ExpresionBase){
+			this.NombreCampo=CampoReceptor.NombreCampo;
+			this.Nombre=CampoReceptor.Nombre;
+			// this.TablaContenedora=CampoDestino.TablaContenedora;
+			this.CampoReceptor=CampoReceptor;
+			this.ExpresionBase=ExpresionBase;
+			this.ExpresionBase.TipoAgrupada=EsAgrupada;
+			FieldInfo f=CampoReceptor.GetType().GetField("CampoContenedor");
+			if(f!=null){
+				f.SetValue(CampoReceptor,this);
+			}
+		}
+		public CampoAlias(Campo CampoReceptor,bool EsAgrupada,params Sqlizable[] Partes)
+			:this(CampoReceptor,EsAgrupada,new ExpresionSql(Partes)){
+		}
+		public CampoAlias(Campo CampoReceptor,bool EsAgrupada,ListaSqlizable<Sqlizable> Partes)
+			:this(CampoReceptor,EsAgrupada,new ExpresionSql(Partes)){
+		}
+		public CampoAlias(Campo CampoReceptor,ExpresionSql ExpresionBase)
+			:this(CampoReceptor,ExpresionBase.TipoAgrupada,ExpresionBase){
+		}
+		public override object ValorSinTipo {
+			get { 
+				Assert.Fail("Un campo base no tiene Valor propio");
+				return null; 
+			}
+		}
+		public override void AsignarValor(object valor)
+		{
+			Assert.Fail("Un campo base no tiene Valor propio (no se le puede asignar)");
+		}
+		public override string ToSql(BaseDatos db)
+		{
+			return ExpresionBase.ToSql(db)/*+" AS "+CampoDestino.ToSql(db)*/;
+		}
+		public override string DefinicionPorDefecto(BaseDatos db)
+		{
+			return "";
+		}
+		public override string TipoCampo {
+			get { 
+				Assert.Fail("Un campo base no tiene Tipo propio (no se puede definir tabla)");
+				return "";
+			}
+		}
+		public override bool CandidatoAGroupBy{ 
+			get{
+				return false;
+			}
+		}
+		public override ExpresionSql Expresion{
+			get{
+				return ExpresionBase;
+			}
+		}
+		public override ConjuntoTablas Tablas(){
+			ConjuntoTablas rta=new ConjuntoTablas();
+			rta.AddRange(ExpresionBase.Tablas());
 			return rta;
 		}
 	}
@@ -140,7 +199,8 @@ namespace Modelador
 					valor=null;
 				}
 			}else if(this.valor is bool){
-				valor=(valor=="S");
+				bool valorBool=((string)valor=="S");
+				valor=valorBool;
 			}
 			this.valor=(T)valor;
 		}
@@ -163,17 +223,15 @@ namespace Modelador
 		public virtual SentenciaUpdate.Sets SetNull(){
 			return new SentenciaUpdate.Sets(this,new ExpresionSql(new ValorSqlNulo()));
 		}
-		public Campo Es(T valor){
+		public CampoAlias Es(T valor){
 			return Es(new ExpresionSql(new ValorSql<T>(valor)));
 		}
-		public Campo EsExpresionAgrupada(string operador,ExpresionSql expresion){
+		public CampoAlias EsExpresionAgrupada(string operador,ExpresionSql expresion){
 			ListaSqlizable<Sqlizable> nueva=new ListaSqlizable<Sqlizable>();
 			nueva.Add(new LiteralSql(operador+"("));
 			nueva.AddRange(expresion.Partes);
 			nueva.Add(new LiteralSql(")"));
-			ExpresionBase=new ExpresionSql(nueva);
-			ExpresionBase.TipoAgrupada=true;
-			return this;	
+			return new CampoAlias(this,true,nueva);
 		}
 		public Campo EsMax(ExpresionSql expresion){
 			return EsExpresionAgrupada("MAX",expresion);
@@ -182,9 +240,7 @@ namespace Modelador
 			return EsExpresionAgrupada("MAX",new ExpresionSql(campo));
 		}
 		public Campo EsCount(){
-			ExpresionBase=new ExpresionSql(new LiteralSql("COUNT(*)"));
-			ExpresionBase.TipoAgrupada=true;
-			return this;
+			return new CampoAlias(this,true,new ExpresionSql(new LiteralSql("COUNT(*)")));
 		}
 		public Campo EsCount(ExpresionSql expresion){
 			return EsExpresionAgrupada("COUNT",expresion);
@@ -200,8 +256,20 @@ namespace Modelador
 		}
 	}
 	public class CampoDestino<T>:CampoNumericoTipo<T>{
+		public CampoAlias CampoContenedor;
 		public CampoDestino(string NombreCampo){
 			this.NombreCampo=NombreCampo;
+			Archivo.Escribir("tmp_aca.txt",NombreCampo+": "+Objeto.ExpandirTodo(this.GetType()));
+			// System.Windows.Forms.MessageBox.Show("Campo destino "+NombreCampo+": "+Objeto.ExpandirTodo(this.GetType()));
+		}
+		public override ExpresionSql Expresion {
+			get { 
+				if(CampoContenedor!=null){
+					return CampoContenedor.Expresion; 
+				}else{
+					return new ExpresionSql(new ValorSql<object>(ValorSinTipo));
+				}
+			}
 		}
 	}
 	public class CampoNumericoTipo<T>:CampoTipo<T>{

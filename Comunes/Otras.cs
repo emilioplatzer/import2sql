@@ -31,7 +31,48 @@ namespace Comunes
 	    }
 	}
 	public class Objeto{
-		public static string ExpandirMiembros(Object o,int identacion){
+		private static string ExpandirMiembros(Object o,int identacion,bool comprimirLineas){
+			string FinLinea;
+			if(comprimirLineas){
+				FinLinea="";
+			}else{
+				FinLinea="\n";
+			}
+			if(o==null){
+				return "null";
+			}else if(o.GetType().Name=="String" || o.GetType().Name=="string"){
+				return '"'+o.ToString()+'"';
+			}else if(o.GetType().IsValueType){
+				return o.ToString();
+			}else{
+				int anchoTab=3;
+				StringBuilder rta=new StringBuilder();
+				string margen=new string(' ',(identacion+1)*anchoTab);
+				if(o.GetType().IsArray){
+					rta.Append(o.GetType().Name+"=["+FinLinea);
+					object[] arreglo=(object[]) o;
+					int posicion=0;
+					foreach(object elemento in arreglo){
+						rta.AppendLine(margen+posicion+":"+ExpandirMiembros(elemento,identacion+1,comprimirLineas)+FinLinea);
+						posicion++;
+					}
+					rta.Append(new string(' ',identacion*anchoTab)+"]"+FinLinea);
+				}else{
+					rta.Append(o.GetType().Name+"{"+FinLinea);
+					FieldInfo[] fs=o.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+					foreach(FieldInfo f in fs){
+						Object objetoValor=f.GetValue(o);
+						rta.Append(margen+f.Name+":"+ExpandirMiembros(objetoValor,identacion+1,comprimirLineas)+FinLinea);
+					}
+					rta.Append(new string(' ',identacion*anchoTab)+"}"+FinLinea);
+				}
+				return rta.ToString();
+			}
+		}
+		public static string ExpandirMiembros(Object o){
+			return ExpandirMiembros(o,0,false);
+		}
+		private static string ExpandirTodo(Object o,int identacion){
 			if(o==null){
 				return "null";
 			}else if(o.GetType().Name=="String" || o.GetType().Name=="string"){
@@ -47,7 +88,7 @@ namespace Comunes
 					object[] arreglo=(object[]) o;
 					int posicion=0;
 					foreach(object elemento in arreglo){
-						rta.AppendLine(margen+posicion+":"+ExpandirMiembros(elemento,identacion+1));
+						rta.AppendLine(margen+posicion+":"+ExpandirTodo(elemento,identacion+1));
 						posicion++;
 					}
 					rta.AppendLine(new string(' ',identacion*anchoTab)+"]");
@@ -56,15 +97,27 @@ namespace Comunes
 					FieldInfo[] fs=o.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 					foreach(FieldInfo f in fs){
 						Object objetoValor=f.GetValue(o);
-						rta.AppendLine(margen+f.Name+":"+ExpandirMiembros(objetoValor,identacion+1));
+						rta.AppendLine(margen+f.Name+":"+ExpandirTodo(objetoValor,identacion+1));
+					}
+					PropertyInfo[] ps=o.GetType().GetProperties();
+					foreach(PropertyInfo p in ps){
+						// MethodInfo m=p.GetGetMethod();
+						#pragma warning disable 168
+						try{
+							if(p.GetIndexParameters().Length==0){
+								rta.AppendLine(margen+p.Name+"="+ExpandirMiembros(p.GetValue(o,new object[0]{}),identacion+1,true));
+							}
+						}catch(System.Exception ex){
+						}
+						#pragma warning restore 168
 					}
 					rta.AppendLine(new string(' ',identacion*anchoTab)+"}");
 				}
 				return rta.ToString();
 			}
 		}
-		public static string ExpandirMiembros(Object o){
-			return ExpandirMiembros(o,0);
+		public static string ExpandirTodo(Object o){
+			return ExpandirTodo(o,0);
 		}
 		public static string[] Paratodo(string[] vector,DelegateString_String f){
 			string[] rta=new string[vector.Length];
@@ -79,10 +132,10 @@ namespace Comunes
 		[Test]
 		public void ExpandirMiembros(){
 			ParametrosPrueba pNO=new ParametrosPrueba(ParametrosPrueba.LeerPorDefecto.NO);
-			Assert.AreEqual("ParametrosPrueba{\r\n   DirUno:null\r\n   Frase:null\r\n   Cantidad:0\r\n   Fecha:01/01/0001 0:00:00\r\n}\r\n",Objeto.ExpandirMiembros(pNO));
+			Assert.AreEqual("ParametrosPrueba{\n   DirUno:null\n   Frase:null\n   Cantidad:0\n   Fecha:01/01/0001 0:00:00\n}\n",Objeto.ExpandirMiembros(pNO));
 			ParametrosPrueba pSI=new ParametrosPrueba(ParametrosPrueba.LeerPorDefecto.SI);
 			System.Console.WriteLine(Objeto.ExpandirMiembros(pSI));
-			Assert.AreEqual("ParametrosPrueba{\r\n   DirUno:\"c:\\temp\\aux\"\r\n   Frase:\"No hay futuro\"\r\n   Cantidad:-1\r\n   Fecha:01/02/2003 0:00:00\r\n}\r\n",Objeto.ExpandirMiembros(pSI));
+			Assert.AreEqual("ParametrosPrueba{\n   DirUno:\"c:\\temp\\aux\"\n   Frase:\"No hay futuro\"\n   Cantidad:-1\n   Fecha:01/02/2003 0:00:00\n}\n",Objeto.ExpandirMiembros(pSI));
 			// Assert.Ignore("Ojo que esto falla la primera vez que se usa");
 			string[] frases={"hola", "che"};
 			System.Console.WriteLine(Objeto.ExpandirMiembros(frases));

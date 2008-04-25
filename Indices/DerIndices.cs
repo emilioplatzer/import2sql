@@ -173,7 +173,7 @@ namespace Indices
 	public class Especificaciones:Tabla{
 		[Pk] public CampoEspecificacion cEspecificacion;
 		public CampoNombre cNombreEspecificacion;
-		public CampoReal cTamannoNormal;
+		public CampoRealOpcional cTamannoNormal;
 		public CampoProducto cProducto;
 		[Fk] public Productos fkProductos;
 	}
@@ -193,19 +193,17 @@ namespace Indices
 	public class Variedades:Tabla{
 		[Pk] public CampoVariedad cVariedad;
 		public CampoNombre cNombreVariedad;
-		public CampoReal cTamanno;
+		public CampoRealOpcional cTamanno;
 		public CampoNombre cUnidad;
 		public CampoEspecificacion cEspecificacion;
 		[Fk] public Especificaciones fkEspecificaciones;
 	}
 	public class RelVar:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
-		[Pk] public CampoVersion cCalculo;
 		[Pk] public CampoVariedad cVariedad;
 		[Pk] public CampoInformante cInformante;
 		public CampoPrecio cPrecio;
 		[Fk] public Periodos fkPeriodos;
-		[Fk] public Calculos fkCalculos;
 		[Fk] public Variedades fkVariedades;
 		[Fk] public Informantes fkInformantes;
 	}
