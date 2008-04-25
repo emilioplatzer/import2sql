@@ -55,24 +55,42 @@ namespace Modelador
 				}
 			}
 		}
+		private static void RegistrarParaEliminarTabla(Assembly assem,System.Collections.Generic.Stack<string> NombresTablasABorrar,Type t){
+			System.Console.WriteLine(t.FullName);
+			bool borrar=true;
+			foreach(System.Attribute attr in t.GetCustomAttributes(true)){
+				if(attr is Vista){
+					borrar=false;
+				}
+			}
+			if(borrar){
+				Tabla tabla=(Tabla)assem.CreateInstance(t.FullName);
+				NombresTablasABorrar.Push(tabla.NombreTabla);
+			}
+		}
 		public virtual void EliminarTablas(){
 			System.Collections.Generic.Stack<string> NombresTablasABorrar=new System.Collections.Generic.Stack<string>();
       		Assembly assem = Assembly.GetExecutingAssembly();
 			System.Type[] ts=this.GetType().GetNestedTypes();
 			foreach(Type t in ts){
 				if(t.IsSubclassOf(typeof(Tabla))){
-					System.Console.WriteLine(t.FullName);
-					bool borrar=true;
-					foreach(System.Attribute attr in t.GetCustomAttributes(true)){
-						if(attr is Vista){
-							borrar=false;
-						}
-					}
-					if(borrar){
-						Tabla tabla=(Tabla)assem.CreateInstance(t.FullName);
-						NombresTablasABorrar.Push(tabla.NombreTabla);
-					}
+					RegistrarParaEliminarTabla(assem,NombresTablasABorrar,t);
 				}
+			}
+			foreach(string nombreTabla in NombresTablasABorrar){
+				db.EliminarTablaSiExiste(nombreTabla);
+			}
+		}
+		public virtual void EliminarTablas(BaseDatos db,string NombreNamespace){
+			System.Collections.Generic.Stack<string> NombresTablasABorrar=new System.Collections.Generic.Stack<string>();
+      		Assembly assem = Assembly.GetExecutingAssembly();
+      		System.Type[] ts=assem.GetExportedTypes();
+			foreach(Type t in ts){
+      			if(t.Namespace==NombreNamespace){
+					if(t.IsSubclassOf(typeof(Tabla))){
+						RegistrarParaEliminarTabla(assem,NombresTablasABorrar,t);
+      				}
+      			}
 			}
 			foreach(string nombreTabla in NombresTablasABorrar){
 				db.EliminarTablaSiExiste(nombreTabla);
