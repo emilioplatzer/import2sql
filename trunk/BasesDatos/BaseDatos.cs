@@ -173,6 +173,8 @@ namespace BasesDatos
 			}else if(valor is double){
 				double d=((double)(object) valor);
 				return d.ToString(Cadena.FormatoPuntoDecimal);
+			}else if(valor is Enum){
+				return "'"+valor.ToString()+"'";
 			}else{
 				return valor.ToString();
 			}

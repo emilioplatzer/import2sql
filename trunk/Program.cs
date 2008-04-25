@@ -63,8 +63,10 @@ namespace TodoASql
 				// new PruebasReflexion().NombresMiembros();
 			    // new ProbarSqLite().ConexionSqLite();
 			    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
-			    // new PrModelador.prTabla().FkConDatos();
-			    // /*
+			    PrModelador.prTabla p=new PrModelador.prTabla();
+			    p.FkConDatos();
+			    p.G_Enumerados();
+			    /*
 			    ProbarIndiceD3 p=new ProbarIndiceD3();
 			    p.A01CalculosBase();
 			    p.A02CalculosTipoInf();

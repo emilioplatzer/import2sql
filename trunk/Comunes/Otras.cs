@@ -221,6 +221,7 @@ namespace Comunes
 	}
 	[TestFixture]
 	public class PrMiEntendimiento{
+		enum Dias{Domingo,Lunes,Martes,Miercoles,Jueves,Viernes,Sabado};
 		[Test]
 		public void Colecciones(){
 			System.Collections.Generic.List<string> Lista=new System.Collections.Generic.List<string>();
@@ -231,6 +232,12 @@ namespace Comunes
 			Lista.Add("Tal");
 			Assert.AreEqual(3,Lista.Count);
 			Assert.AreEqual(2,OtraLista.Count);
+		}
+		[Test]
+		public void prEnum(){
+			Assert.AreEqual("Martes",Dias.GetName(typeof(Dias),Dias.Martes));
+			Assert.AreEqual("Miercoles",Dias.Miercoles.ToString());
+			Assert.AreEqual(Dias.Jueves,Dias.Parse(typeof(Dias),"Jueves"));
 		}
 	}
 }

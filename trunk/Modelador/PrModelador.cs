@@ -54,6 +54,11 @@ namespace PrModelador
 	public class Numeros:Tabla{
 		[Pk] public CampoEntero cNumero;
 	}
+	public class ColoresCompuestos:Tabla{
+		public enum ColorPrimario{Rojo,Verde,Azul};
+		[Pk] public CampoEntero cColorCompuesto;
+		public CampoEnumerado<ColorPrimario> cColorBase;
+	}
 	#pragma warning restore 649
 	public class CampoPieza:CampoProducto{};
 	[TestFixture]
@@ -348,6 +353,18 @@ namespace PrModelador
 			pp3.Leer(db,7,"P11",1);
 			pp3.UsarFk();
 			Assert.AreEqual("P11",pp3.fkPiezas.cPieza.Valor);
+			db.Close();
+		}
+		[Test]
+		public void G_Enumerados(){
+			BaseDatos db=ProbarBdAccess.AbrirBase();
+			ColoresCompuestos cp=new ColoresCompuestos();
+			cp.InsertarDirecto(db,1,ColoresCompuestos.ColorPrimario.Azul);
+			cp.InsertarValores(db,cp.cColorCompuesto.Es(2),cp.cColorBase.Es(ColoresCompuestos.ColorPrimario.Verde));
+			cp.InsertarDirecto(db,3,ColoresCompuestos.ColorPrimario.Rojo);
+			cp.Leer(db,1);
+			Assert.AreEqual(ColoresCompuestos.ColorPrimario.Azul,cp.cColorBase);
+			db.Close();
 		}
 	}
 }

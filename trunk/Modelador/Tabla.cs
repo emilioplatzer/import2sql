@@ -271,19 +271,14 @@ namespace Modelador
 		}
 		public virtual ListaSqlizable<Campo> CamposPk(){
 			return Campos(delegate(Campo c){ return c.EsPk; });
-			/*
-			ListaSqlizable<Campo> rta=new ListaSqlizable<Campo>();
-  			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-			foreach(FieldInfo m in ms){
-				if(m.FieldType.IsSubclassOf(typeof(Campo))){
-					Campo c=(Campo)m.GetValue(this);
-					if(c.EsPk){
-						rta.Add(c);
-					}
-				}
-  			}
-  			return rta;
-  			*/
+		}
+		public virtual string OrderBy(BaseDatos db){
+			StringBuilder rta=new StringBuilder();
+			Separador coma=new Separador(", ");
+			foreach(Campo c in CamposPk()){
+				rta.Append(coma+c.ToSql(db));
+			}
+			return rta.ToString();
 		}
 		public virtual bool TieneElCampo(Campo campo){
 			ListaSqlizable<Campo> rta=new ListaSqlizable<Campo>();
@@ -421,7 +416,7 @@ namespace Modelador
 		public IteradorRegistro(Tabla TablaBase,BaseDatos db){
 			this.db=db;
 			this.RegistroActual=TablaBase;
-			Sentencia="SELECT * FROM "+db.StuffTabla(TablaBase.NombreTabla);
+			Sentencia="SELECT * FROM "+db.StuffTabla(TablaBase.NombreTabla)+" ORDER BY "+TablaBase.OrderBy(db);
 			Reset();
 		}
 		public void Reset(){

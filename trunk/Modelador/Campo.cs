@@ -198,9 +198,11 @@ namespace Modelador
 				}else{
 					valor=null;
 				}
-			}else if(this.valor is bool){
+			}else if(typeof(T)==typeof(bool) && valor is string){
 				bool valorBool=((string)valor=="S");
 				valor=valorBool;
+			}else if(typeof(T).IsEnum && valor is string){
+				valor=Enum.Parse(typeof(T),(string)valor);
 			}
 			this.valor=(T)valor;
 		}
@@ -253,6 +255,25 @@ namespace Modelador
 		public CampoPkTipo()
 		{	
 			EsPk=true;
+		}
+	}
+	public class CampoEnumerado<T>:CampoTipo<T>{
+		public int LongitudDefinicion;
+		public int MaximaLongitud;
+		public CampoEnumerado(){
+			string[] nombres=Enum.GetNames(typeof(T));
+			foreach(string nombre in nombres){
+				if(nombre.Length>MaximaLongitud){
+					MaximaLongitud=nombre.Length;
+				}
+			}
+			LongitudDefinicion=MaximaLongitud*2;
+			if(LongitudDefinicion<10){
+				LongitudDefinicion=10;
+			}
+		}
+		public override string TipoCampo {
+			get { return "varchar("+LongitudDefinicion+")"; }
 		}
 	}
 	public class CampoDestino<T>:CampoNumericoTipo<T>{
