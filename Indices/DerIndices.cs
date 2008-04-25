@@ -23,13 +23,14 @@ namespace Indices
 	public class CampoGrupo:CampoChar{ public CampoGrupo():base(9){} };
 	public class CampoPonderador:CampoReal{};
 	public class CampoNivel:CampoEnteroOpcional{}
-	public class CampoPrecio:CampoReal{};
+	public class CampoPrecio:CampoRealOpcional{};
 	public class CampoIndice:CampoReal{};
 	public class CampoFactor:CampoReal{};
 	public class CampoPeriodo:CampoChar{ public CampoPeriodo():base(4+2){} }
 	public class CampoVersion:CampoEntero{};
 	public class CampoInformante:CampoEntero{};
 	public class CampoTipo:CampoChar{ public CampoTipo():base(1){} };
+	public class CampoNovedad<T>:CampoEnumerado<T>{};
 	/********************* TABLAS ***************************/
 	public class Productos:Tabla{
 		[Pk] public CampoProducto cProducto;
@@ -210,9 +211,6 @@ namespace Indices
 	public class CalVar:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
-		public CampoProducto cProducto;
-		public CampoTipo cTipoInf;
-		public CampoEspecificacion cEspecificacion;
 		[Pk] public CampoVariedad cVariedad;
 		[Pk] public CampoInformante cInformante;
 		public CampoPrecio cPrecio;
@@ -220,9 +218,16 @@ namespace Indices
 		public CampoEntero cAntiguedad;
 		[Fk] public Periodos fkPeriodos;
 		[Fk] public Calculos fkCalculos;
-		[Fk] public Productos fkProductos;
-		[Fk] public ProdTipoInf fkProdTipoInf;
-		[Fk] public Especificaciones fkEspecificaciones;
+		[Fk] public Variedades fkVariedades;
+		[Fk] public Informantes fkInformantes;
+	}
+	public class NovRelVar:Tabla{
+		public enum Estados{Alta,Baja,Reemplazo};
+		[Pk] public CampoPeriodo cPeriodo;
+		[Pk] public CampoVariedad cVariedad;
+		[Pk] public CampoInformante cInformante;
+		public CampoNovedad<Estados> cEstado;
+		[Fk] public Periodos fkPeriodos;
 		[Fk] public Variedades fkVariedades;
 		[Fk] public Informantes fkInformantes;
 	}

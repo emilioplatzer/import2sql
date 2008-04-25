@@ -185,7 +185,7 @@ namespace Indices
 			c.EsFkDe(rv,c.cCalculo.Es(-1));
 			new Ejecutador(db).Ejecutar(
 				new SentenciaInsert(cv)
-				.Select(cv.cPeriodo.EsMax(c.cPeriodo),c.cCalculo,rv.cInformante,rv.cVariedad)
+				.Select(cv.cPeriodo.EsMax(c.cPeriodo),c.cCalculo,rv.cInformante,rv.cVariedad,cv.cAntiguedad.Es(1))
 				.Where(c.cEsPeriodoBase.Igual(true))
 				.Having(cv.cPeriodo.EsCount().MayorOIgual(CantidadPeriodosMinima))
 			);
@@ -430,7 +430,7 @@ namespace Indices
 		public ProbarIndiceD3(){
 			BaseDatos db;
 			#pragma warning disable 162
-			switch(3){ // solo se va a tomar un camino
+			switch(1){ // solo se va a tomar un camino
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					/*
@@ -526,9 +526,12 @@ namespace Indices
 			inf.InsertarDirecto(repo.db,1);
 			inf.InsertarDirecto(repo.db,2);
 			inf.InsertarDirecto(repo.db,3);
+			inf.InsertarDirecto(repo.db,4);
 			CargarPrecio("200112","P100"	,1,2.0);
 			CargarPrecio("200112","P100"	,2,2.0);
+			CargarPrecio("200112","P100"	,4,3.0);
 			CargarPrecio("200201","P100"	,1,2.0);
+			CargarPrecio("200201","P100"	,4,3.0);
 			CargarPrecio("200202","P100"	,1,2.0);
 			CargarPrecio("200202","P100"	,2,2.2);
 			CargarPrecio("200202","P100"	,3,2.4);
@@ -536,14 +539,29 @@ namespace Indices
 			Calculos c=new Calculos();
 			p.LeerNoPk(repo.db,p.cAno.Es(2002),p.cMes.Es(2));
 			c.cCalculo.AsignarValor(-1);
-			c.InsertarValores(repo.db,p,c.cCalculo,c.cEsPeriodoBase.Es(true));
+			c.cEsPeriodoBase.AsignarValor(true);
+			c.InsertarValores(repo.db,p,c.cCalculo,c.cEsPeriodoBase);
 			for(int i=0; i<2; i++){
 				p.UsarFk();
 				p=p.fkPeriodoAnterior;
-				c.InsertarValores(repo.db,p,c);
+				c.InsertarValores(repo.db,p,c,c.cEsPeriodoBase);
 			}
 			Assert.IsTrue(c.Buscar(repo.db,"200112",-1));
 			repo.CalcularMatrizBase(2);
+			int cantidad=0;
+			object[,] esperado={
+				{"200202","P100"	,1},
+				{"200202","P100"	,2},
+				{"200202","P100"	,4}
+			};
+			foreach(CalVar cv in new CalVar().Todos(repo.db)){
+				Assert.AreEqual(esperado[cantidad,0],cv.cPeriodo.Valor);
+				Assert.AreEqual(esperado[cantidad,1],cv.cVariedad.Valor);
+				Assert.AreEqual(esperado[cantidad,2],cv.cInformante.Valor);
+				Assert.AreEqual(-1,cv.cCalculo.Valor);
+				cantidad++;
+			}
+			Assert.AreEqual(3,cantidad);
 		}
 		[Test]
 		public void VerCanasta(){
