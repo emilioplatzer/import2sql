@@ -127,7 +127,7 @@ namespace Tareas
 		public void PrExacta(){
 			string[] viejos={"San Martín","Belgrano","Corrientes","No esta"," distinta "};
 			string[] nuevos={"San Martín","Belgrano","Corrientes","Tampoco esta","distinta"};
-			string[] coinciden={"San Martín","Belgrano","Corrientes"};
+			string[] coinciden={"Belgrano","Corrientes","San Martín"};
 			Cargar(viejos,nuevos);
 			cp.AsignacionExacta();
 			CompararCoincidencias(coinciden,coinciden);

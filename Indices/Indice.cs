@@ -179,15 +179,16 @@ namespace Indices
 			}
 		}
 		public void CalcularMatrizBase(int CantidadPeriodosMinima){
-			CalVar cv=new CalVar();
+			NovRelVar n=new NovRelVar();
 			Calculos c=new Calculos();
 			RelVar rv=new RelVar();
+			CalVar cv=new CalVar();
 			c.EsFkDe(rv,c.cCalculo.Es(-1));
 			new Ejecutador(db).Ejecutar(
-				new SentenciaInsert(cv)
-				.Select(cv.cPeriodo.EsMax(c.cPeriodo),c.cCalculo,rv.cInformante,rv.cVariedad,cv.cAntiguedad.Es(1))
+				new SentenciaInsert(n)
+				.Select(n.cPeriodo.EsMax(c.cPeriodo),c.cCalculo,rv.cInformante,rv.cVariedad,n.cEstado.Es(NovRelVar.Estados.Alta))
 				.Where(c.cEsPeriodoBase.Igual(true))
-				.Having(cv.cPeriodo.EsCount().MayorOIgual(CantidadPeriodosMinima))
+				.Having(n.cPeriodo.EsCount().MayorOIgual(CantidadPeriodosMinima))
 			);
 		}
 		public void ReglasDeIntegridad(){
@@ -548,17 +549,17 @@ namespace Indices
 			}
 			Assert.IsTrue(c.Buscar(repo.db,"200112",-1));
 			repo.CalcularMatrizBase(2);
-			int cantidad=0;
 			object[,] esperado={
+				{"200201","P100"	,4},
 				{"200202","P100"	,1},
-				{"200202","P100"	,2},
-				{"200202","P100"	,4}
+				{"200202","P100"	,2}
 			};
-			foreach(CalVar cv in new CalVar().Todos(repo.db)){
-				Assert.AreEqual(esperado[cantidad,0],cv.cPeriodo.Valor);
-				Assert.AreEqual(esperado[cantidad,1],cv.cVariedad.Valor);
-				Assert.AreEqual(esperado[cantidad,2],cv.cInformante.Valor);
-				Assert.AreEqual(-1,cv.cCalculo.Valor);
+			int cantidad=0;
+			foreach(NovRelVar n in new NovRelVar().Todos(repo.db)){
+				Assert.AreEqual(esperado[cantidad,2],n.cInformante.Valor);
+				Assert.AreEqual(esperado[cantidad,0],n.cPeriodo.Valor);
+				Assert.AreEqual(esperado[cantidad,1],n.cVariedad.Valor);
+				Assert.AreEqual(-1,n.cCalculo.Valor);
 				cantidad++;
 			}
 			Assert.AreEqual(3,cantidad);

@@ -64,17 +64,19 @@ namespace BasesDatos
 	}
 	[TestFixture]
 	public class ProbarBdAccess{
-		public static BdAccess AbrirBase(){
+		public static BdAccess AbrirBase(bool borrar){
 			string nombreArchivo="tempAccesABorrar.mdb";
-			Archivo.Borrar(nombreArchivo);
-			Assert.IsTrue(!Archivo.Existe(nombreArchivo),"no debería existir");
-			Catalog cat=BdAccess.Crear(nombreArchivo);
+			if(borrar){
+				Archivo.Borrar(nombreArchivo);
+				Assert.IsTrue(!Archivo.Existe(nombreArchivo),"no debería existir");
+				Catalog cat=BdAccess.Crear(nombreArchivo);
+			}
 			Assert.IsTrue(Archivo.Existe(nombreArchivo),"debería existir");
 			return BdAccess.Abrir(nombreArchivo);
 		}
 		[Test]
 		public void Creacion(){
-			BdAccess db=AbrirBase();
+			BdAccess db=AbrirBase(true);
 			db.ExecuteNonQuery("CREATE TABLE tablaexistente (texto varchar(100), numero integer)");
 			db.ExecuteNonQuery("INSERT INTO tablaexistente (texto, numero) VALUES ('uno',1)");
 			ProbarBaseDatos.ObjEnTodasLasBases(db);
