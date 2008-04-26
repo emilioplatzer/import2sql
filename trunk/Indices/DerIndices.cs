@@ -224,10 +224,12 @@ namespace Indices
 	public class NovRelVar:Tabla{
 		public enum Estados{Alta,Baja,Reemplazo};
 		[Pk] public CampoPeriodo cPeriodo;
+		[Pk] public CampoVersion cCalculo;
 		[Pk] public CampoVariedad cVariedad;
 		[Pk] public CampoInformante cInformante;
 		public CampoNovedad<Estados> cEstado;
 		[Fk] public Periodos fkPeriodos;
+		[Fk] public Calculos fkCalculos;
 		[Fk] public Variedades fkVariedades;
 		[Fk] public Informantes fkInformantes;
 	}
