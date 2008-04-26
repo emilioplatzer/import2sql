@@ -114,7 +114,7 @@ namespace Modelador
 			rta.AppendLine("\n);");
 			return rta.ToString();
 		}
-		public void InsertarValores(BaseDatos db,params Campable[] Campos){
+		public virtual void InsertarValores(BaseDatos db,params Campable[] Campos){
 			Sentencia s=new SentenciaInsert(this).Valores(Campos);
 			Ejecutador ej=new Ejecutador(db);
 			ej.Ejecutar(s);
@@ -167,6 +167,8 @@ namespace Modelador
 						Valores.Add(c);
 					}else if(c is CampoAlias && (c as CampoAlias).ExpresionBase.CandidatoAGroupBy==false){
 						Valores.Add((c as CampoAlias).ExpresionBase);
+					}else{
+						Assert.Fail("BuscarYLeer un parámetro Campo ("+c.Nombre+") no tiene valor ni expresion base");
 					}
 				}else if(o is Tabla){
 					Tabla t=o as Tabla;
@@ -179,6 +181,16 @@ namespace Modelador
 			}
 			int i=0;
 			object[] parametros=new object[CantidadCamposPk*2];
+			foreach(Campo c in CamposPk()){
+			if(i>=Valores.Count) break;
+				parametros[i*2]=c.NombreCampo;
+				parametros[i*2+1]=Valores[i];
+				i++;
+			}
+			if(i<CamposPk().Count){
+				Assert.Fail("Faltaron especificar campos en BuscarYLeer de "+this.NombreTabla+" con "+Objeto.ExpandirMiembros(Codigos));
+			}
+			/*
   			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
 			if(i>=Valores.Count) break;
@@ -191,6 +203,7 @@ namespace Modelador
 				}
 				i++;
   			}
+  			*/
   			return BuscarYLeerNoPk(db,LanzaExcepcion,parametros);
 		}
 		public virtual void LeerNoPk(BaseDatos db,params object[] parametros){

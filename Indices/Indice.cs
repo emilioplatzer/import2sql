@@ -112,17 +112,17 @@ namespace Indices
 				// Tabla base:
 				CalProd cp=new CalProd();
 				cp.UsarFk();
-				Periodos per=cp.fkPeriodos;
+				// Periodos per=cp.fkPeriodos;
 				Calculos c=cp.fkCalculos;
 				CalProd cp0=new CalProd();
-				cp0.EsFkDe(cp,cp0.cPeriodo.Es(per.cPeriodoAnterior));
+				cp0.EsFkDe(cp,cp0.cPeriodo.Es(c.cPeriodoAnterior));
 				cp0.LiberadaDelContextoDelEjecutador=true;
 				CalGru cg0=new CalGru();
 				cg0.EsFkDe(cp0,cg0.cGrupo.Es(cp0.cProducto),cg0.cAgrupacion.Es(agrupacion.cAgrupacion.Valor));
 				cg0.LiberadaDelContextoDelEjecutador=true;
 				ej.Ejecutar(
 					new SentenciaInsert(cg)
-					.Select(per,c,cg0.cAgrupacion,cg0.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedio.Dividido(cp0.cPromedio))),cg0.cFactor)
+					.Select(c,cg0.cAgrupacion,cg0.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedio.Dividido(cp0.cPromedio))),cg0.cFactor)
 				);
 				Grupos gh=new Grupos();
 				cg.EsFkDe(gh,cg.cPeriodo.Es(cal.cPeriodo.Valor),cg.cCalculo.Es(cal.cCalculo.Valor));
@@ -382,6 +382,21 @@ namespace Indices
 		public Periodos CrearPeriodo(int ano, int mes){
 			return CrearPeriodo(db,ano,mes);
 		}
+		public Periodos CrearProximo(Periodos ant){
+			int ano=ant.cAno.Valor;
+			int mes=ant.cMes.Valor+1;
+			if(mes==13){
+				mes=1; 
+				ano++;
+			}
+			Periodos p=new Periodos();
+			using(Insertador ins=p.Insertar(db)){
+				p.cPeriodo[ins]=ano.ToString()+((int)mes).ToString("00");
+				p.cAno[ins]=ano;
+				p.cMes[ins]=mes;
+			}
+			return new Periodos(db,ano,mes);
+		}
 		public Periodos AbrirPeriodo(int ano, int mes){
 			Periodos p=new Periodos();
 			p.LeerNoPk(db,"ano",ano,"mes",mes);
@@ -401,6 +416,20 @@ namespace Indices
 			Calculos c=new Calculos();
 			// c.Leer(db,"periodos",p.cPeriodo.Valor,"calculo",calculo);
 			c.Leer(db,p.cPeriodo.Valor,calculo);
+			return c;
+		}
+		public Calculos CrearProximo(Calculos ant){
+			Periodos p=new Periodos();
+			p.Leer(db,ant.cPeriodo);
+			Periodos pProx=CrearProximo(p);
+			Calculos c=new Calculos();
+			using(Insertador ins=c.Insertar(db)){
+				c.cPeriodo[ins]=pProx.cPeriodo.Valor;
+				c.cCalculo[ins]=ant.cCalculo.Valor;
+				c.cPeriodoAnterior[ins]=ant.cPeriodo;
+				c.cEsPeriodoBase[ins]=ant.cEsPeriodoBase;
+			}
+			c.Leer(db,pProx.cPeriodo.Valor,ant.cCalculo.Valor);
 			return c;
 		}
 		public void RegistrarPromedio(Calculos cal,Productos prod,double promedio){
@@ -494,9 +523,8 @@ namespace Indices
 			repo.RegistrarPromedio(pAnt,P102,20.0);
 			repo.CalcularMesBase(pAnt,A);
 			Assert.AreEqual(100.0,new CalGru(repo.db,pAnt,A).cIndice.Valor);
-			Calculos Per1=pAnt.CrearProximo();
+			Calculos Per1=repo.CrearProximo(pAnt);
 			Per1.UsarFk();
-			Assert.AreEqual("200112",Per1.fkPeriodos.cPeriodoAnterior.Valor);
 			Assert.AreEqual("200201",Per1.cPeriodo.Valor);
 			Assert.AreEqual(2002,Per1.fkPeriodos.cAno.Valor);
 			Assert.AreEqual(1,Per1.fkPeriodos.cMes.Valor);
@@ -508,7 +536,7 @@ namespace Indices
 			repo.CalcularCalGru(Per1,A);
 			Assert.AreEqual(110.0,new CalGru(repo.db,Per1,A2).cIndice.Valor,Controlar.DeltaDouble);
 			Assert.AreEqual(104.0,new CalGru(repo.db,Per1,A).cIndice.Valor,Controlar.DeltaDouble);
-			Calculos Per2=Per1.CrearProximo();
+			Calculos Per2=repo.CrearProximo(Per1);
 			repo.RegistrarPromedio(Per2,P100,2.2);
 			repo.RegistrarPromedio(Per2,P101,11.0);
 			repo.RegistrarPromedio(Per2,P102,22.0);
@@ -538,16 +566,18 @@ namespace Indices
 			CargarPrecio("200202","P100"	,3,2.4);
 			Periodos p=new Periodos(); 
 			Calculos c=new Calculos();
-			p.LeerNoPk(repo.db,p.cAno.Es(2002),p.cMes.Es(2));
+			p.LeerNoPk(repo.db,p.cAno.Es(2001),p.cMes.Es(12));
 			c.cCalculo.AsignarValor(-1);
 			c.cEsPeriodoBase.AsignarValor(true);
 			c.InsertarValores(repo.db,p,c.cCalculo,c.cEsPeriodoBase);
+			Assert.AreEqual("200112",p.cPeriodo.Valor);
+			c.Leer(repo.db,p.cPeriodo,-1);
 			for(int i=0; i<2; i++){
-				p.UsarFk();
-				p=p.fkPeriodoAnterior;
-				c.InsertarValores(repo.db,p,c,c.cEsPeriodoBase);
+				c=repo.CrearProximo(c);
+				// c.InsertarValores(repo.db,p,c,c.cEsPeriodoBase,pAnt.cPeriodo);
 			}
-			Assert.IsTrue(c.Buscar(repo.db,"200112",-1));
+			Assert.IsTrue(c.Buscar(repo.db,"200112",-1),"está el primer período");
+			Assert.IsTrue(c.Buscar(repo.db,"200202",-1),"está el último período");
 			repo.CalcularMatrizBase(2);
 			object[,] esperado={
 				{"200201","P100"	,4},

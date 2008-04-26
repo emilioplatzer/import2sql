@@ -31,12 +31,25 @@ namespace Comunes
 	    }
 	}
 	public class Objeto{
-		private static string ExpandirMiembros(Object o,int identacion,bool comprimirLineas){
+		const bool condebug=true;
+		private static string debug(string frase){
+			if(condebug){
+				System.Console.Write(frase);
+			}
+			return frase;
+		}
+		private static string ExpandirMiembros(Conjunto<Object> vistos,Object o,int identacion,bool comprimirLineas){
 			string FinLinea;
 			if(comprimirLineas){
 				FinLinea="";
 			}else{
 				FinLinea="\n";
+			}
+			if(o!=null){
+				if(vistos.Contains(o)){
+					return "#"+FinLinea;
+				} 
+				vistos.Add(o);
 			}
 			if(o==null){
 				return "null";
@@ -49,28 +62,28 @@ namespace Comunes
 				StringBuilder rta=new StringBuilder();
 				string margen=new string(' ',(identacion+1)*anchoTab);
 				if(o.GetType().IsArray){
-					rta.Append(o.GetType().Name+"=["+FinLinea);
+					rta.Append(debug(o.GetType().Name+"=["+FinLinea));
 					object[] arreglo=(object[]) o;
 					int posicion=0;
 					foreach(object elemento in arreglo){
-						rta.AppendLine(margen+posicion+":"+ExpandirMiembros(elemento,identacion+1,comprimirLineas)+FinLinea);
+						rta.Append(debug(margen+posicion+":"+ExpandirMiembros(vistos,elemento,identacion+1,comprimirLineas)+FinLinea));
 						posicion++;
 					}
-					rta.Append(new string(' ',identacion*anchoTab)+"]"+FinLinea);
+					rta.Append(debug(new string(' ',identacion*anchoTab)+"]"+FinLinea));
 				}else{
-					rta.Append(o.GetType().Name+"{"+FinLinea);
+					rta.Append(debug(o.GetType().Name+"{"+FinLinea));
 					FieldInfo[] fs=o.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 					foreach(FieldInfo f in fs){
 						Object objetoValor=f.GetValue(o);
-						rta.Append(margen+f.Name+":"+ExpandirMiembros(objetoValor,identacion+1,comprimirLineas)+FinLinea);
+						rta.Append(debug(margen+f.Name+":"+ExpandirMiembros(vistos,objetoValor,identacion+1,comprimirLineas)+FinLinea));
 					}
-					rta.Append(new string(' ',identacion*anchoTab)+"}"+FinLinea);
+					rta.Append(debug(new string(' ',identacion*anchoTab)+"}"+FinLinea));
 				}
 				return rta.ToString();
 			}
 		}
 		public static string ExpandirMiembros(Object o){
-			return ExpandirMiembros(o,0,false);
+			return ExpandirMiembros(new Conjunto<Object>(),o,0,false);
 		}
 		private static string ExpandirTodo(Object o,int identacion){
 			if(o==null){
@@ -105,7 +118,7 @@ namespace Comunes
 						#pragma warning disable 168
 						try{
 							if(p.GetIndexParameters().Length==0){
-								rta.AppendLine(margen+p.Name+"="+ExpandirMiembros(p.GetValue(o,new object[0]{}),identacion+1,true));
+								rta.AppendLine(margen+p.Name+"="+ExpandirMiembros(new Conjunto<Object>(),p.GetValue(o,new object[0]{}),identacion+1,true));
 							}
 						}catch(System.Exception ex){
 						}
@@ -183,6 +196,43 @@ namespace Comunes
 				case Posibilidades.Padre: return new PadreHijo(Posibilidades.Hijo);
 				default: return this;
 			}
+		}
+	}
+	public class Conjunto<T>:System.Collections.Generic.Dictionary<T, int>{
+		Conjunto<T> AddAdd(T t,int cuanto){
+			if(this.ContainsKey(t)){
+				this[t]+=cuanto;
+			}else{
+				this.Add(t,cuanto);
+			}
+			return this;
+		}
+		public Conjunto<T> Add(T t){
+			return AddAdd(t,1);
+		}
+		public Conjunto<T> AddRange(Conjunto<T> conj){
+			foreach(System.Collections.Generic.KeyValuePair<T, int> t in conj){
+				this.AddAdd(t.Key,t.Value);
+			}
+			return this;
+		}
+		public Conjunto<T> AddRange(params T[] conj){
+			foreach(T t in conj){
+				this.AddAdd(t,1);
+			}
+			return this;
+		}
+		public bool Contains(T t){
+			return ContainsKey(t);
+		}
+	}
+	[TestFixture]
+	public class prConjunto{
+		[Test]
+		public void probar(){
+			Conjunto<string> colores=new Conjunto<string>();
+			colores.AddRange("Rojo","Verde","Azul");
+			Assert.IsTrue(colores.Contains("Verde"));
 		}
 	}
 	public class UnSoloUso{
