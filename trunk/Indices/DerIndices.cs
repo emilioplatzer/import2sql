@@ -76,48 +76,20 @@ namespace Indices
 	}
 	public class Periodos:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
-		[FkMixta("ant")] public CampoPeriodo cPeriodoAnterior;
 		public CampoEntero cAno;
 		public CampoEntero cMes;
-		[FkMixta("ant")] public Periodos fkPeriodoAnterior;
 		public Periodos(BaseDatos db,int ano, int mes){
 			LeerNoPk(db,"ano",ano,"mes",mes);
 		}
 		public Periodos(){}
-		public Periodos CrearProximo(){
-			int ano=cAno.Valor;
-			int mes=cMes.Valor+1;
-			if(mes==13){
-				mes=1; 
-				ano++;
-			}
-			Periodos p=new Periodos();
-			using(Insertador ins=p.Insertar(db)){
-				p.cPeriodo[ins]=ano.ToString()+((int)mes).ToString("00");
-				p.cAno[ins]=ano;
-				p.cMes[ins]=mes;
-				p.cPeriodoAnterior[ins]=cPeriodo;
-			}
-			return new Periodos(db,ano,mes);
-		}
 	}
 	public class Calculos:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
 		public CampoLogico cEsPeriodoBase;
+		[FkMixta("ant")] public CampoPeriodo cPeriodoAnterior;
 		[Fk] public Periodos fkPeriodos;
-		public Calculos CrearProximo(){
-			Periodos p=new Periodos();
-			p.Leer(db,cPeriodo);
-			Periodos pProx=p.CrearProximo();
-			Calculos c=new Calculos();
-			using(Insertador ins=c.Insertar(db)){
-				c.cPeriodo[ins]=pProx.cPeriodo.Valor;
-				c.cCalculo[ins]=cCalculo.Valor;
-			}
-			c.Leer(db,pProx.cPeriodo.Valor,cCalculo.Valor);
-			return c;
-		}
+		[FkMixta("ant")] public Periodos fkCalculoAnterior;
 	}
 	public class CalProd:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;

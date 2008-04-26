@@ -22,6 +22,8 @@ namespace Modelador
 {
 	public class Diccionario<TKey, TValue>:System.Collections.Generic.Dictionary<TKey, TValue>{};
 	public class Lista<T>:System.Collections.Generic.List<T>{};
+	public class ConjuntoTablas:Conjunto<Tabla>{};
+	/*
 	public class ConjuntoTablas:System.Collections.Generic.Dictionary<Tabla, int>{
 		ConjuntoTablas AddAdd(Tabla t,int cuanto){
 			if(this.ContainsKey(t)){
@@ -44,6 +46,7 @@ namespace Modelador
 			return ContainsKey(t);
 		}
 	}
+	*/
 	public class ListaSqlizable<TSqlizable>:Lista<TSqlizable> where TSqlizable : Sqlizable{
 		public ListaSqlizable(){}
 		public ListaSqlizable(params TSqlizable[] elementos){
