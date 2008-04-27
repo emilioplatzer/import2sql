@@ -59,6 +59,14 @@ namespace DelOffice
 		public HojaExcel Hoja(string etiqueta){
 			return new HojaExcel((Excel.Worksheet) libro.Worksheets[etiqueta]);
 		}
+		public HojaExcel Hoja(int cual){
+			return new HojaExcel((Excel.Worksheet) libro.Worksheets[cual]);
+		}
+		public int CantidadHojas{
+			get{
+				return libro.Worksheets.Count;
+			}
+		}
 		public void GuardarYCerrar(string nombreArchivo){
 			libro.Close(true,nombreArchivo,___);
 		}
@@ -117,6 +125,9 @@ namespace DelOffice
 		}
 		public int NumeroColumna{
 			get{ return rango.Column; }
+		}
+		public bool EsValido{
+			get{ return rango!=null; } 
 		}
 		/*
 		public string LetraColumna{

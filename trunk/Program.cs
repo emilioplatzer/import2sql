@@ -16,6 +16,7 @@ using Modelador;
 using PrModelador;
 using BasesDatos;
 using Tareas;
+using DelOffice;
 
 namespace TodoASql
 {
@@ -63,12 +64,14 @@ namespace TodoASql
 				// new PruebasReflexion().NombresMiembros();
 			    // new ProbarSqLite().ConexionSqLite();
 			    // new ProcesoLevantarPlanillas().TraerPlanillasRecepcion();
+			    RecolectorExcel.Ejemplo();
+			    // new prRecolectarExcel().UnExcel();
 			    /*
 			    PrModelador.prTabla p=new PrModelador.prTabla();
 			    p.FkConDatos();
 			    p.G_Enumerados();
 			    */
-			    // /*
+			    /*
 			    ProbarIndiceD3 p=new ProbarIndiceD3();
 			    p.A01CalculosBase();
 			    p.A02CalculosTipoInf();

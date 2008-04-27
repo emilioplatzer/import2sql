@@ -228,12 +228,15 @@ namespace Modelador
 		public CampoAlias Es(T valor){
 			return Es(new ExpresionSql(new ValorSql<T>(valor)));
 		}
-		public CampoAlias EsExpresionAgrupada(string operador,ExpresionSql expresion){
+		public CampoAlias EsExpresionAgrupada(string operador,ExpresionSql expresion,string subOperador){
 			ListaSqlizable<Sqlizable> nueva=new ListaSqlizable<Sqlizable>();
-			nueva.Add(new LiteralSql(operador+"("));
+			nueva.Add(new LiteralSql(operador+"("+subOperador));
 			nueva.AddRange(expresion.Partes);
 			nueva.Add(new LiteralSql(")"));
 			return new CampoAlias(this,true,nueva);
+		}
+		public CampoAlias EsExpresionAgrupada(string operador,ExpresionSql expresion){
+			return EsExpresionAgrupada(operador,expresion,"");
 		}
 		public Campo EsMax(ExpresionSql expresion){
 			return EsExpresionAgrupada("MAX",expresion);
@@ -249,6 +252,12 @@ namespace Modelador
 		}
 		public Campo EsCount(Campo campo){
 			return EsExpresionAgrupada("COUNT",new ExpresionSql(campo));
+		}
+		public Campo EsCountDistinct(ExpresionSql expresion){
+			return EsExpresionAgrupada("COUNT",expresion,"DISTINCT ");
+		}
+		public Campo EsCountDistinct(Campo campo){
+			return EsExpresionAgrupada("COUNT",new ExpresionSql(campo),"DISTINCT ");
 		}
 	}
 	public class CampoPkTipo<T>:CampoTipo<T>{

@@ -153,15 +153,33 @@ namespace Indices
 	public class CalEsp:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
-		[Pk] public CampoProducto cProducto;
-		[Pk] public CampoTipo cTipoInf;
 		[Pk] public CampoEspecificacion cEspecificacion;
 		public CampoPrecio cPromedio;
 		[Fk] public Periodos fkPeriodos;
 		[Fk] public Calculos fkCalculos;
-		[Fk] public Productos fkProductos;
-		[Fk] public ProdTipoInf fkProdTipoInf;
 		[Fk] public Especificaciones fkEspecificaciones;
+	}
+	public class CalEspInf:Tabla{
+		[Pk] public CampoPeriodo cPeriodo;
+		[Pk] public CampoVersion cCalculo;
+		[Pk] public CampoEspecificacion cEspecificacion;
+		[Pk] public CampoInformante cInformante;
+		public CampoPrecio cPromedio;
+		[Fk] public Periodos fkPeriodos;
+		[Fk] public Calculos fkCalculos;
+		[Fk] public Especificaciones fkEspecificaciones;
+	}
+	public class NovEspInf:Tabla{
+		public enum Estados{Alta,Baja,Reemplazo};
+		[Pk] public CampoPeriodo cPeriodo;
+		[Pk] public CampoVersion cCalculo;
+		[Pk] public CampoEspecificacion cEspecificacion;
+		[Pk] public CampoInformante cInformante;
+		public CampoNovedad<Estados> cEstado;
+		[Fk] public Periodos fkPeriodos;
+		[Fk] public Calculos fkCalculos;
+		[Fk] public Especificaciones fkEspecificaciones;
+		[Fk] public Informantes fkInformantes;
 	}
 	public class Variedades:Tabla{
 		[Pk] public CampoVariedad cVariedad;
@@ -177,31 +195,6 @@ namespace Indices
 		[Pk] public CampoInformante cInformante;
 		public CampoPrecio cPrecio;
 		[Fk] public Periodos fkPeriodos;
-		[Fk] public Variedades fkVariedades;
-		[Fk] public Informantes fkInformantes;
-	}
-	public class CalVar:Tabla{
-		[Pk] public CampoPeriodo cPeriodo;
-		[Pk] public CampoVersion cCalculo;
-		[Pk] public CampoVariedad cVariedad;
-		[Pk] public CampoInformante cInformante;
-		public CampoPrecio cPrecio;
-		public CampoTipo cTipoImputacion;
-		public CampoEntero cAntiguedad;
-		[Fk] public Periodos fkPeriodos;
-		[Fk] public Calculos fkCalculos;
-		[Fk] public Variedades fkVariedades;
-		[Fk] public Informantes fkInformantes;
-	}
-	public class NovRelVar:Tabla{
-		public enum Estados{Alta,Baja,Reemplazo};
-		[Pk] public CampoPeriodo cPeriodo;
-		[Pk] public CampoVersion cCalculo;
-		[Pk] public CampoVariedad cVariedad;
-		[Pk] public CampoInformante cInformante;
-		public CampoNovedad<Estados> cEstado;
-		[Fk] public Periodos fkPeriodos;
-		[Fk] public Calculos fkCalculos;
 		[Fk] public Variedades fkVariedades;
 		[Fk] public Informantes fkInformantes;
 	}
