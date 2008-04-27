@@ -179,16 +179,18 @@ namespace Indices
 			}
 		}
 		public void CalcularMatrizBase(int CantidadPeriodosMinima){
-			NovRelVar n=new NovRelVar();
+			NovEspInf n=new NovEspInf();
 			Calculos c=new Calculos();
 			RelVar rv=new RelVar();
-			CalVar cv=new CalVar();
+			rv.UsarFk();
+			// Especificacion e=n.fkEspecificaciones;
+			Variedades v=rv.fkVariedades;
 			c.EsFkDe(rv,c.cCalculo.Es(-1));
 			new Ejecutador(db).Ejecutar(
 				new SentenciaInsert(n)
-				.Select(n.cPeriodo.EsMax(c.cPeriodo),c.cCalculo,rv.cInformante,rv.cVariedad,n.cEstado.Es(NovRelVar.Estados.Alta))
+				.Select(n.cPeriodo.EsMax(c.cPeriodo),c.cCalculo,rv.cInformante,v.cEspecificacion,n.cEstado.Es(NovEspInf.Estados.Alta))
 				.Where(c.cEsPeriodoBase.Igual(true))
-				.Having(n.cPeriodo.EsCount().MayorOIgual(CantidadPeriodosMinima))
+				.Having(n.cPeriodo.EsCountDistinct(rv.cPeriodo).MayorOIgual(CantidadPeriodosMinima))
 			);
 		}
 		public void ReglasDeIntegridad(){
@@ -559,14 +561,19 @@ namespace Indices
 			inf.InsertarDirecto(repo.db,2);
 			inf.InsertarDirecto(repo.db,3);
 			inf.InsertarDirecto(repo.db,4);
+			Variedades v=new Variedades();
+			v.InsertarValores(repo.db,v.cEspecificacion.Es("P100"),v.cVariedad.Es("P100/2"));
 			CargarPrecio("200112","P100"	,1,2.0);
 			CargarPrecio("200112","P100"	,2,2.0);
 			CargarPrecio("200112","P100"	,4,3.0);
 			CargarPrecio("200201","P100"	,1,2.0);
 			CargarPrecio("200201","P100"	,4,3.0);
+			CargarPrecio("200201","P100/2"	,1,3.60);
 			CargarPrecio("200202","P100"	,1,2.0);
 			CargarPrecio("200202","P100"	,2,2.2);
+			CargarPrecio("200202","P100/2"	,1,2.60);
 			CargarPrecio("200202","P100"	,3,2.4);
+			CargarPrecio("200202","P100/2"	,3,2.60);
 			CargarPrecio("200112","P101"	,2,12.2);
 			CargarPrecio("200201","P101"	,2,12.2);
 			Periodos p=new Periodos(); 
@@ -591,10 +598,11 @@ namespace Indices
 				{"200202","P100"	,2}
 			};
 			int cantidad=0;
-			foreach(NovRelVar n in new NovRelVar().Todos(repo.db)){
+			foreach(NovEspInf n in new NovEspInf().Todos(repo.db)){
+				Assert.IsTrue(cantidad<esperado.GetLength(0),"Hay resultados de más");
 				Assert.AreEqual(esperado[cantidad,2],n.cInformante.Valor);
 				Assert.AreEqual(esperado[cantidad,0],n.cPeriodo.Valor);
-				Assert.AreEqual(esperado[cantidad,1],n.cVariedad.Valor);
+				Assert.AreEqual(esperado[cantidad,1],n.cEspecificacion.Valor);
 				Assert.AreEqual(-1,n.cCalculo.Valor);
 				cantidad++;
 			}

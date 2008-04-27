@@ -45,7 +45,7 @@ namespace BasesDatos
 		public override string ErrorCode_NoExisteVista{ get{ return "No se puede encontrar";}}
 		public override string StuffTabla(string nombreTabla){
 			if(DebeStuffear(nombreTabla)){
-				return "["+nombreTabla+"]";
+				return "["+nombreTabla.Replace(".","_").Replace("[","(").Replace("]",")")+"]";
 			}else{
 				return nombreTabla;
 			}
