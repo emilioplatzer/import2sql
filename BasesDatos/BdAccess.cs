@@ -64,9 +64,12 @@ namespace BasesDatos
 	}
 	[TestFixture]
 	public class ProbarBdAccess{
-		public static BdAccess AbrirBase(bool borrar){
-			string nombreArchivo="tempAccesABorrar.mdb";
-			if(borrar){
+		public static BdAccess AbrirBase(int version){
+			// Pendiente
+			// Tuve que poner la version porque no cierra bien la base.
+			// Después tengo que investigar eso!
+			string nombreArchivo="tempAccesABorrar"+version.ToString()+".mdb";
+			if(version>0){
 				Archivo.Borrar(nombreArchivo);
 				Assert.IsTrue(!Archivo.Existe(nombreArchivo),"no debería existir");
 				Catalog cat=BdAccess.Crear(nombreArchivo);
@@ -76,7 +79,7 @@ namespace BasesDatos
 		}
 		[Test]
 		public void Creacion(){
-			BdAccess db=AbrirBase(true);
+			BdAccess db=AbrirBase(1);
 			db.ExecuteNonQuery("CREATE TABLE tablaexistente (texto varchar(100), numero integer)");
 			db.ExecuteNonQuery("INSERT INTO tablaexistente (texto, numero) VALUES ('uno',1)");
 			ProbarBaseDatos.ObjEnTodasLasBases(db);

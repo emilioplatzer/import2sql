@@ -390,10 +390,13 @@ namespace Indices
 				ano++;
 			}
 			Periodos p=new Periodos();
-			using(Insertador ins=p.Insertar(db)){
-				p.cPeriodo[ins]=ano.ToString()+((int)mes).ToString("00");
-				p.cAno[ins]=ano;
-				p.cMes[ins]=mes;
+			string codigoNuevo=ano.ToString()+((int)mes).ToString("00");
+			if(!p.Buscar(db,codigoNuevo)){
+				using(Insertador ins=p.Insertar(db)){
+					p.cPeriodo[ins]=codigoNuevo;
+					p.cAno[ins]=ano;
+					p.cMes[ins]=mes;
+				}
 			}
 			return new Periodos(db,ano,mes);
 		}
@@ -564,6 +567,8 @@ namespace Indices
 			CargarPrecio("200202","P100"	,1,2.0);
 			CargarPrecio("200202","P100"	,2,2.2);
 			CargarPrecio("200202","P100"	,3,2.4);
+			CargarPrecio("200112","P101"	,2,12.2);
+			CargarPrecio("200201","P101"	,2,12.2);
 			Periodos p=new Periodos(); 
 			Calculos c=new Calculos();
 			p.LeerNoPk(repo.db,p.cAno.Es(2001),p.cMes.Es(12));
@@ -581,6 +586,7 @@ namespace Indices
 			repo.CalcularMatrizBase(2);
 			object[,] esperado={
 				{"200201","P100"	,4},
+				{"200201","P101"	,2},
 				{"200202","P100"	,1},
 				{"200202","P100"	,2}
 			};
@@ -592,7 +598,7 @@ namespace Indices
 				Assert.AreEqual(-1,n.cCalculo.Valor);
 				cantidad++;
 			}
-			Assert.AreEqual(3,cantidad);
+			Assert.AreEqual(esperado.GetLength(0),cantidad,"cantidad de registros vistos");
 		}
 		[Test]
 		public void VerCanasta(){

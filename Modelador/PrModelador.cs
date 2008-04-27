@@ -318,7 +318,7 @@ namespace PrModelador
 		}
 		[Test]
 		public void FkConDatos(){
-			BaseDatos db=ProbarBdAccess.AbrirBase(true);
+			BaseDatos db=ProbarBdAccess.AbrirBase(2);
 			Repositorio.CrearTablas(db,this.GetType().Namespace);
 			Empresas e=new Empresas();
 			Piezas p=new Piezas();
@@ -357,7 +357,7 @@ namespace PrModelador
 		}
 		[Test]
 		public void G_Enumerados(){
-			BaseDatos db=ProbarBdAccess.AbrirBase(true);
+			BaseDatos db=ProbarBdAccess.AbrirBase(3);
 			Repositorio.CrearTablas(db,this.GetType().Namespace);
 			ColoresCompuestos cp=new ColoresCompuestos();
 			cp.InsertarDirecto(db,1,ColoresCompuestos.ColorPrimario.Azul);
