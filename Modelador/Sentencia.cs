@@ -587,8 +587,12 @@ namespace Modelador
 		public static ExpresionSql Sum<T>(T expresion){
 			return Agrupada("SUM",expresion);
 		}
-		public class SelectSuma:Sqlizable{
+		public class SelectAgrupado:Sqlizable{
 			Tabla TablaBase;
+			ExpresionSql Expresion;
+			string Operador;
+			string PreOperador;
+			string PostOperador;
 			public Campo CampoSumar;
 			// ExpresionSql ExpresionWhere;
 			/*
@@ -597,10 +601,14 @@ namespace Modelador
 				this.CampoSumar=CampoSumar;
 			}
 			*/
-			public SelectSuma(Tabla TablaBase,Campo CampoSumar)
+			public SelectAgrupado(Tabla TablaBase,Campo CampoSumar,ExpresionSql expresion,string Operador,string preOperador,string postOperador)
 			{
 				this.TablaBase=TablaBase;
 				this.CampoSumar=CampoSumar;
+				this.Expresion=expresion;
+				this.Operador=Operador;
+				this.PreOperador=preOperador;
+				this.PostOperador=postOperador;
 			}
 			public override string ToSql(BaseDatos db)
 			{
@@ -608,26 +616,50 @@ namespace Modelador
 				StringBuilder rta=new StringBuilder();
 				if(db.UpdateSelectSumViaDSum){
 					Tabla TablaSumandis=CampoSumar.TablaContenedora;
-					rta.Append("DSum('"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
+					TablaSumandis.Alias=null;
+					rta.Append(PreOperador+"D"+Operador+"("+PostOperador+"'"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
 					           +db.StuffTabla(TablaSumandis.NombreTabla));
+					Separador and=new Separador("','"," AND ");
+					if(Expresion!=null){
+						rta.Append(and);
+						foreach(Sqlizable p in Expresion.Partes){
+							if(p is Campo){
+								Campo c=p as Campo;
+								if(c.TablaContenedora==TablaSumandis){
+									rta.Append(p.ToSql(db));
+								}else{
+									if(c.TipoCampo.Contains("char")){
+										rta.Append("'''"+p.ToSql(db)+"'''");
+									}
+								}
+							}else{
+								rta.Append(p.ToSql(db).Replace("'","''"));
+							}
+						}
+					}
+					if(PostOperador=="LN("){
+						rta.Append(and+CampoSumar.ToSql(db)+">0");
+					}
 					if(TablaSumandis==TablaBase.TablaRelacionada){
-						rta.Append("','");
-						Separador and=new Separador(" AND ");
 						foreach(Campo c in TablaBase.CamposPk()){
 							rta.Append(and+db.StuffCampo(TablaBase.CamposRelacionadosFk[c].UnicoCampo().NombreCampo)+"=''' & "+c.ToSql(db)+" & '''");
 						}
 					}
-					rta.Append("')");
+					rta.Append("')".PadRight(Cadena.CantidadOcurrencias('(',PreOperador+PostOperador)+2,')'));
 					return rta.ToString();
 				}else{
 					Tabla TablaSumandis=CampoSumar.TablaContenedora;
 					if(TablaSumandis.Alias==null){
 						TablaSumandis.Alias="zz";
 					}
-					rta.Append("(SELECT SUM("+CampoSumar.ToSql(db)+") FROM "
+					rta.Append("(SELECT "+PreOperador+Operador+"("+PostOperador+CampoSumar.ToSql(db)+")".PadRight(Cadena.CantidadOcurrencias('(',PreOperador+PostOperador)+1,')')+
+					           " FROM "
 					           +TablaSumandis.ToSql(db));
+					Separador and=new Separador(" WHERE "," AND ");
+					if(PostOperador=="LN("){
+						rta.Append(and+CampoSumar.ToSql(db)+">0");
+					}
 					if(TablaSumandis==TablaBase.TablaRelacionada){
-						Separador and=new Separador(" WHERE "," AND ");
 						foreach(Campo c in TablaBase.CamposPk()){
 							rta.Append(and+TablaBase.CamposRelacionadosFk[c].ToSql(db)+"="+c.ToSql(db));
 						}
@@ -636,7 +668,7 @@ namespace Modelador
 					return rta.ToString();
 				}
 			}
-			public static implicit operator ExpresionSql(SelectSuma ss){
+			public static implicit operator ExpresionSql(SelectAgrupado ss){
 				return new ExpresionSql(ss);
 			}
 			public override bool CandidatoAGroupBy{ 

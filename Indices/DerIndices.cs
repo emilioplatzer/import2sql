@@ -165,6 +165,8 @@ namespace Indices
 		[Pk] public CampoEspecificacion cEspecificacion;
 		[Pk] public CampoInformante cInformante;
 		public CampoPrecio cPromedio;
+		public CampoEntero cAntiguedadConPrecio;
+		public CampoEntero cAntiguedadSinPrecio;
 		[Fk] public Periodos fkPeriodos;
 		[Fk] public Calculos fkCalculos;
 		[Fk] public Especificaciones fkEspecificaciones;

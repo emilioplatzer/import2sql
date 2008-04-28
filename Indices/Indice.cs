@@ -60,7 +60,7 @@ namespace Indices
 				Grupos padre=hijos.fkGrupoPadre;
 				ej.Ejecutar(
 					new SentenciaUpdate(grupos,grupos.cNivel.Set(0),grupos.cPonderador.Set(1.0))
-					.Where(grupos.cGrupoPadre.EsNulo())); // .And(grupos.cAgrupacion.Igual(grupo.cAgrupacion))));
+					.Where(grupos.cGrupoPadre.EsNulo())); 
 				for(int i=0;i<10;i++){
 					ej.Ejecutar(
 						new SentenciaUpdate(grupos,grupos.cNivel.Set(i+1))
@@ -74,7 +74,6 @@ namespace Indices
 					);
 				}
 				AuxGrupos auxgrupos=new AuxGrupos();
-				// auxgrupos.RegistrarFk(hijos);
 				for(int i=1;i<10;i++){
 					ej.Ejecutar(
 						new SentenciaInsert(new AuxGrupos())
@@ -112,7 +111,6 @@ namespace Indices
 				// Tabla base:
 				CalProd cp=new CalProd();
 				cp.UsarFk();
-				// Periodos per=cp.fkPeriodos;
 				Calculos c=cp.fkCalculos;
 				CalProd cp0=new CalProd();
 				cp0.EsFkDe(cp,cp0.cPeriodo.Es(c.cPeriodoAnterior));
@@ -139,70 +137,51 @@ namespace Indices
 					);
 				}
 			}
-			using(EjecutadorSql ej=new EjecutadorSql(db,"periodo",cal.cPeriodo.Valor,"agrupacion",agrupacion.cAgrupacion.Valor)){
-				/*
-				ej.ExecuteNonQuery(@"
-					insert into calgru (periodo,agrupacion,grupo,indice,factor)
-					  select per.periodo,g.agrupacion,g.grupo,cg0.indice*cp1.promedio/cp0.promedio,cg0.factor
-					    from grupos as g, 
-							 productos as p,
-					         calgru as cg0,
-					         periodos as per, 
-					         calprod as cp0, 
-					         calprod as cp1
-					    where g.agrupacion={agrupacion}
-					      and per.periodo={periodo}
-					      and g.grupo=p.producto
-					      and g.grupo=cg0.grupo and g.agrupacion=cg0.agrupacion
-					      and per.periodoanterior=cg0.periodo 
-					      and cp0.periodo=per.periodoanterior and cp0.producto=p.producto
-					      and cp1.periodo=per.periodo and cp1.producto=p.producto
-				");
-				for(int i=9;i>=0;i--){
-					ej.ExecuteNonQuery(new SentenciaSql(db,@"
-						insert into calgru (periodo,agrupacion,grupo,indice,factor)
-						  select cg.periodo,gp.agrupacion,gp.grupo
-								,sum(cg.indice*gh.ponderador)/sum(gh.ponderador)
-								,sum(cg.factor*gh.ponderador)/sum(gh.ponderador)
-						    from grupos gh,
-						         calgru as cg,
-						         grupos gp 
-						    where cg.agrupacion={agrupacion}
-						      and cg.periodo={periodo}
-						      and gh.nivel={nivel}
-						      and gh.grupo=cg.grupo and gh.agrupacion=cg.agrupacion
-						      and gp.agrupacion=gh.agrupacion and gp.grupo=gh.grupopadre
-						    group by cg.periodo,gp.agrupacion,gp.grupo;
-					").Arg("nivel",i));
-				}
-				*/
-			}
 		}
 		public void CalcularMatrizBase(int CantidadPeriodosMinima){
-			NovEspInf n=new NovEspInf();
-			Calculos c=new Calculos();
-			RelVar rv=new RelVar();
-			rv.UsarFk();
-			// Especificacion e=n.fkEspecificaciones;
-			Variedades v=rv.fkVariedades;
-			c.EsFkDe(rv,c.cCalculo.Es(-1));
-			NovEspInf nss=new NovEspInf();
-			nss.SubSelect(rv.cPeriodo,c.cCalculo,rv.cInformante,v.cEspecificacion)
-			.Where(c.cEsPeriodoBase.Igual(true),rv.cPrecio.NoEsNulo())
-			.GroupBy();
-			new Ejecutador(db).Ejecutar(
-				new SentenciaInsert(n)
-				.Select(n.cPeriodo.EsMax(nss.cPeriodo),nss.cCalculo,nss.cInformante,nss.cEspecificacion,n.cEstado.Es(NovEspInf.Estados.Alta))
-				.Having(n.cPeriodo.EsCount(nss.cPeriodo).MayorOIgual(CantidadPeriodosMinima))
-			);
-			/*
-			new Ejecutador(db).Ejecutar(
-				new SentenciaInsert(n)
-				.Select(n.cPeriodo.EsMax(c.cPeriodo),c.cCalculo,rv.cInformante,v.cEspecificacion,n.cEstado.Es(NovEspInf.Estados.Alta))
-				.Where(c.cEsPeriodoBase.Igual(true))
-				.Having(n.cPeriodo.EsCountDistinct(rv.cPeriodo).MayorOIgual(CantidadPeriodosMinima))
-			);
-			*/
+			{
+				NovEspInf n=new NovEspInf();
+				Calculos c=new Calculos();
+				RelVar rv=new RelVar();
+				rv.UsarFk();
+				Variedades v=rv.fkVariedades;
+				c.EsFkDe(rv,c.cCalculo.Es(-1));
+				NovEspInf nss=new NovEspInf();
+				nss.SubSelect(rv.cPeriodo,c.cCalculo,rv.cInformante,v.cEspecificacion)
+				.Where(c.cEsPeriodoBase.Igual(true),rv.cPrecio.NoEsNulo())
+				.GroupBy();
+				new Ejecutador(db).Ejecutar(
+					new SentenciaInsert(n)
+					.Select(n.cPeriodo.EsMax(nss.cPeriodo),nss.cCalculo,nss.cInformante,nss.cEspecificacion,n.cEstado.Es(NovEspInf.Estados.Alta))
+					.Having(n.cPeriodo.EsCount(nss.cPeriodo).MayorOIgual(CantidadPeriodosMinima))
+				);
+			}
+			Calculos cals=new Calculos();
+			foreach(Calculos cal in new Calculos().Algunos(db,cals.cEsPeriodoBase.Igual(true),cals.cPeriodo.Desc())){
+				using(Ejecutador ej=new Ejecutador(db,cal)){
+					NovEspInf nei=new NovEspInf();
+					CalEspInf cei=new CalEspInf();
+					CalEspInf cei0=new CalEspInf();
+					Calculos c=new Calculos();
+					RelVar rv=new RelVar();
+					c.EsFkDe(cei0,cei0.cPeriodo.Es(c.cPeriodoAnterior));
+					ej.Ejecutar(
+						new SentenciaInsert(cei)
+						.Select(c.cPeriodo,
+								cei.cAntiguedadConPrecio.Es(cei0.cAntiguedadConPrecio.Mas(1)),
+						        cei.cAntiguedadSinPrecio.Es(cei0.cAntiguedadSinPrecio.Mas(1)),
+						        cei0)
+					);
+					ej.Ejecutar(
+						new SentenciaInsert(cei)
+						.Select(nei)
+						.Where(nei.NotIn(cei))
+					);
+					ej.Ejecutar(
+						new SentenciaUpdate(cei,cei.cPromedio.Set(cei.SelectPromedioGeometrico(rv.cPrecio)))
+					);
+				}
+			}
 		}
 		public void ReglasDeIntegridad(){
 			db.AssertSinRegistros(
@@ -312,7 +291,6 @@ namespace Indices
 		public override void CrearTablas(){
 			RepositorioIndice repo=new RepositorioIndice(db);
 			repo.CrearTablas();
-			// base.CrearTablas();
 		}
 		public override void EliminarTablas(){
 			RepositorioIndice repo=new RepositorioIndice(db);
@@ -353,7 +331,6 @@ namespace Indices
 					g.cGrupoPadre[ins]=codigopadre;
 				}
 				g.cAgrupacion[ins]=agrupacion;
-				// ins.InsertarSiHayCampos();
 			}
 			return AbrirGrupo(agrupacion,codigo);
 		}
@@ -367,7 +344,6 @@ namespace Indices
 			Agrupaciones a=new Agrupaciones();
 			using(Insertador ins=a.Insertar(db)){
 				a.cAgrupacion[ins]=codigo;
-				// ins.InsertarSiHayCampos();
 			}
 			CrearGrupo(codigo,codigo,null,1);
 			return AbrirAgrupacion(codigo);
@@ -380,7 +356,6 @@ namespace Indices
 				g.cGrupoPadre[ins]=grupo.cGrupo;
 				g.cPonderador[ins]=ponderador;
 				g.cEsProducto[ins]=db.Verdadero;
-				// ins.InsertarSiHayCampos();
 			}			
 		}
 		public static Periodos CrearPeriodo(BaseDatos db,int ano, int mes){
@@ -430,7 +405,6 @@ namespace Indices
 		public Calculos AbrirCalculo(int ano, int mes, int calculo){
 			Periodos p=AbrirPeriodo(ano,mes);
 			Calculos c=new Calculos();
-			// c.Leer(db,"periodos",p.cPeriodo.Valor,"calculo",calculo);
 			c.Leer(db,p.cPeriodo.Valor,calculo);
 			return c;
 		}
@@ -476,19 +450,9 @@ namespace Indices
 		public ProbarIndiceD3(){
 			BaseDatos db;
 			#pragma warning disable 162
-			switch(3){ // solo se va a tomar un camino
+			switch(1){ 
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
-					/*
-					db.EliminarTablaSiExiste("calgru");
-					db.EliminarTablaSiExiste("calpro");
-					db.EliminarTablaSiExiste("periodos");
-					db.EliminarTablaSiExiste("grupos");
-					db.EliminarTablaSiExiste("agrupaciones");
-					db.EliminarTablaSiExiste("productos");
-					db.EliminarTablaSiExiste("numeros");
-					db.EliminarTablaSiExiste("auxgrupos");
-					*/
 					repo=new RepositorioPruebaIndice(db);
 					repo.EliminarTablas();
 					repo.CrearTablas();
@@ -589,16 +553,11 @@ namespace Indices
 			CargarPrecio("200201","P101"	,2,12.2);
 			Periodos p=new Periodos(); 
 			Calculos c=new Calculos();
-			p.LeerNoPk(repo.db,p.cAno.Es(2001),p.cMes.Es(12));
 			c.cCalculo.AsignarValor(-1);
 			c.cEsPeriodoBase.AsignarValor(true);
-			c.InsertarValores(repo.db,p,c.cCalculo,c.cEsPeriodoBase);
-			Assert.AreEqual("200112",p.cPeriodo.Valor);
-			c.Leer(repo.db,p.cPeriodo,-1);
-			for(int i=0; i<2; i++){
-				c=repo.CrearProximo(c);
-				// c.InsertarValores(repo.db,p,c,c.cEsPeriodoBase,pAnt.cPeriodo);
-			}
+			c.InsertarValores(repo.db,c.cPeriodo.Es("200202"),c.cEsPeriodoBase,c);
+			c.InsertarValores(repo.db,c.cPeriodo.Es("200201"),c.cEsPeriodoBase,c.cPeriodoAnterior.Es("200202"),c);
+			c.InsertarValores(repo.db,c.cPeriodo.Es("200112"),c.cEsPeriodoBase,c.cPeriodoAnterior.Es("200201"),c);
 			Assert.IsTrue(c.Buscar(repo.db,"200112",-1),"está el primer período");
 			Assert.IsTrue(c.Buscar(repo.db,"200202",-1),"está el último período");
 			repo.CalcularMatrizBase(2);
@@ -618,6 +577,27 @@ namespace Indices
 				cantidad++;
 			}
 			Assert.AreEqual(esperado.GetLength(0),cantidad,"cantidad de registros vistos");
+			object[,] esperado2={
+				{"200112","P100"	,1,2.0},
+				{"200112","P100"	,2,2.0},
+				{"200112","P100"	,4,3.0},
+				{"200112","P101"	,2,12.2},
+				{"200201","P100"	,1,2.0},
+				{"200201","P100"	,4,Math.Sqrt(3.0*3.60)},
+				{"200201","P101"	,2,12.2},
+				{"200202","P100"	,1,Math.Sqrt(2.0*2.60)},
+				{"200202","P100"	,2,2.2}};
+			cantidad=0;
+			foreach(CalEspInf cei in new CalEspInf().Todos(repo.db)){
+				Assert.IsTrue(cantidad<esperado2.GetLength(0),"Hay resultados de más");
+				Assert.AreEqual(esperado2[cantidad,2],cei.cInformante.Valor);
+				Assert.AreEqual(esperado2[cantidad,0],cei.cPeriodo.Valor);
+				Assert.AreEqual(esperado2[cantidad,1],cei.cEspecificacion.Valor);
+				Assert.AreEqual(-1,cei.cCalculo.Valor);
+				Assert.AreEqual((double)esperado2[cantidad,3],(double)cei.cPromedio.Valor,0.001);
+				cantidad++;
+			}
+			Assert.AreEqual(esperado2.GetLength(0),cantidad,"cantidad de registros vistos");
 		}
 		[Test]
 		public void VerCanasta(){

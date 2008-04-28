@@ -88,7 +88,7 @@ namespace DelOffice
 			dir.ProcesarArchivos("*.xls","procesado",
 			    delegate(string nombreArchivo){
 			        LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
-			        bool tengoDatos=true;
+			        bool tengoDatos=false;
 			        for(int i=1; i<=libro.CantidadHojas; i++){
 			        	HojaExcel hoja=libro.Hoja(i);
 			        	RangoExcel encontreId=
@@ -100,7 +100,6 @@ namespace DelOffice
 			        		tengoDatos=true;
 			        	}else{
 			        		System.Console.WriteLine("hoja {0} sin datos",i);
-			        		tengoDatos=false;
 			        	}
 			        }
 			        libro.CerrarNoHayCambios();

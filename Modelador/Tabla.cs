@@ -398,36 +398,69 @@ namespace Modelador
 				+(this.Alias==null?"":" "+this.Alias);
 		}
 		public override bool CandidatoAGroupBy{ 
-			get{
+			get{ // No tiene en el sentido de que no es una expresión
 				Assert.Fail("No debería preguntar si una tabla tiene variables");
 				return false; 
 			} 
-		} // No tiene en el sentido de que no es una expresión
+		} 
 		/*
 		public ExpresionSql SelectSuma(Campo CampoSumar,ExpresionSql ExpresionWhere){
 			return new ExpresionSql.SelectSuma(this,CampoSumar,ExpresionWhere);
 		}
 		*/
 		public ExpresionSql SelectSuma(Campo CampoSumar){
-			return new ExpresionSql.SelectSuma(this,CampoSumar);
+			return new ExpresionSql.SelectAgrupado(this,CampoSumar,null,"SUM","","");
+		}
+		public ExpresionSql SelectPromedioGeometrico(Campo CampoSumar){
+			return new ExpresionSql.SelectAgrupado(this,CampoSumar,null,"AVG","EXP(","LN(");
 		}
 		public RegistrosEnumerables Todos(BaseDatos db){
 			return new RegistrosEnumerables(this,db);
+		}
+		public RegistrosEnumerables Algunos(BaseDatos db,ExpresionSql ExpresionWhere,params Campo[] CamposOrden){
+			return new RegistrosEnumerables(this,db,ExpresionWhere,CamposOrden);
 		}
 		public SentenciaSelect SubSelect(params Campo[] Campos){
 			SentenciaSubSelect=new SentenciaSelect(Campos);
 			return SentenciaSubSelect;
 		}
+		public ExpresionSql NotIn(Tabla t){
+			ListaSqlizable<Sqlizable> Partes1=new ListaSqlizable<Sqlizable>();
+			ListaSqlizable<Sqlizable> Partes2=new ListaSqlizable<Sqlizable>();
+			ParteSeparadora p1=new ParteSeparadora("(",", ");
+			ParteSeparadora p2=new ParteSeparadora(") NOT IN (SELECT ",",");
+			foreach(Campo c in this.CamposPk()){
+				if(t.TieneElCampo(c)){
+					p1.AgregarEn(Partes1,c);
+					p2.AgregarEn(Partes2,t.CampoIndirecto(c));
+				}
+			}
+			if(Partes1.Count==0){
+				Assert.Fail("Tiene que haber campos en el not in");
+			}
+			Partes1.AddRange(Partes2);
+			Partes1.Add(new LiteralSql(" FROM "));
+			Partes1.Add(new LiteralSql(t.NombreTabla));
+			Partes1.Add(new LiteralSql(")"));
+			return new ExpresionSql(Partes1);
+		}
 	}
 	public class RegistrosEnumerables{
 		BaseDatos db;
 		Tabla TablaARecorrer;
-		public RegistrosEnumerables(Tabla TablaARecorrer,BaseDatos db){
+		ExpresionSql ExpresionWhere;
+		Campo[] CamposOrden;
+		public RegistrosEnumerables(Tabla TablaARecorrer,BaseDatos db)
+			:this(TablaARecorrer,db,null,new Campo[]{})
+		{}
+		public RegistrosEnumerables(Tabla TablaARecorrer,BaseDatos db,ExpresionSql ExpresionWhere,Campo[] CamposOrden){
 			this.db=db;
 			this.TablaARecorrer=TablaARecorrer;
+			this.ExpresionWhere=ExpresionWhere;
+			this.CamposOrden=CamposOrden;
 		}
 		public IteradorRegistro GetEnumerator(){
-			return new IteradorRegistro(TablaARecorrer,db);
+			return new IteradorRegistro(TablaARecorrer,db,ExpresionWhere,CamposOrden);
 		}
 	}
 	public class IteradorRegistro{
@@ -436,10 +469,23 @@ namespace Modelador
 		BaseDatos db;
 		bool HayActual;
 		string Sentencia;
-		public IteradorRegistro(Tabla TablaBase,BaseDatos db){
+		public IteradorRegistro(Tabla TablaBase,BaseDatos db,ExpresionSql expresionWhere,params Campo[] Campos){
 			this.db=db;
 			this.RegistroActual=TablaBase;
-			Sentencia="SELECT * FROM "+db.StuffTabla(TablaBase.NombreTabla)+" ORDER BY "+TablaBase.OrderBy(db);
+			StringBuilder s=new StringBuilder();
+			s.Append("SELECT * FROM "+db.StuffTabla(TablaBase.NombreTabla));
+			if(expresionWhere!=null){
+				s.Append(" WHERE "+expresionWhere.ToSql(db));
+			}
+			if(Campos.Length==0){
+				s.Append(" ORDER BY "+TablaBase.OrderBy(db));
+			}else{
+				Separador coma=new Separador(" ORDER BY ",", ");
+				foreach(Campo c in Campos){
+					s.Append(coma+c.ToSql(db)+c.DireccionOrderBy);
+				}
+			}
+			Sentencia=s.ToString();
 			Reset();
 		}
 		public void Reset(){
