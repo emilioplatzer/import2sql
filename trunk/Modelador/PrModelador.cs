@@ -303,7 +303,7 @@ namespace PrModelador
 			Assert.AreEqual(pr.TablaRelacionada,pp);
 			SentenciaUpdate su=
 				new SentenciaUpdate(pr,pr.cCosto.Set(pr.SelectSuma(pp.cCantidad)));
-			Assert.AreEqual("UPDATE piezas SET costo=DSum('cantidad','partespiezas','empresa=''' & empresa & ''' AND pieza=''' & pieza & '''');\n"
+			Assert.AreEqual("UPDATE piezas SET costo=DSUM('cantidad','partespiezas','empresa=''' & empresa & ''' AND pieza=''' & pieza & '''');\n"
 			                ,new Ejecutador(dba).Dump(su));
 			Assert.AreEqual("UPDATE piezas SET costo=(SELECT SUM(zz.cantidad) FROM partespiezas zz WHERE zz.empresa=empresa AND zz.pieza=pieza);\n"
 			                ,new Ejecutador(dbp).Dump(su));
@@ -311,9 +311,14 @@ namespace PrModelador
 			np.UsarFk();
 			pr.EsFkDe(np,np.cPiezaAuxiliar);
 			su=new SentenciaUpdate(pr,pr.cCosto.Set(pr.SelectSuma(np.cNuevoEstado)));
-			Assert.AreEqual("UPDATE piezas SET costo=DSum('nuevoestado','novedadespiezas','empresa=''' & empresa & ''' AND piezaauxiliar=''' & pieza & '''');\n"
+			Assert.AreEqual("UPDATE piezas SET costo=DSUM('nuevoestado','novedadespiezas','empresa=''' & empresa & ''' AND piezaauxiliar=''' & pieza & '''');\n"
 			                ,new Ejecutador(dba).Dump(su));
 			Assert.AreEqual("UPDATE piezas SET costo=(SELECT SUM(zz.nuevoestado) FROM novedadespiezas zz WHERE zz.empresa=empresa AND zz.piezaauxiliar=pieza);\n"
+			                ,new Ejecutador(dbp).Dump(su));
+			su=new SentenciaUpdate(pr,pr.cCosto.Set(pr.SelectPromedioGeometrico(np.cNuevoEstado)));
+			Assert.AreEqual("UPDATE piezas SET costo=EXP(DAVG(LN('nuevoestado','novedadespiezas','nuevoestado>0 AND empresa=''' & empresa & ''' AND piezaauxiliar=''' & pieza & '''')));\n"
+			                ,new Ejecutador(dba).Dump(su));
+			Assert.AreEqual("UPDATE piezas SET costo=(SELECT EXP(AVG(LN(zz.nuevoestado))) FROM novedadespiezas zz WHERE zz.nuevoestado>0 AND zz.empresa=empresa AND zz.piezaauxiliar=pieza);\n"
 			                ,new Ejecutador(dbp).Dump(su));
 		}
 		[Test]

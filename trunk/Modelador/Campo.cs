@@ -27,6 +27,7 @@ namespace Modelador
 		public bool EsPk;
 		public bool Obligatorio;
 		public Tabla TablaContenedora;
+		public string DireccionOrderBy;
 		public Campo(){
 		}
 		public object this[InsertadorSql ins]{
@@ -102,6 +103,10 @@ namespace Modelador
 				rta.Add(TablaContenedora);
 			}
 			return rta;
+		}
+		public Campo Desc(){
+			this.DireccionOrderBy=" DESC";
+			return this;
 		}
 	}
 	public class CampoAlias:Campo{
@@ -231,15 +236,15 @@ namespace Modelador
 		public CampoAlias Es(T valor){
 			return Es(new ExpresionSql(new ValorSql<T>(valor)));
 		}
-		public CampoAlias EsExpresionAgrupada(string operador,ExpresionSql expresion,string subOperador){
+		public CampoAlias EsExpresionAgrupada(string operador,ExpresionSql expresion,string subOperador,string postOperador){
 			ListaSqlizable<Sqlizable> nueva=new ListaSqlizable<Sqlizable>();
 			nueva.Add(new LiteralSql(operador+"("+subOperador));
 			nueva.AddRange(expresion.Partes);
-			nueva.Add(new LiteralSql(")"));
+			nueva.Add(new LiteralSql(postOperador+")"));
 			return new CampoAlias(this,true,nueva);
 		}
 		public CampoAlias EsExpresionAgrupada(string operador,ExpresionSql expresion){
-			return EsExpresionAgrupada(operador,expresion,"");
+			return EsExpresionAgrupada(operador,expresion,"","");
 		}
 		public Campo EsMax(ExpresionSql expresion){
 			return EsExpresionAgrupada("MAX",expresion);
@@ -314,6 +319,12 @@ namespace Modelador
 		}
 		public Campo EsSuma(Campo campo){
 			return EsExpresionAgrupada("SUM",new ExpresionSql(campo));
+		}
+		public Campo EsPromedioGeometrico(ExpresionSql expresion){
+			return EsExpresionAgrupada("EXP",expresion,"AVG(LN","))");
+		}
+		public Campo EsPromedioGeometrico(Campo campo){
+			return EsExpresionAgrupada("SUM",new ExpresionSql(campo),"AVG(LN","))");
 		}
 		public ExpresionSql Mas<T2>(T2 Valor){
 			return Operado<T2>("+",Valor);
