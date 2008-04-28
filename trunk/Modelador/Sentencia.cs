@@ -65,6 +65,7 @@ namespace Modelador
 	public abstract class Sentencia{
 		ListaSqlizable<Sqlizable> ParteWhere=new ListaSqlizable<Sqlizable>();
 		ListaSqlizable<Sqlizable> ParteHaving=new ListaSqlizable<Sqlizable>();
+		public ConjuntoTablas TablasLibres=new ConjuntoTablas();
 		protected System.Collections.Generic.Dictionary<string, string> AliasTablas=new System.Collections.Generic.Dictionary<string, string>();
 		protected bool ForzarGroupBy=false;
 		protected virtual void ClonarMiembros(Sentencia s){
@@ -193,6 +194,31 @@ namespace Modelador
 			rta.ClonarMiembros(this);
 			return rta;
 		}
+		public Sentencia Libre(Tabla t){
+			TablasLibres.Add(t);
+			return this;
+		}
+		public Sentencia Libres(ConjuntoTablas ts){
+			TablasLibres.AddRange(ts);
+			return this;
+		}
+	}
+	public class SelectInterno:Sqlizable{
+		Sentencia SentenciaInterna;
+		public SelectInterno(Sentencia SentenciaInterna){
+			this.SentenciaInterna=SentenciaInterna;
+		}
+		public override ConjuntoTablas Tablas()
+		{
+			return new ConjuntoTablas();
+		}
+		public override string ToSql(BaseDatos db)
+		{
+			return new Ejecutador(db).Dump(SentenciaInterna,true);
+		}
+		public override bool CandidatoAGroupBy {
+			get { return false; }
+		}
 	}
 	public class SentenciaUpdate:Sentencia{
 		public Tabla TablaBase;
@@ -298,7 +324,9 @@ namespace Modelador
 				ParteSeparadora coma=new ParteSeparadora(", ");
 				todas.Add(new LiteralSql("\n FROM "));
 				foreach(Tabla t in Tablas().Keys){
-					coma.AgregarEn(todas,t);
+					if(!TablasLibres.Contains(t)){
+						coma.AgregarEn(todas,t);
+					}
 				}
 			}
 			todas.AddRange(PartesWhere());
@@ -449,7 +477,9 @@ namespace Modelador
 					foreach(Tabla t in su.Tablas().Keys){
 						if(t!=su.TablaBase){
 							if(t.TablaRelacionada!=null && su.Tablas().Contains(t.TablaRelacionada)){
-								parteFrom.Append(coma+t.ToSql(db));
+								if(!s.TablasLibres.Contains(t)){
+									parteFrom.Append(coma+t.ToSql(db));
+								}
 								foreach(Campo c in t.CamposPk()){
 									parteWhere.Append(and+c.Igual(t.CamposRelacionadosFk[c]).ToSql(db));
 								}

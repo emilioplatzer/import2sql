@@ -96,6 +96,10 @@ namespace BasesDatos
 			       where f.id = father_id)
 			    where depth is null;
 			");
+			db.ExecuteNonQuery(@" 
+			  update nodes set depth=depth+10
+			    where not exists (select id from nodes where id=1);
+			");
 		}
 		#endif
 	}

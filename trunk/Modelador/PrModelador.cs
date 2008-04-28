@@ -417,6 +417,20 @@ namespace PrModelador
 					.Where(pss.cEmpresa.Distinto(0))
 				)
 			);
+			Piezas p2=new Piezas();
+			Empresas e=new Empresas();
+			Assert.AreEqual(
+				"INSERT INTO piezas (empresa, pieza, nombrepieza)"+
+				" SELECT p.empresa, p.pieza, p.nombreparte AS nombrepieza\n" +
+				" FROM partespiezas p\n" +
+				" WHERE NOT EXISTS (SELECT e.empresa\n FROM empresas e\n WHERE e.empresa=p.empresa)\n" +
+				" AND p.empresa<>0;\n",
+				new Ejecutador(dba).Dump(
+					new SentenciaInsert(p)
+					.Select(pp.cEmpresa,pp.cPieza, p.cNombrePieza.Es(pp.cNombreParte))
+					.Where(e.NoExistePara(p2),pp.cEmpresa.Distinto(0))
+				)
+			);
 		}
 		[Test]
 		public void SubselectGroupBySqlite(){
