@@ -35,6 +35,7 @@ namespace Modelador
 		public Fk.Tipo TipoFk=Fk.Tipo.Obligatoria;
 		public bool LiberadaDelContextoDelEjecutador; // Del contexto del ejecutador
 		public bool RegistroConDatos=false;
+		public SentenciaSelect SentenciaSubSelect;
 		public Tabla()
 		{
 			Construir();
@@ -263,7 +264,9 @@ namespace Modelador
 		}
 		public override ConjuntoTablas Tablas(){
 			ConjuntoTablas rta=new ConjuntoTablas();
-			rta.Add(this);
+			if(SentenciaSubSelect==null){
+				rta.Add(this);
+			}
 			return rta;
 		}
 		public override ListaSqlizable<Campo> Campos(){
@@ -389,7 +392,10 @@ namespace Modelador
 		}
 		public override string ToSql(BaseDatos db)
 		{
-			return db.StuffTabla(this.NombreTabla)+(this.Alias==null?"":" "+this.Alias);
+			return (SentenciaSubSelect==null
+					?db.StuffTabla(this.NombreTabla)
+					:"("+new Ejecutador(db).Dump(SentenciaSubSelect).Replace(";\n","")+")")
+				+(this.Alias==null?"":" "+this.Alias);
 		}
 		public override bool CandidatoAGroupBy{ 
 			get{
@@ -407,6 +413,10 @@ namespace Modelador
 		}
 		public RegistrosEnumerables Todos(BaseDatos db){
 			return new RegistrosEnumerables(this,db);
+		}
+		public SentenciaSelect SubSelect(params Campo[] Campos){
+			SentenciaSubSelect=new SentenciaSelect(Campos);
+			return SentenciaSubSelect;
 		}
 	}
 	public class RegistrosEnumerables{
