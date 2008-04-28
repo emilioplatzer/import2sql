@@ -256,14 +256,15 @@ namespace Modelador
 		public Campo EsCount(Campo campo){
 			return EsExpresionAgrupada("COUNT",new ExpresionSql(campo));
 		}
-		/*
+		#if NuncaAccess
+		// habilitar esto si nunca se va a trabajar en Access
 		public Campo EsCountDistinct(ExpresionSql expresion){
 			return EsExpresionAgrupada("COUNT",expresion,"DISTINCT ");
 		}
 		public Campo EsCountDistinct(Campo campo){
 			return EsExpresionAgrupada("COUNT",new ExpresionSql(campo),"DISTINCT ");
 		}
-		*/
+		#endif
 	}
 	public class CampoPkTipo<T>:CampoTipo<T>{
 		public CampoPkTipo()

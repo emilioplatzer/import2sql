@@ -18,6 +18,7 @@ namespace BasesDatos
 {
 	public class SqLite:BaseDatos
 	{
+		SqLite(){}
 		SqLite(OdbcConnection con)
 			:base(con)
 		{
@@ -27,6 +28,9 @@ namespace BasesDatos
 			ConexionABase.ConnectionString=@"DRIVER=SQLite3 ODBC Driver;DATABASE="+Base;
 			ConexionABase.Open();
 			return new SqLite(ConexionABase);
+		}
+		public static SqLite SinAbrir(){
+			return new SqLite();
 		}
 		public override string ErrorCode_NoExisteTabla{ get{ return "ERROR [HY000]";}}
 		public override string ErrorCode_NoExisteVista{ get{ return "ERROR [HY000]";}}
@@ -44,6 +48,7 @@ namespace BasesDatos
 			get { return "||"; }
 		}
 		public override bool UpdateConJoin{ get{ return false; } }
+		public override bool InternosForzarAs { get { return true; } }
 	}
 	[TestFixture]
 	public class ProbarSqLite{

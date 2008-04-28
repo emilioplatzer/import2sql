@@ -61,6 +61,7 @@ namespace BasesDatos
 		}
 		public override bool UpdateConJoin{ get{ return true; } }
 		public override bool UpdateSelectSumViaDSum{ get{ return true; } }
+		public override bool InternosForzarAs { get { return false; } }
 	}
 	[TestFixture]
 	public class ProbarBdAccess{

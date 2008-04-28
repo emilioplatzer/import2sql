@@ -205,6 +205,7 @@ namespace BasesDatos
 		public virtual string OperadorConcatenacionDerecha{ get{ return ")"; } } 
 		public abstract bool UpdateConJoin{ get; }
 		public virtual bool UpdateSelectSumViaDSum{ get{ return false; } }
+		public abstract bool InternosForzarAs{ get; } 
 	}
 	public class SentenciaSql{
 		StringBuilder sentencia;
