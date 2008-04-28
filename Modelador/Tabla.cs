@@ -424,6 +424,27 @@ namespace Modelador
 			SentenciaSubSelect=new SentenciaSelect(Campos);
 			return SentenciaSubSelect;
 		}
+		public ExpresionSql NoExistePara(params Campable[] CamposOTablas){
+			ListaSqlizable<Campo> Campos=new ListaSqlizable<Campo>();
+			ListaSqlizable<ExpresionSql> ExpresionesWhere=new ListaSqlizable<ExpresionSql>();
+			ConjuntoTablas TablasLibres=new ConjuntoTablas();
+			foreach(Campable cc in CamposOTablas){
+				foreach(Campo c in cc.Campos()){
+					if(this.TieneElCampo(c) && c.EsPk){
+						ExpresionesWhere.Add(this.CampoIndirecto(c).Igual(c));
+						if(c.TablaContenedora!=this){
+							System.Console.WriteLine("Tabla libre: "+c.TablaContenedora.NombreTabla);
+							TablasLibres.Add(c.TablaContenedora);
+						}
+					}
+				}
+			}
+			Sentencia s=new SentenciaSelect(this.CamposPk()[0])
+				.Where(ExpresionesWhere.ToArray())
+				.Libres(TablasLibres);
+			return new ExpresionSql(new LiteralSql("NOT EXISTS ("),new SelectInterno(s),new LiteralSql(")"));
+		}
+		/*
 		public ExpresionSql NotIn(Tabla t){
 			ListaSqlizable<Sqlizable> Partes1=new ListaSqlizable<Sqlizable>();
 			ListaSqlizable<Sqlizable> Partes2=new ListaSqlizable<Sqlizable>();
@@ -444,6 +465,7 @@ namespace Modelador
 			Partes1.Add(new LiteralSql(")"));
 			return new ExpresionSql(Partes1);
 		}
+		*/
 	}
 	public class RegistrosEnumerables{
 		BaseDatos db;

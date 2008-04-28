@@ -71,7 +71,8 @@ namespace TodoASql
 			    p.FkConDatos();
 			    p.G_Enumerados();
 			    */
-			    // /*
+			   new prTabla().SubselectGroupBy();
+			    /*
 			    ProbarIndiceD3 p=new ProbarIndiceD3();
 			    p.A01CalculosBase();
 			    p.A02CalculosTipoInf();

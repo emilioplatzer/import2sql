@@ -175,7 +175,7 @@ namespace Indices
 					ej.Ejecutar(
 						new SentenciaInsert(cei)
 						.Select(nei)
-						.Where(nei.NotIn(cei))
+						.Where(cei.NoExistePara(nei))
 					);
 					ej.Ejecutar(
 						new SentenciaUpdate(cei,cei.cPromedio.Set(cei.SelectPromedioGeometrico(rv.cPrecio)))
@@ -450,7 +450,7 @@ namespace Indices
 		public ProbarIndiceD3(){
 			BaseDatos db;
 			#pragma warning disable 162
-			switch(1){ 
+			switch(3){ 
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					repo=new RepositorioPruebaIndice(db);
