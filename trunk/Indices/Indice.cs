@@ -159,6 +159,17 @@ namespace Indices
 			Calculos cals=new Calculos();
 			foreach(Calculos cal in new Calculos().Algunos(db,cals.cEsPeriodoBase.Igual(true),cals.cPeriodo.Desc())){
 				using(Ejecutador ej=new Ejecutador(db,cal)){
+					CalEspInf cei=new CalEspInf();
+					RelVar rv=new RelVar();
+					rv.UsarFk();
+					Variedades v=rv.fkVariedades;
+					ej.Ejecutar(
+						new SentenciaInsert(cei)
+						.Select(rv,cei.cCalculo.Es(cal.cCalculo.Valor),v.cEspecificacion,cei.cPromedio.EsPromedioGeometrico(rv.cPrecio))
+						.Where(rv.cPrecio.Mayor(0))
+					);
+					ej.E
+					/*
 					NovEspInf nei=new NovEspInf();
 					CalEspInf cei=new CalEspInf();
 					CalEspInf cei0=new CalEspInf();
@@ -177,9 +188,16 @@ namespace Indices
 						.Select(nei)
 						.Where(cei.NoExistePara(nei))
 					);
+					CalEspInf ceiss=new CalEspInf();
+					rv.UsarFk();
+					Variedades v=rv.fkVariedades;
+					ceiss.SubSelect(rv.cPeriodo,ceiss.cCalculo.Es(cal.cCalculo.Valor),ceiss.cPromedio.EsPromedioGeometrico(rv.cPrecio),rv.cInformante,v.cEspecificacion)
+						.Where(rv.cPrecio.Mayor(0));
+					cei.EsFkDe(ceiss);
 					ej.Ejecutar(
-						new SentenciaUpdate(cei,cei.cPromedio.Set(cei.SelectPromedioGeometrico(rv.cPrecio)))
+						new SentenciaUpdate(cei,cei.cPromedio.Set(cei.SelectSuma(ceiss.cPromedio)))
 					);
+					*/
 				}
 			}
 		}

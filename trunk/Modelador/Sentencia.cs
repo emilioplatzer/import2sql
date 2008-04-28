@@ -647,8 +647,12 @@ namespace Modelador
 				if(db.UpdateSelectSumViaDSum){
 					Tabla TablaSumandis=CampoSumar.TablaContenedora;
 					TablaSumandis.Alias=null;
+					/*
 					rta.Append(PreOperador+"D"+Operador+"("+PostOperador+"'"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
 					           +db.StuffTabla(TablaSumandis.NombreTabla));
+					           */
+					rta.Append(PreOperador+"D"+Operador+"("+PostOperador+"'"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
+					           +TablaSumandis.ToSql(db));
 					Separador and=new Separador("','"," AND ");
 					if(Expresion!=null){
 						rta.Append(and);
@@ -667,12 +671,18 @@ namespace Modelador
 							}
 						}
 					}
-					if(PostOperador=="LN("){
+					if(PostOperador=="LOG("){
 						rta.Append(and+CampoSumar.ToSql(db)+">0");
 					}
 					if(TablaSumandis==TablaBase.TablaRelacionada){
 						foreach(Campo c in TablaBase.CamposPk()){
-							rta.Append(and+db.StuffCampo(TablaBase.CamposRelacionadosFk[c].UnicoCampo().NombreCampo)+"=''' & "+c.ToSql(db)+" & '''");
+							string doblecomillas;
+							if(c.TipoCampo.Contains("char")){
+								doblecomillas="''";
+							}else{
+								doblecomillas="";
+							}
+							rta.Append(and+db.StuffCampo(TablaBase.CamposRelacionadosFk[c].UnicoCampo().NombreCampo)+"="+doblecomillas+"' & "+c.ToSql(db)+" & '"+doblecomillas);
 						}
 					}
 					rta.Append("')".PadRight(Cadena.CantidadOcurrencias('(',PreOperador+PostOperador)+2,')'));
@@ -686,7 +696,7 @@ namespace Modelador
 					           " FROM "
 					           +TablaSumandis.ToSql(db));
 					Separador and=new Separador(" WHERE "," AND ");
-					if(PostOperador=="LN("){
+					if(PostOperador=="LOG("){
 						rta.Append(and+CampoSumar.ToSql(db)+">0");
 					}
 					if(TablaSumandis==TablaBase.TablaRelacionada){
