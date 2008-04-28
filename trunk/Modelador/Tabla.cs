@@ -394,7 +394,7 @@ namespace Modelador
 		{
 			return (SentenciaSubSelect==null
 					?db.StuffTabla(this.NombreTabla)
-					:"("+new Ejecutador(db).Dump(SentenciaSubSelect).Replace(";\n","")+")")
+					:"("+new Ejecutador(db).Dump(SentenciaSubSelect,true)+")")
 				+(this.Alias==null?"":" "+this.Alias);
 		}
 		public override bool CandidatoAGroupBy{ 

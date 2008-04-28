@@ -66,6 +66,7 @@ namespace Modelador
 		ListaSqlizable<Sqlizable> ParteWhere=new ListaSqlizable<Sqlizable>();
 		ListaSqlizable<Sqlizable> ParteHaving=new ListaSqlizable<Sqlizable>();
 		protected System.Collections.Generic.Dictionary<string, string> AliasTablas=new System.Collections.Generic.Dictionary<string, string>();
+		protected bool ForzarGroupBy=false;
 		protected virtual void ClonarMiembros(Sentencia s){
 			ParteWhere=new ListaSqlizable<Sqlizable>();
 			ParteWhere.AddRange(s.ParteWhere);
@@ -97,6 +98,10 @@ namespace Modelador
 		}
 		public Sentencia Having(params ExpresionSql[] expresiones){
 			return AgregarParte(ParteHaving,expresiones);
+		}
+		public Sentencia GroupBy(){
+			ForzarGroupBy=true;
+			return this;
 		}
 		public ListaSqlizable<Sqlizable> DevolverParte(string clausula,ListaSqlizable<Sqlizable> ListaPartes){
 			ListaSqlizable<Sqlizable> rta=new ListaSqlizable<Sqlizable>();
@@ -262,14 +267,14 @@ namespace Modelador
 		}
 	}
 	public class SentenciaSelect:Sentencia{
-		protected ListaSqlizable<Campo> Campos=new ListaSqlizable<Campo>();
+		public ListaSqlizable<Campo> Campos=new ListaSqlizable<Campo>();
 		public SentenciaSelect(params Campo[] Campos){
 			this.Campos.AddRange(Campos);
 		}
 		public override ListaSqlizable<Sqlizable> Partes(){
 			ListaSqlizable<Sqlizable> todas=new ListaSqlizable<Sqlizable>();
 			ListaSqlizable<Sqlizable> groupBy=new ListaSqlizable<Sqlizable>();
-			bool tieneAgrupados=false;
+			bool tieneAgrupados=ForzarGroupBy;
 			todas.Add(new LiteralSql("SELECT "));
 			{
 				ParteSeparadora coma=new ParteSeparadora(", ");
@@ -398,6 +403,9 @@ namespace Modelador
 			base.ExecuteNonQuery(Dump(s));
 		}
 		public string Dump(Sentencia laSentencia){
+			return Dump(laSentencia,false);
+		}
+		public string Dump(Sentencia laSentencia,bool interno){
 			Sentencia s=laSentencia.Clonate();
 			StringBuilder rta=new StringBuilder();
 			s.AsignarAlias();
@@ -468,6 +476,18 @@ namespace Modelador
 					rta.Append(p.ToSql(db));
 				}
 			}else{
+				if(s is SentenciaSelect && interno && db.InternosForzarAs){
+					SentenciaSelect ss=s as SentenciaSelect;
+					ListaSqlizable<Campo> nuevaLista=new ListaSqlizable<Campo>();
+					foreach(Campo c in ss.Campos){
+						if(c is CampoAlias){
+							nuevaLista.Add(c);
+						}else{
+							nuevaLista.Add(c.Es(c));
+						}
+					}
+					ss.Campos=nuevaLista;
+				}
 				foreach(Tabla t in s.Tablas().Keys){
 					System.Console.WriteLine("reviso "+t.NombreTabla);
 					if(t.TablaRelacionada!=null && s.Tablas().Contains(t.TablaRelacionada)){
@@ -491,7 +511,9 @@ namespace Modelador
 					rta.Append(p.ToSql(db));
 				}
 			}
-			rta.Append(";\n");
+			if(!interno){
+				rta.Append(";\n");
+			}
 			return rta.ToString();
 		}
 	}

@@ -64,6 +64,7 @@ namespace BasesDatos
 			get { return "||"; }
 		}
 		public override bool UpdateConJoin{ get{ return false; } }
+		public override bool InternosForzarAs { get { return false; } }
 	}
 	[TestFixture]
 	public class ProbarPostgreSql{

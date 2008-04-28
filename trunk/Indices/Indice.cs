@@ -188,7 +188,8 @@ namespace Indices
 			c.EsFkDe(rv,c.cCalculo.Es(-1));
 			NovEspInf nss=new NovEspInf();
 			nss.SubSelect(rv.cPeriodo,c.cCalculo,rv.cInformante,v.cEspecificacion)
-			.Where(c.cEsPeriodoBase.Igual(true),rv.cPrecio.NoEsNulo());
+			.Where(c.cEsPeriodoBase.Igual(true),rv.cPrecio.NoEsNulo())
+			.GroupBy();
 			new Ejecutador(db).Ejecutar(
 				new SentenciaInsert(n)
 				.Select(n.cPeriodo.EsMax(nss.cPeriodo),nss.cCalculo,nss.cInformante,nss.cEspecificacion,n.cEstado.Es(NovEspInf.Estados.Alta))

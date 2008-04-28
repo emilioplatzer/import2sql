@@ -389,5 +389,53 @@ namespace PrModelador
 				)
 			);
 		}
+		[Test]
+		public void SubselectGroupBy(){
+			BaseDatos dba=BdAccess.SinAbrir();
+			Piezas pss=new Piezas();
+			PartesPiezas pp=new PartesPiezas();
+			pss.SubSelect(pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
+				.Where(pp.cParteAnterior.EsNulo())
+				.GroupBy();
+			Piezas p=new Piezas();
+			Assert.AreEqual(
+				"INSERT INTO piezas (empresa, pieza, nombrepieza)"+
+				" SELECT p.empresa, p.pieza, p.nombrepieza\n" +
+				" FROM (SELECT p.empresa, p.pieza, p.nombreparte AS nombrepieza\n" +
+				" FROM partespiezas p\n" +
+				" WHERE p.parteanterior IS NULL\n" +
+				" GROUP BY p.empresa, p.pieza, p.nombreparte) p\n" +
+				" WHERE p.empresa<>0;\n",
+				new Ejecutador(dba).Dump(
+					new SentenciaInsert(p)
+					.Select(pss.cEmpresa,pss.cPieza, pss.cNombrePieza)
+					.Where(pss.cEmpresa.Distinto(0))
+				)
+			);
+		}
+		[Test]
+		public void SubselectGroupBySqlite(){
+			BaseDatos db=SqLite.SinAbrir();
+			Piezas pss=new Piezas();
+			PartesPiezas pp=new PartesPiezas();
+			pss.SubSelect(pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
+				.Where(pp.cParteAnterior.EsNulo())
+				.GroupBy();
+			Piezas p=new Piezas();
+			Assert.AreEqual(
+				"INSERT INTO piezas (empresa, pieza, nombrepieza)"+
+				" SELECT p.empresa, p.pieza, p.nombrepieza\n" +
+				" FROM (SELECT p.empresa AS empresa, p.pieza AS pieza, p.nombreparte AS nombrepieza\n" +
+				" FROM partespiezas p\n" +
+				" WHERE p.parteanterior IS NULL\n" +
+				" GROUP BY p.empresa, p.pieza, p.nombreparte) p\n" +
+				" WHERE p.empresa<>0;\n",
+				new Ejecutador(db).Dump(
+					new SentenciaInsert(p)
+					.Select(pss.cEmpresa,pss.cPieza, pss.cNombrePieza)
+					.Where(pss.cEmpresa.Distinto(0))
+				)
+			);
+		}
 	}
 }
