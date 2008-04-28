@@ -83,6 +83,9 @@ namespace Modelador
 		public ExpresionSql MayorOIgual<T>(T expresion){
 			return Operado<T>(">=",expresion);
 		}
+		public ExpresionSql Mayor<T>(T expresion){
+			return Operado<T>(">",expresion);
+		}
 		public ExpresionSql Distinto<T>(T expresion){
 			return Operado<T>("<>",expresion);
 		}
@@ -321,10 +324,10 @@ namespace Modelador
 			return EsExpresionAgrupada("SUM",new ExpresionSql(campo));
 		}
 		public Campo EsPromedioGeometrico(ExpresionSql expresion){
-			return EsExpresionAgrupada("EXP",expresion,"AVG(LN","))");
+			return EsExpresionAgrupada("EXP",expresion,"AVG(LOG(","))");
 		}
 		public Campo EsPromedioGeometrico(Campo campo){
-			return EsExpresionAgrupada("SUM",new ExpresionSql(campo),"AVG(LN","))");
+			return EsExpresionAgrupada("EXP",new ExpresionSql(campo),"AVG(LOG(","))");
 		}
 		public ExpresionSql Mas<T2>(T2 Valor){
 			return Operado<T2>("+",Valor);

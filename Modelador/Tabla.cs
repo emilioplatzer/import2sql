@@ -353,7 +353,7 @@ namespace Modelador
 			this.TipoFk=TipoFk;
 		}
 		public void EsFkDe(Tabla maestra){
-			EsFkDe(maestra,Fk.Tipo.Sugerida,null);
+			EsFkDe(maestra,Fk.Tipo.Sugerida,new Campo[]{});
 		}
 		public void EsFkDe(Tabla maestra,params Campo[] CampoReemplazo){
 			EsFkDe(maestra,Fk.Tipo.Sugerida,CampoReemplazo);
@@ -412,7 +412,8 @@ namespace Modelador
 			return new ExpresionSql.SelectAgrupado(this,CampoSumar,null,"SUM","","");
 		}
 		public ExpresionSql SelectPromedioGeometrico(Campo CampoSumar){
-			return new ExpresionSql.SelectAgrupado(this,CampoSumar,null,"AVG","EXP(","LN(");
+			return new ExpresionSql.SelectAgrupado(this,CampoSumar,null,"AVG","","");
+			// return new ExpresionSql.SelectAgrupado(this,CampoSumar,null,"AVG","EXP(","LOG(");
 		}
 		public RegistrosEnumerables Todos(BaseDatos db){
 			return new RegistrosEnumerables(this,db);
