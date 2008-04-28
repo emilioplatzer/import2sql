@@ -53,6 +53,9 @@ namespace Modelador
 		public virtual ExpresionSql EsNulo(){
 			return new ExpresionSql(this,new LiteralSql(" IS NULL"));
 		}
+		public virtual ExpresionSql NoEsNulo(){
+			return new ExpresionSql(this,new LiteralSql(" IS NOT NULL"));
+		}
 		public virtual string Opcionalidad{ 
 			get{ if(Obligatorio){ return " not null"; }else{ return ""; } }
 		}
@@ -253,12 +256,14 @@ namespace Modelador
 		public Campo EsCount(Campo campo){
 			return EsExpresionAgrupada("COUNT",new ExpresionSql(campo));
 		}
+		/*
 		public Campo EsCountDistinct(ExpresionSql expresion){
 			return EsExpresionAgrupada("COUNT",expresion,"DISTINCT ");
 		}
 		public Campo EsCountDistinct(Campo campo){
 			return EsExpresionAgrupada("COUNT",new ExpresionSql(campo),"DISTINCT ");
 		}
+		*/
 	}
 	public class CampoPkTipo<T>:CampoTipo<T>{
 		public CampoPkTipo()

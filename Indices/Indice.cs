@@ -186,12 +186,22 @@ namespace Indices
 			// Especificacion e=n.fkEspecificaciones;
 			Variedades v=rv.fkVariedades;
 			c.EsFkDe(rv,c.cCalculo.Es(-1));
+			NovEspInf nss=new NovEspInf();
+			nss.SubSelect(rv.cPeriodo,c.cCalculo,rv.cInformante,v.cEspecificacion)
+			.Where(c.cEsPeriodoBase.Igual(true),rv.cPrecio.NoEsNulo());
+			new Ejecutador(db).Ejecutar(
+				new SentenciaInsert(n)
+				.Select(n.cPeriodo.EsMax(nss.cPeriodo),nss.cCalculo,nss.cInformante,nss.cEspecificacion,n.cEstado.Es(NovEspInf.Estados.Alta))
+				.Having(n.cPeriodo.EsCount(nss.cPeriodo).MayorOIgual(CantidadPeriodosMinima))
+			);
+			/*
 			new Ejecutador(db).Ejecutar(
 				new SentenciaInsert(n)
 				.Select(n.cPeriodo.EsMax(c.cPeriodo),c.cCalculo,rv.cInformante,v.cEspecificacion,n.cEstado.Es(NovEspInf.Estados.Alta))
 				.Where(c.cEsPeriodoBase.Igual(true))
 				.Having(n.cPeriodo.EsCountDistinct(rv.cPeriodo).MayorOIgual(CantidadPeriodosMinima))
 			);
+			*/
 		}
 		public void ReglasDeIntegridad(){
 			db.AssertSinRegistros(
@@ -465,7 +475,7 @@ namespace Indices
 		public ProbarIndiceD3(){
 			BaseDatos db;
 			#pragma warning disable 162
-			switch(1){ // solo se va a tomar un camino
+			switch(3){ // solo se va a tomar un camino
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					/*

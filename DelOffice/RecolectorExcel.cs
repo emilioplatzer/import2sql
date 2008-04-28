@@ -79,7 +79,9 @@ namespace DelOffice
 					db.StuffCampo(NombreCampoIdentificador)+") VALUES ('0');"
 				);
 				System.Console.WriteLine("La base fue creada");
+				#pragma warning disable 168
 			}catch(System.Data.OleDb.OleDbException ex){
+				#pragma warning restore 168
 				System.Console.WriteLine("La base ya existe");
 			}
 			Carpeta dir=new Carpeta(CarpetaExcel);

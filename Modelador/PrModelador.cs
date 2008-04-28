@@ -367,5 +367,27 @@ namespace PrModelador
 			Assert.AreEqual(ColoresCompuestos.ColorPrimario.Azul,cp.cColorBase.Valor);
 			db.Close();
 		}
+		[Test]
+		public void Subselect(){
+			BaseDatos dba=BdAccess.SinAbrir();
+			Piezas pss=new Piezas();
+			PartesPiezas pp=new PartesPiezas();
+			pss.SubSelect(pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
+				.Where(pp.cParteAnterior.EsNulo());
+			Piezas p=new Piezas();
+			Assert.AreEqual(
+				"INSERT INTO piezas (empresa, pieza, nombrepieza)"+
+				" SELECT p.empresa, p.pieza, p.nombrepieza\n" +
+				" FROM (SELECT p.empresa, p.pieza, p.nombreparte AS nombrepieza\n" +
+				" FROM partespiezas p\n" +
+				" WHERE p.parteanterior IS NULL) p\n" +
+				" WHERE p.empresa<>0;\n",
+				new Ejecutador(dba).Dump(
+					new SentenciaInsert(p)
+					.Select(pss.cEmpresa,pss.cPieza, pss.cNombrePieza)
+					.Where(pss.cEmpresa.Distinto(0))
+				)
+			);
+		}
 	}
 }
