@@ -42,6 +42,7 @@ namespace PrModelador
 		[Pk] public CampoEntero cParte;
 		public CampoNombre cNombreParte;
 		public CampoEnteroOpcional cCantidad;
+		[Fk] public Empresas fkEmpresas;
 		[FkMixta("ant")] public CampoEnteroOpcional cParteAnterior;
 		[Fk] public Piezas fkPiezas;
 		[FkMixta("ant")] public PartesPiezas fkParteAnterior;
@@ -80,11 +81,11 @@ namespace PrModelador
 			PartesPiezas pa=new PartesPiezas();
 			Assert.AreEqual(false,dba.SoportaFkMixta);
 			pa.UsarFk();
-			Assert.AreEqual("partespiezas",pa.TablasFk[1].NombreTabla);
-			Assert.AreEqual(Fk.Tipo.Mixta,pa.TablasFk[1].TipoFk);
-			Assert.AreEqual("create table partespiezas(empresa integer not null,pieza varchar(4),parte integer not null,nombreparte varchar(250),cantidad integer,parteanterior integer,primary key(empresa,pieza,parte),foreign key(empresa,pieza)references piezas(empresa,pieza));"
+			Assert.AreEqual("partespiezas",pa.TablasFk[2].NombreTabla);
+			Assert.AreEqual(Fk.Tipo.Mixta,pa.TablasFk[2].TipoFk);
+			Assert.AreEqual("create table partespiezas(empresa integer not null,pieza varchar(4),parte integer not null,nombreparte varchar(250),cantidad integer,parteanterior integer,primary key(empresa,pieza,parte),foreign key(empresa)references empresas(empresa),foreign key(empresa,pieza)references piezas(empresa,pieza));"
 			                ,Cadena.Simplificar(pa.SentenciaCreateTable(dba)));
-			Assert.AreEqual("create table partespiezas(empresa integer not null,pieza varchar(4),parte integer not null,nombreparte varchar(250),cantidad integer,parteanterior integer,primary key(empresa,pieza,parte),foreign key(empresa,pieza)references piezas(empresa,pieza),foreign key(empresa,pieza,parteanterior)references partespiezas(empresa,pieza,parte));"
+			Assert.AreEqual("create table partespiezas(empresa integer not null,pieza varchar(4),parte integer not null,nombreparte varchar(250),cantidad integer,parteanterior integer,primary key(empresa,pieza,parte),foreign key(empresa)references empresas(empresa),foreign key(empresa,pieza)references piezas(empresa,pieza),foreign key(empresa,pieza,parteanterior)references partespiezas(empresa,pieza,parte));"
 			                ,Cadena.Simplificar(pa.SentenciaCreateTable(dbp)));
 		}
 		[Test]
@@ -149,7 +150,7 @@ namespace PrModelador
 			sentencia.Where(p.cPieza.Igual("P3")
 			                .And(p.cNombrePieza.EsNulo()
 			                     .Or(p.cNombrePieza.Distinto(p.cPieza))));
-			Assert.AreEqual(1,sentencia.Tablas().Count);
+			Assert.AreEqual(1,sentencia.Tablas(QueTablas.AlFrom).Count);
 			//Assert.AreEqual("piezas",(sentencia.Tablas().Keys)[0].NombreTabla);
 			sentencia.Where(p.cNombrePieza.Distinto("P0"));
 			Esperado+="\n AND [nombrepieza]<>'P0'";
@@ -303,7 +304,7 @@ namespace PrModelador
 			Assert.AreEqual(pr.TablaRelacionada,pp);
 			SentenciaUpdate su=
 				new SentenciaUpdate(pr,pr.cCosto.Set(pr.SelectSuma(pp.cCantidad)));
-			Assert.AreEqual("UPDATE piezas SET costo=DSUM('cantidad','partespiezas','empresa=''' & empresa & ''' AND pieza=''' & pieza & '''');\n"
+			Assert.AreEqual("UPDATE piezas SET costo=DSUM('cantidad','partespiezas','empresa=' & empresa & ' AND pieza=''' & pieza & '''');\n"
 			                ,new Ejecutador(dba).Dump(su));
 			Assert.AreEqual("UPDATE piezas SET costo=(SELECT SUM(zz.cantidad) FROM partespiezas zz WHERE zz.empresa=empresa AND zz.pieza=pieza);\n"
 			                ,new Ejecutador(dbp).Dump(su));
@@ -311,13 +312,13 @@ namespace PrModelador
 			np.UsarFk();
 			pr.EsFkDe(np,np.cPiezaAuxiliar);
 			su=new SentenciaUpdate(pr,pr.cCosto.Set(pr.SelectSuma(np.cNuevoEstado)));
-			Assert.AreEqual("UPDATE piezas SET costo=DSUM('nuevoestado','novedadespiezas','empresa=''' & empresa & ''' AND piezaauxiliar=''' & pieza & '''');\n"
+			Assert.AreEqual("UPDATE piezas SET costo=DSUM('nuevoestado','novedadespiezas','empresa=' & empresa & ' AND piezaauxiliar=''' & pieza & '''');\n"
 			                ,new Ejecutador(dba).Dump(su));
 			Assert.AreEqual("UPDATE piezas SET costo=(SELECT SUM(zz.nuevoestado) FROM novedadespiezas zz WHERE zz.empresa=empresa AND zz.piezaauxiliar=pieza);\n"
 			                ,new Ejecutador(dbp).Dump(su));
 			Assert.Ignore("Error en el promedio geom'etrico" );
 			su=new SentenciaUpdate(pr,pr.cCosto.Set(pr.SelectPromedioGeometrico(np.cNuevoEstado)));
-			Assert.AreEqual("UPDATE piezas SET costo=EXP(DAVG(LOG('nuevoestado','novedadespiezas','nuevoestado>0 AND empresa=''' & empresa & ''' AND piezaauxiliar=''' & pieza & '''')));\n"
+			Assert.AreEqual("UPDATE piezas SET costo=EXP(DAVG(LOG('nuevoestado','novedadespiezas','nuevoestado>0 AND empresa=' & empresa & ' AND piezaauxiliar=''' & pieza & '''')));\n"
 			                ,new Ejecutador(dba).Dump(su));
 			Assert.AreEqual("UPDATE piezas SET costo=(SELECT EXP(AVG(LOG(zz.nuevoestado))) FROM novedadespiezas zz WHERE zz.nuevoestado>0 AND zz.empresa=empresa AND zz.piezaauxiliar=pieza);\n"
 			                ,new Ejecutador(dbp).Dump(su));
@@ -378,16 +379,18 @@ namespace PrModelador
 			BaseDatos dba=BdAccess.SinAbrir();
 			Piezas pss=new Piezas();
 			PartesPiezas pp=new PartesPiezas();
+			pp.UsarFk();
+			Empresas e=pp.fkEmpresas;
 			pss.SubSelect(pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
-				.Where(pp.cParteAnterior.EsNulo());
+				.Where(pp.cParteAnterior.EsNulo(),e.cNombreEmpresa.Distinto("este"));
 			Piezas p=new Piezas();
 			Assert.AreEqual(
 				"INSERT INTO piezas (empresa, pieza, nombrepieza)"+
-				" SELECT p.empresa, p.pieza, p.nombrepieza\n" +
+				" SELECT pi.empresa, pi.pieza, pi.nombrepieza\n" +
 				" FROM (SELECT p.empresa, p.pieza, p.nombreparte AS nombrepieza\n" +
-				" FROM partespiezas p\n" +
-				" WHERE p.parteanterior IS NULL) p\n" +
-				" WHERE p.empresa<>0;\n",
+				" FROM partespiezas p, empresas e\n" +
+				" WHERE p.parteanterior IS NULL\n AND e.nombreempresa<>'este'\n AND e.empresa=p.empresa) pi\n" +
+				" WHERE pi.empresa<>0;\n",
 				new Ejecutador(dba).Dump(
 					new SentenciaInsert(p)
 					.Select(pss.cEmpresa,pss.cPieza, pss.cNombrePieza)
@@ -403,22 +406,29 @@ namespace PrModelador
 			pss.SubSelect(pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
 				.Where(pp.cParteAnterior.EsNulo())
 				.GroupBy();
+			System.Console.WriteLine("******** que tablas aliasables *********");
+			System.Console.WriteLine(Objeto.ExpandirMiembros(pss.Tablas(QueTablas.Aliasables).ToString()));
+			System.Console.WriteLine("******** que tablas al from *********");
+			System.Console.WriteLine(Objeto.ExpandirMiembros(pss.Tablas(QueTablas.AlFrom).ToString()));
 			Piezas p=new Piezas();
+			Sentencia s=
+				new SentenciaInsert(p)
+				.Select(pss.cEmpresa,pss.cPieza, pss.cNombrePieza)
+				.Where(pss.cEmpresa.Distinto(0));
+			System.Console.WriteLine("******** que tablas aliasables *********");
+			System.Console.WriteLine(Objeto.ExpandirMiembros(s.Tablas(QueTablas.Aliasables).ToString()));
+			System.Console.WriteLine("******** que tablas al from *********");
+			System.Console.WriteLine(Objeto.ExpandirMiembros(s.Tablas(QueTablas.AlFrom).ToString()));
 			Assert.AreEqual(
 				"INSERT INTO piezas (empresa, pieza, nombrepieza)"+
-				" SELECT p.empresa, p.pieza, p.nombrepieza\n" +
+				" SELECT pi.empresa, pi.pieza, pi.nombrepieza\n" +
 				" FROM (SELECT p.empresa, p.pieza, p.nombreparte AS nombrepieza\n" +
 				" FROM partespiezas p\n" +
 				" WHERE p.parteanterior IS NULL\n" +
-				" GROUP BY p.empresa, p.pieza, p.nombreparte) p\n" +
-				" WHERE p.empresa<>0;\n",
-				new Ejecutador(dba).Dump(
-					new SentenciaInsert(p)
-					.Select(pss.cEmpresa,pss.cPieza, pss.cNombrePieza)
-					.Where(pss.cEmpresa.Distinto(0))
-				)
+				" GROUP BY p.empresa, p.pieza, p.nombreparte) pi\n" +
+				" WHERE pi.empresa<>0;\n",
+				new Ejecutador(dba).Dump(s)
 			);
-			Piezas p2=new Piezas();
 			Empresas e=new Empresas();
 			Assert.AreEqual(
 				"INSERT INTO piezas (empresa, pieza, nombrepieza)"+
@@ -429,7 +439,7 @@ namespace PrModelador
 				new Ejecutador(dba).Dump(
 					new SentenciaInsert(p)
 					.Select(pp.cEmpresa,pp.cPieza, p.cNombrePieza.Es(pp.cNombreParte))
-					.Where(e.NoExistePara(p2),pp.cEmpresa.Distinto(0))
+					.Where(e.NoExistePara(pp),pp.cEmpresa.Distinto(0))
 				)
 			);
 		}
@@ -444,12 +454,12 @@ namespace PrModelador
 			Piezas p=new Piezas();
 			Assert.AreEqual(
 				"INSERT INTO piezas (empresa, pieza, nombrepieza)"+
-				" SELECT p.empresa, p.pieza, p.nombrepieza\n" +
+				" SELECT pi.empresa, pi.pieza, pi.nombrepieza\n" +
 				" FROM (SELECT p.empresa AS empresa, p.pieza AS pieza, p.nombreparte AS nombrepieza\n" +
 				" FROM partespiezas p\n" +
 				" WHERE p.parteanterior IS NULL\n" +
-				" GROUP BY p.empresa, p.pieza, p.nombreparte) p\n" +
-				" WHERE p.empresa<>0;\n",
+				" GROUP BY p.empresa, p.pieza, p.nombreparte) pi\n" +
+				" WHERE pi.empresa<>0;\n",
 				new Ejecutador(db).Dump(
 					new SentenciaInsert(p)
 					.Select(pss.cEmpresa,pss.cPieza, pss.cNombrePieza)

@@ -20,9 +20,13 @@ using Modelador;
 
 namespace Modelador
 {
+	public enum QueTablas{Aliasables, AlFrom};
 	public class Diccionario<TKey, TValue>:System.Collections.Generic.Dictionary<TKey, TValue>{};
 	public class Lista<T>:System.Collections.Generic.List<T>{};
-	public class ConjuntoTablas:Conjunto<Tabla>{};
+	public class ConjuntoTablas:Conjunto<Tabla>{
+		public ConjuntoTablas(){}
+		public ConjuntoTablas(Tabla t):base(t){}
+	};
 	/*
 	public class ConjuntoTablas:System.Collections.Generic.Dictionary<Tabla, int>{
 		ConjuntoTablas AddAdd(Tabla t,int cuanto){
@@ -54,10 +58,10 @@ namespace Modelador
 				this.Add(s);
 			}
 		}
-		public ConjuntoTablas Tablas(){
+		public ConjuntoTablas Tablas(QueTablas queTablas){
 			ConjuntoTablas rta=new ConjuntoTablas();
 			foreach(TSqlizable s in this){
-				rta.AddRange(s.Tablas());
+				rta.AddRange(s.Tablas(queTablas));
 			}
 			return rta;
 		}
@@ -74,17 +78,9 @@ namespace Modelador
 			ParteHaving=new ListaSqlizable<Sqlizable>();
 			ParteHaving.AddRange(s.ParteHaving);
 			AliasTablas=new System.Collections.Generic.Dictionary<string, string>(s.AliasTablas);
-			/*
-			if(s.Tablas()Usadas==null){
-				TablasUsadas=null;
-			}else{
-				TablasUsadas=new Lista<Tabla>();
-				TablasUsadas.AddRange(s.TablasUsadas);
-			}
-			*/
 		}
 		public abstract ListaSqlizable<Sqlizable> Partes();
-		public abstract ConjuntoTablas Tablas();
+		public abstract ConjuntoTablas Tablas(QueTablas queTablas);
 		Sentencia AgregarParte(ListaSqlizable<Sqlizable> ListaPartes,params ExpresionSql[]expresiones){
 			foreach(ExpresionSql expresion in expresiones){
 				if(ListaPartes.Count>0){
@@ -118,41 +114,6 @@ namespace Modelador
 		public ListaSqlizable<Sqlizable> PartesHaving(){
 			return DevolverParte("HAVING",ParteHaving);
 		}
-		/*
-		protected void RegistrarTablas(Campo c){
-			ExpresionSql expresion=c.ExpresionBase;
-			if(expresion!=null){
-				RegistrarTablas(expresion);
-			}else{
-				RegistrarTabla(c.TablaContenedora);
-			}
-		}
-		protected void RegistrarTablas(ListaSqlizable<Campo> Campos){
-			foreach(Campo c in Campos){
-				RegistrarTablas(c);
-			}
-		}
-		protected void RegistrarTablas(ExpresionSql expresion){
-			RegistrarTablas(expresion.Partes);
-		}
-		protected void RegistrarTablas(ListaSqlizable<Sqlizable> Partes){
-			foreach(Sqlizable s in Partes){
-				if(s is Campo){
-					RegistrarTablas(s as Campo);
-				}else if(s is ExpresionSql){
-					RegistrarTablas(s as ExpresionSql);
-				}else if(s is ValorSql<Campo>){
-					RegistrarTablas((s as ValorSql<Campo>).Valor);
-				}else if(s is ValorSql<ExpresionSql>){
-					RegistrarTablas((s as ValorSql<ExpresionSql>).Valor);
-				}else if(s is SentenciaUpdate.Sets){
-					RegistrarTablas((s as SentenciaUpdate.Sets).ValorAsignar);
-				}else if(s is ExpresionSql.SelectSuma){
-					AsignarAlias((s as ExpresionSql.SelectSuma).CampoSumar.TablaContenedora);
-				}
-			}
-		}
-		*/
 		public void AsignarAlias(Tabla t){
 			int Largo=1;
 			int Sufijo=0;
@@ -175,7 +136,7 @@ namespace Modelador
 		}
 		public void AsignarAlias(){
 			AliasTablas=new System.Collections.Generic.Dictionary<string, string>();
-			foreach(Tabla t in Tablas().Keys){
+			foreach(Tabla t in Tablas(QueTablas.Aliasables).Keys){
 				AsignarAlias(t);
 			}
 		}
@@ -208,12 +169,14 @@ namespace Modelador
 		public SelectInterno(Sentencia SentenciaInterna){
 			this.SentenciaInterna=SentenciaInterna;
 		}
-		public override ConjuntoTablas Tablas()
-		{
-			return new ConjuntoTablas();
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
+			if(queTablas==QueTablas.AlFrom){
+				return new ConjuntoTablas();
+			}else{
+				return SentenciaInterna.Tablas(queTablas);
+			}
 		}
-		public override string ToSql(BaseDatos db)
-		{
+		public override string ToSql(BaseDatos db){
 			return new Ejecutador(db).Dump(SentenciaInterna,true);
 		}
 		public override bool CandidatoAGroupBy {
@@ -250,8 +213,8 @@ namespace Modelador
 					return false;
 				}
 			}
-			public override ConjuntoTablas Tablas(){
-				return ValorAsignar.Tablas();
+			public override ConjuntoTablas Tablas(QueTablas queTablas){
+				return ValorAsignar.Tablas(queTablas);
 			}
 		}
 		public override ListaSqlizable<Sqlizable> Partes(){
@@ -260,12 +223,12 @@ namespace Modelador
 			todas.AddRange(PartesWhere());
 			return todas;
 		}
-		public override ConjuntoTablas Tablas(){
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
 			ConjuntoTablas TablasUsadas=new ConjuntoTablas();
 			TablasUsadas.Add(TablaBase);
-			TablasUsadas.AddRange(ParteSet.Tablas());
-			TablasUsadas.AddRange(PartesWhere().Tablas());
-			TablasUsadas.AddRange(PartesHaving().Tablas());
+			TablasUsadas.AddRange(ParteSet.Tablas(queTablas));
+			TablasUsadas.AddRange(PartesWhere().Tablas(queTablas));
+			TablasUsadas.AddRange(PartesHaving().Tablas(queTablas));
 			return TablasUsadas;
 		}
 	}
@@ -323,7 +286,7 @@ namespace Modelador
 			{
 				ParteSeparadora coma=new ParteSeparadora(", ");
 				todas.Add(new LiteralSql("\n FROM "));
-				foreach(Tabla t in Tablas().Keys){
+				foreach(Tabla t in Tablas(QueTablas.AlFrom).Keys){
 					if(!TablasLibres.Contains(t)){
 						coma.AgregarEn(todas,t);
 					}
@@ -336,10 +299,10 @@ namespace Modelador
 			}
 			return todas;
 		}
-		public override ConjuntoTablas Tablas(){
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
 			ConjuntoTablas rta=new ConjuntoTablas();
-			rta.AddRange(Campos.Tablas());
-			rta.AddRange(PartesWhere().Tablas());
+			rta.AddRange(Campos.Tablas(queTablas));
+			rta.AddRange(PartesWhere().Tablas(queTablas));
 			return rta;
 		}
 	}
@@ -353,8 +316,8 @@ namespace Modelador
 			return db.StuffCampo(CampoSinAlias.NombreCampo);
 		}
 		public override bool CandidatoAGroupBy{ get{return CampoSinAlias.CandidatoAGroupBy;} }
-		public override ConjuntoTablas Tablas(){
-			return CampoSinAlias.Tablas();
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
+			return CampoSinAlias.Tablas(queTablas);
 		}
 	}
 	public class SentenciaInsert:SentenciaSelect{
@@ -436,11 +399,13 @@ namespace Modelador
 		public string Dump(Sentencia laSentencia,bool interno){
 			Sentencia s=laSentencia.Clonate();
 			StringBuilder rta=new StringBuilder();
-			s.AsignarAlias();
+			if(!interno){
+				s.AsignarAlias();
+			}
 			if(s is SentenciaUpdate){
 				rta.Append("UPDATE ");
 				SentenciaUpdate su=s as SentenciaUpdate;
-				ConjuntoTablas suTablas=su.Tablas();
+				ConjuntoTablas suTablas=su.Tablas(QueTablas.AlFrom);
 				if(suTablas.Count<=1 || !db.UpdateConJoin){
 					su.TablaBase.Alias=null;
 				}
@@ -448,9 +413,9 @@ namespace Modelador
 				string prefijoSet="";
 				string sufijoSet="";
 				if(db.UpdateConJoin){
-					foreach(Tabla t in su.Tablas().Keys){
+					foreach(Tabla t in su.Tablas(QueTablas.AlFrom).Keys){
 						if(t!=su.TablaBase){
-							if(t.TablaRelacionada!=null && su.Tablas().Contains(t.TablaRelacionada)){
+							if(t.TablaRelacionada!=null && su.Tablas(QueTablas.AlFrom).Contains(t.TablaRelacionada)){
 								rta.Append(" INNER JOIN "+t.ToSql(db)+" ON ");
 								Separador and=new Separador(" AND ");
 								foreach(Campo c in t.CamposPk()){
@@ -460,7 +425,7 @@ namespace Modelador
 							}
 						}
 					}
-					foreach(Tabla t in s.Tablas().Keys){
+					foreach(Tabla t in s.Tablas(QueTablas.AlFrom).Keys){
 						if(!t.LiberadaDelContextoDelEjecutador){
 							foreach(Campo c in CamposContexto){
 								if(t.TieneElCampo(c)){
@@ -474,9 +439,9 @@ namespace Modelador
 					StringBuilder parteWhere=new StringBuilder();
 					Separador and=new Separador(" WHERE "," AND ");
 					Separador coma=new Separador(" FROM ",", ");
-					foreach(Tabla t in su.Tablas().Keys){
+					foreach(Tabla t in su.Tablas(QueTablas.AlFrom).Keys){
 						if(t!=su.TablaBase){
-							if(t.TablaRelacionada!=null && su.Tablas().Contains(t.TablaRelacionada)){
+							if(t.TablaRelacionada!=null && su.Tablas(QueTablas.AlFrom).Contains(t.TablaRelacionada)){
 								if(!s.TablasLibres.Contains(t)){
 									parteFrom.Append(coma+t.ToSql(db));
 								}
@@ -518,17 +483,14 @@ namespace Modelador
 					}
 					ss.Campos=nuevaLista;
 				}
-				foreach(Tabla t in s.Tablas().Keys){
-					System.Console.WriteLine("reviso "+t.NombreTabla);
-					if(t.TablaRelacionada!=null && s.Tablas().Contains(t.TablaRelacionada)){
-						System.Console.WriteLine("inducir relación "+t.TablaRelacionada);
-					// if(t.TablaRelacionada!=null){
+				foreach(Tabla t in s.Tablas(QueTablas.AlFrom).Keys){
+					if(t.TablaRelacionada!=null && s.Tablas(QueTablas.AlFrom).Contains(t.TablaRelacionada)){
 						foreach(Campo c in t.CamposPk()){
 							s.Where(c.Igual(t.CamposRelacionadosFk[c]));
 						}
 					}
 				}
-				foreach(Tabla t in s.Tablas().Keys){
+				foreach(Tabla t in s.Tablas(QueTablas.AlFrom).Keys){
 					if(!t.LiberadaDelContextoDelEjecutador){
 						foreach(Campo c in CamposContexto){
 							if(t.TieneElCampo(c)){
@@ -591,11 +553,11 @@ namespace Modelador
 			}
 			return rta.ToString();
 		}
-		public override ConjuntoTablas Tablas()
+		public override ConjuntoTablas Tablas(QueTablas queTablas)
 		{
 			ConjuntoTablas rta=new ConjuntoTablas();
 			foreach(Sqlizable s in Partes){
-				rta.AddRange(s.Tablas());
+				rta.AddRange(s.Tablas(queTablas));
 			}
 			return rta;
 		}
@@ -716,7 +678,7 @@ namespace Modelador
 					return false;
 				} 
 			}
-			public override ConjuntoTablas Tablas()
+			public override ConjuntoTablas Tablas(QueTablas queTablas)
 			{
 				ConjuntoTablas rta=new ConjuntoTablas();
 				// rta.Add(CampoSumar.TablaContenedora);

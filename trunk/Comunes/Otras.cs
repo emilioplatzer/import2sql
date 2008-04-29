@@ -31,12 +31,27 @@ namespace Comunes
 	    }
 	}
 	public class Objeto{
-		const bool condebug=true;
+		const bool condebug=false;
 		private static string debug(string frase){
 			if(condebug){
 				System.Console.Write(frase);
 			}
 			return frase;
+		}
+		private static string ExpandirMiembros<T>(Conjunto<Object> vistos,Conjunto<T> conj,int identacion,bool comprimirLineas){
+			string FinLinea;
+			if(comprimirLineas){
+				FinLinea="";
+			}else{
+				FinLinea="\n";
+			}
+			int anchoTab=3;
+			string margen=new string(' ',(identacion+1)*anchoTab);
+			StringBuilder rta=new StringBuilder();
+			foreach(T objetoValor in conj.Keys){
+				rta.Append(debug(margen+"+"+ExpandirMiembros(vistos,objetoValor,identacion+1,comprimirLineas)+FinLinea));
+			}
+			return rta.ToString();
 		}
 		private static string ExpandirMiembros(Conjunto<Object> vistos,Object o,int identacion,bool comprimirLineas){
 			string FinLinea;
@@ -147,11 +162,9 @@ namespace Comunes
 			ParametrosPrueba pNO=new ParametrosPrueba(ParametrosPrueba.LeerPorDefecto.NO);
 			Assert.AreEqual("ParametrosPrueba{\n   DirUno:null\n   Frase:null\n   Cantidad:0\n   Fecha:01/01/0001 0:00:00\n}\n",Objeto.ExpandirMiembros(pNO));
 			ParametrosPrueba pSI=new ParametrosPrueba(ParametrosPrueba.LeerPorDefecto.SI);
-			System.Console.WriteLine(Objeto.ExpandirMiembros(pSI));
 			Assert.AreEqual("ParametrosPrueba{\n   DirUno:\"c:\\temp\\aux\"\n   Frase:\"No hay futuro\"\n   Cantidad:-1\n   Fecha:01/02/2003 0:00:00\n}\n",Objeto.ExpandirMiembros(pSI));
 			// Assert.Ignore("Ojo que esto falla la primera vez que se usa");
 			string[] frases={"hola", "che"};
-			System.Console.WriteLine(Objeto.ExpandirMiembros(frases));
 			Assert.AreEqual(Cadena.Simplificar("String[]=[0:\"hola\" 1:\"che\"]"),Cadena.Simplificar(Objeto.ExpandirMiembros(frases)));
 		}
 	}
@@ -199,6 +212,8 @@ namespace Comunes
 		}
 	}
 	public class Conjunto<T>:System.Collections.Generic.Dictionary<T, int>{
+		public Conjunto(){}
+		public Conjunto(T t){ this.Add(t); }
 		Conjunto<T> AddAdd(T t,int cuanto){
 			if(this.ContainsKey(t)){
 				this[t]+=cuanto;
@@ -225,6 +240,14 @@ namespace Comunes
 		public bool Contains(T t){
 			return ContainsKey(t);
 		}
+		public override string ToString(){
+			StringBuilder rta=new StringBuilder();
+			Separador coma=new Separador("<","; ");
+			foreach(System.Collections.Generic.KeyValuePair<T, int> t in this){
+				rta.Append(coma+t.Key.ToString());
+			}
+			return rta.ToString()+">";
+		}
 	}
 	[TestFixture]
 	public class prConjunto{
@@ -233,6 +256,10 @@ namespace Comunes
 			Conjunto<string> colores=new Conjunto<string>();
 			colores.AddRange("Rojo","Verde","Azul");
 			Assert.IsTrue(colores.Contains("Verde"));
+			Conjunto<string> otroscolores=new Conjunto<string>();
+			otroscolores.AddRange("Amarillo","Naranja");
+			colores.AddRange(otroscolores);
+			Assert.AreEqual("<Rojo; Verde; Azul; Amarillo; Naranja>",colores.ToString());
 		}
 	}
 	public class UnSoloUso{

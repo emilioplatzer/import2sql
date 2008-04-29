@@ -100,12 +100,13 @@ namespace Modelador
 			rta.Add(this);
 			return rta;
 		}
-		public override ConjuntoTablas Tablas(){
-			ConjuntoTablas rta=new ConjuntoTablas();
-			if(TablaContenedora!=null){
-				rta.Add(TablaContenedora);
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
+			if(TablaContenedora==null){
+				return new ConjuntoTablas();
+			}else{
+				// return new ConjuntoTablas(TablaContenedora);
+				return TablaContenedora.Tablas(queTablas);
 			}
-			return rta;
 		}
 		public Campo Desc(){
 			this.DireccionOrderBy=" DESC";
@@ -170,9 +171,9 @@ namespace Modelador
 				return ExpresionBase;
 			}
 		}
-		public override ConjuntoTablas Tablas(){
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
 			ConjuntoTablas rta=new ConjuntoTablas();
-			rta.AddRange(ExpresionBase.Tablas());
+			rta.AddRange(ExpresionBase.Tablas(queTablas));
 			return rta;
 		}
 	}
