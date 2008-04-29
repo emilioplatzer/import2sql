@@ -328,6 +328,14 @@ namespace Modelador
 		public virtual Campo CampoIndirecto(Campo campo){
 			return CampoIndirecto(campo.Nombre);
 		}
+		public string MostrarCampos(){
+			StringBuilder rta=new StringBuilder();
+			Separador coma=new Separador(", ");
+			foreach(Campo c in Campos()){
+				rta.Append(coma+c.Nombre+"="+Cadena.DelValor(c.ValorSinTipo));
+			}
+			return rta.ToString();
+		}
 		public void EsFkDe(Tabla maestra,Fk.Tipo TipoFk,params Campo[] CamposReemplazo){
 			this.TablaRelacionada=maestra;
 			int cantidadCamposFk=CamposPk().Count;
@@ -509,6 +517,7 @@ namespace Modelador
 					s.Append(coma+c.ToSql(db)+c.DireccionOrderBy);
 				}
 			}
+			s.Append(";");
 			Sentencia=s.ToString();
 			Reset();
 		}

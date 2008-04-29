@@ -34,6 +34,7 @@ namespace BasesDatos
 		}
 		public override string ErrorCode_NoExisteTabla{ get{ return "ERROR [HY000]";}}
 		public override string ErrorCode_NoExisteVista{ get{ return "ERROR [HY000]";}}
+		public override bool UpdateSoloUnaTabla{ get{ return true; } }
 		public override string StuffTabla(string nombreTabla){
 			if(DebeStuffear(nombreTabla)){
 				return '"'+nombreTabla+'"';

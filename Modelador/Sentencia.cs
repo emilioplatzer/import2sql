@@ -26,6 +26,7 @@ namespace Modelador
 	public class ConjuntoTablas:Conjunto<Tabla>{
 		public ConjuntoTablas(){}
 		public ConjuntoTablas(Tabla t):base(t){}
+		public ConjuntoTablas(ConjuntoTablas t):base(t){}
 	};
 	/*
 	public class ConjuntoTablas:System.Collections.Generic.Dictionary<Tabla, int>{
@@ -205,7 +206,8 @@ namespace Modelador
 			}
 			public override string ToSql(BaseDatos db)
 			{
-				return CampoAsignado.ToSql(db)+"="+ValorAsignar.ToSql(db);
+				return ((db.UpdateConJoin)?CampoAsignado.ToSql(db):CampoAsignado.NombreCampo)
+					+"="+ValorAsignar.ToSql(db);
 			}
 			public override bool CandidatoAGroupBy{ 
 				get{
@@ -406,7 +408,7 @@ namespace Modelador
 				rta.Append("UPDATE ");
 				SentenciaUpdate su=s as SentenciaUpdate;
 				ConjuntoTablas suTablas=su.Tablas(QueTablas.AlFrom);
-				if(suTablas.Count<=1 || !db.UpdateConJoin){
+				if((suTablas.Count<=1 || !db.UpdateConJoin) && db.UpdateSoloUnaTabla){
 					su.TablaBase.Alias=null;
 				}
 				rta.Append(su.TablaBase.ToSql(db));
@@ -465,7 +467,7 @@ namespace Modelador
 				}
 				Separador setComa=new Separador(" SET ",",\n ");
 				foreach(SentenciaUpdate.Sets p in su.ParteSet){
-					rta.Append(setComa+p.CampoAsignado.ToSql(db)+"="+prefijoSet+p.ValorAsignar.ToSql(db)+sufijoSet);
+					rta.Append(setComa+(db.UpdateConJoin?p.CampoAsignado.ToSql(db):p.CampoAsignado.NombreCampo)+"="+prefijoSet+p.ValorAsignar.ToSql(db)+sufijoSet);
 				}
 				foreach(Sqlizable p in su.PartesWhere()){
 					rta.Append(p.ToSql(db));
@@ -651,9 +653,6 @@ namespace Modelador
 					return rta.ToString();
 				}else{
 					Tabla TablaSumandis=CampoSumar.TablaContenedora;
-					if(TablaSumandis.Alias==null){
-						TablaSumandis.Alias="zz";
-					}
 					rta.Append("(SELECT "+PreOperador+Operador+"("+PostOperador+CampoSumar.ToSql(db)+")".PadRight(Cadena.CantidadOcurrencias('(',PreOperador+PostOperador)+1,')')+
 					           " FROM "
 					           +TablaSumandis.ToSql(db));
@@ -680,9 +679,11 @@ namespace Modelador
 			}
 			public override ConjuntoTablas Tablas(QueTablas queTablas)
 			{
-				ConjuntoTablas rta=new ConjuntoTablas();
-				// rta.Add(CampoSumar.TablaContenedora);
-				return rta;
+				if(queTablas==QueTablas.AlFrom){
+					return new ConjuntoTablas();
+				}else{
+					return new ConjuntoTablas(CampoSumar.TablaContenedora.Tablas(queTablas));
+				}
 			}
 		}
 	}

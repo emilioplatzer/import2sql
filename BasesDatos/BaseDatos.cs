@@ -125,7 +125,7 @@ namespace BasesDatos
 		public bool EliminarTablaSiExiste(string nombreTabla){
 			Assert.IsNotNull(cmd);
 			try{
-				ExecuteNonQuery("DROP TABLE "+StuffTabla(nombreTabla));
+				ExecuteNonQuery("DROP TABLE "+StuffTabla(nombreTabla)+";");
 				return true;
 			}catch(DbException ex){
 				if(ex.Message.StartsWith(ErrorCode_NoExisteTabla)){
@@ -205,6 +205,7 @@ namespace BasesDatos
 		public virtual string OperadorConcatenacionDerecha{ get{ return ")"; } } 
 		public abstract bool UpdateConJoin{ get; }
 		public virtual bool UpdateSelectSumViaDSum{ get{ return false; } }
+		public virtual bool UpdateSoloUnaTabla{ get{ return false; } }
 		public abstract bool InternosForzarAs{ get; } 
 	}
 	public class SentenciaSql{

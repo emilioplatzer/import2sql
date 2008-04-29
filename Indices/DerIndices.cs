@@ -55,14 +55,11 @@ namespace Indices
 		public CampoLogico cEsProducto;
 		[Fk] public Agrupaciones fkAgrupaciones;
 		[FkMixta("padre")] public Grupos fkGrupoPadre;
-		public ExpresionSql InPadresWhere(ExpresionSql e){
+		public ExpresionSql InPadresWhere(int nivel){
 			return new ExpresionSql(
 				this.cGrupoPadre,
-				new LiteralSql(" IN (SELECT "),
-				this.cGrupo,
-				new LiteralSql(" FROM grupos WHERE "),
-				e,
-				new LiteralSql(")"));
+				new LiteralSql(" IN (SELECT grupo FROM grupos WHERE nivel="+nivel.ToString()+")")
+				);
 		}
 	}
 	public class Numeros:Tabla{
@@ -90,6 +87,14 @@ namespace Indices
 		[FkMixta("ant")] public CampoPeriodo cPeriodoAnterior;
 		[Fk] public Periodos fkPeriodos;
 		[FkMixta("ant")] public Periodos fkCalculoAnterior;
+		public ExpresionSql SiguienteDe(Tabla t){
+			if(t.TieneElCampo(this.cCalculo)){
+				return this.cPeriodoAnterior.Igual(t.CampoIndirecto(this.cPeriodo))
+					.And(this.cCalculo.Igual(t.CampoIndirecto(this.cCalculo)));
+			}else{
+				return this.cPeriodoAnterior.Igual(t.CampoIndirecto(this.cPeriodo));
+			}
+		}
 	}
 	public class CalProd:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;

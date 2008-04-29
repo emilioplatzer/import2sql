@@ -64,7 +64,7 @@ namespace Indices
 				for(int i=0;i<10;i++){
 					ej.Ejecutar(
 						new SentenciaUpdate(grupos,grupos.cNivel.Set(i+1))
-						.Where(grupos.InPadresWhere(grupos.cNivel.Igual(i)))
+						.Where(grupos.InPadresWhere(i))
 					);
 				}
 				for(int i=9;i>=0;i--){ // Subir ponderadores nulos
@@ -159,6 +159,7 @@ namespace Indices
 			Calculos cals=new Calculos();
 			foreach(Calculos cal in new Calculos().Algunos(db,cals.cEsPeriodoBase.Igual(true),cals.cPeriodo.Desc())){
 				using(Ejecutador ej=new Ejecutador(db,cal)){
+					/*
 					CalEspInf cei=new CalEspInf();
 					RelVar rv=new RelVar();
 					rv.UsarFk();
@@ -173,31 +174,53 @@ namespace Indices
 					cei0.LiberadaDelContextoDelEjecutador=true;
 					// c.EsFkDe(cei0,c.cPeriodoAnterior.Es(cei0.cPeriodo));
 					c.EsFkDe(cei0,cei0.cPeriodo.Es(c.cPeriodoAnterior));
-					cei.Alias="cx";
-					ej.Ejecutar(
+					// cei.Alias="cx";
+					ej.Ejecutar( // agregar los registros del mes anterior
 						new SentenciaInsert(cei)
 						.Select(c,cei.cPromedio.Es(null),cei0)
 						.Where(cei.NoExistePara(c,cei0))
 					);
-					Calculos cc=new Calculos();
-					/*
+					NovEspInf n=new NovEspInf();
+					ej.Ejecutar( // agregar las altas
+						new SentenciaInsert(cei)
+						.Select(cei.cPromedio.Es(null),n)
+						.Where(cei.NoExistePara(n)
+						       ,n.cEstado.Igual(NovEspInf.Estados.Alta)
+						       .Or(n.cEstado.Igual(NovEspInf.Estados.Reemplazo)))
+					);
+					ej.Ejecutar( // elimina los registros que el mes anterior no estuvieron
+						new SentenciaInsert(cei)
+						.Select(c,cei.cPromedio.Es(null),cei0)
+						.Where(cei.NoExistePara(c,cei0))
+					);
+					NovEspInf n=new NovEspInf();
+					ej.Ejecutar( // agregar las altas
+						new SentenciaInsert(cei)
+						.Select(cei.cPromedio.Es(null),n)
+						.Where(cei.NoExistePara(n)
+						       ,n.cEstado.Igual(NovEspInf.Estados.Alta)
+						       .Or(n.cEstado.Igual(NovEspInf.Estados.Reemplazo)))
+					);
+					*/
 					NovEspInf nei=new NovEspInf();
 					CalEspInf cei=new CalEspInf();
 					CalEspInf cei0=new CalEspInf();
+					cei0.LiberadaDelContextoDelEjecutador=true;
 					Calculos c=new Calculos();
 					RelVar rv=new RelVar();
-					c.EsFkDe(cei0,cei0.cPeriodo.Es(c.cPeriodoAnterior));
 					ej.Ejecutar(
 						new SentenciaInsert(cei)
 						.Select(c.cPeriodo,
+						        cei.cPromedio.Es(null),
 								cei.cAntiguedadConPrecio.Es(cei0.cAntiguedadConPrecio.Mas(1)),
 						        cei.cAntiguedadSinPrecio.Es(cei0.cAntiguedadSinPrecio.Mas(1)),
 						        cei0)
+						.Where(c.SiguienteDe(cei0))
 					);
 					ej.Ejecutar(
 						new SentenciaInsert(cei)
 						.Select(nei)
-						.Where(cei.NoExistePara(nei))
+						.Where(cei.NoExistePara(nei),nei.cEstado.Igual(NovEspInf.Estados.Alta).Or(nei.cEstado.Igual(NovEspInf.Estados.Reemplazo)))
 					);
 					CalEspInf ceiss=new CalEspInf();
 					rv.UsarFk();
@@ -208,7 +231,7 @@ namespace Indices
 					ej.Ejecutar(
 						new SentenciaUpdate(cei,cei.cPromedio.Set(cei.SelectSuma(ceiss.cPromedio)))
 					);
-					*/
+					// rv.UsarFk();
 				}
 			}
 		}
@@ -619,6 +642,7 @@ namespace Indices
 			cantidad=0;
 			foreach(CalEspInf cei in new CalEspInf().Todos(repo.db)){
 				Assert.IsTrue(cantidad<esperado2.GetLength(0),"Hay resultados de más");
+				System.Console.WriteLine("Registro {0}={1}",cantidad,cei.MostrarCampos());
 				Assert.AreEqual(esperado2[cantidad,2],cei.cInformante.Valor);
 				Assert.AreEqual(esperado2[cantidad,0],cei.cPeriodo.Valor);
 				Assert.AreEqual(esperado2[cantidad,1],cei.cEspecificacion.Valor);
