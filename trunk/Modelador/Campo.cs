@@ -242,7 +242,14 @@ namespace Modelador
 		}
 		public CampoAlias EsExpresionAgrupada(string operador,ExpresionSql expresion,string subOperador,string postOperador){
 			ListaSqlizable<Sqlizable> nueva=new ListaSqlizable<Sqlizable>();
-			nueva.Add(new LiteralSql(operador+"("+subOperador));
+			if(subOperador.Contains("LOG")){
+				int pos=subOperador.IndexOf("LOG");
+				nueva.Add(new LiteralSql(operador+"("+subOperador.Substring(0,pos)));
+				nueva.Add(new FuncionLn());
+				nueva.Add(new LiteralSql(subOperador.Substring(pos+3)));
+			}else{
+				nueva.Add(new LiteralSql(operador+"("+subOperador));
+			}
 			nueva.AddRange(expresion.Partes);
 			nueva.Add(new LiteralSql(postOperador+")"));
 			return new CampoAlias(this,true,nueva);

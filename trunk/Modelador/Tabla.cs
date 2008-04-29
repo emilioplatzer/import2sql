@@ -611,6 +611,11 @@ namespace Modelador
 			return db.OperadorConcatenacionMedio;
 		}
 	}
+	public class FuncionLn:OperadorDependienteDeLaBase{
+		public override string ToSql(BaseDatos db){
+			return db.FuncionLn;
+		}
+	}
 	public class ValorSql<T>:Sqlizable{
 		public T Valor;
 		public ValorSql(T Valor){

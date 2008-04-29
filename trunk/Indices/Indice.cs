@@ -228,9 +228,28 @@ namespace Indices
 					ceiss.SubSelect(rv.cPeriodo,ceiss.cCalculo.Es(cal.cCalculo.Valor),ceiss.cPromedio.EsPromedioGeometrico(rv.cPrecio),rv.cInformante,v.cEspecificacion)
 						.Where(rv.cPrecio.Mayor(0));
 					cei.EsFkDe(ceiss);
+					if(db is BdAccess){
+						db.EliminarVistaSiExiste("RelEsp");
+						ej.ExecuteNonQuery(
+							@"create view RelEsp as
+SELECT r.periodo, -1 AS calculo, EXP(AVG(LOG(r.precio))) AS promedio, r.informante, v.especificacion FROM relvar r, variedades v WHERE r.precio>0 AND v.variedad=r.variedad GROUP BY r.periodo, r.informante, v.especificacion
+							"
+						);
+						ej.ExecuteNonQuery(
+							@"
+UPDATE calespinf c SET c.promedio=
+   DLOOKUP('promedio',
+     'RelEsp',
+	 'periodo=''' & c.periodo & ''' AND calculo=' & c.calculo & ' AND especificacion=''' & c.especificacion & ''' AND informante=' & c.informante & '')
+ WHERE c.periodo='"+cal.cPeriodo.Valor+@"'
+ AND c.calculo=-1; 
+							"
+						);
+					}else{
 					ej.Ejecutar(
 						new SentenciaUpdate(cei,cei.cPromedio.Set(cei.SelectSuma(ceiss.cPromedio)))
 					);
+					}
 					// rv.UsarFk();
 				}
 			}
@@ -502,7 +521,7 @@ namespace Indices
 		public ProbarIndiceD3(){
 			BaseDatos db;
 			#pragma warning disable 162
-			switch(1){ 
+			switch(3){ 
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					repo=new RepositorioPruebaIndice(db);
@@ -595,7 +614,7 @@ namespace Indices
 			CargarPrecio("200112","P100"	,4,3.0);
 			CargarPrecio("200201","P100"	,1,2.0);
 			CargarPrecio("200201","P100"	,4,3.0);
-			CargarPrecio("200201","P100/2"	,1,3.60);
+			CargarPrecio("200201","P100/2"	,4,3.60);
 			CargarPrecio("200202","P100"	,1,2.0);
 			CargarPrecio("200202","P100"	,2,2.2);
 			CargarPrecio("200202","P100/2"	,1,2.60);
@@ -635,6 +654,7 @@ namespace Indices
 				{"200112","P100"	,4,3.0},
 				{"200112","P101"	,2,12.2},
 				{"200201","P100"	,1,2.0},
+				{"200201","P100"	,2,null},
 				{"200201","P100"	,4,Math.Sqrt(3.0*3.60)},
 				{"200201","P101"	,2,12.2},
 				{"200202","P100"	,1,Math.Sqrt(2.0*2.60)},
@@ -647,7 +667,9 @@ namespace Indices
 				Assert.AreEqual(esperado2[cantidad,0],cei.cPeriodo.Valor);
 				Assert.AreEqual(esperado2[cantidad,1],cei.cEspecificacion.Valor);
 				Assert.AreEqual(-1,cei.cCalculo.Valor);
-				Assert.AreEqual((double)esperado2[cantidad,3],(double)cei.cPromedio.Valor,0.001);
+				if(cantidad!=5){ // 5 es nulo
+					Assert.AreEqual((double)esperado2[cantidad,3],(double)cei.cPromedio.Valor,0.001);
+				}
 				cantidad++;
 			}
 			Assert.AreEqual(esperado2.GetLength(0),cantidad,"cantidad de registros vistos");
