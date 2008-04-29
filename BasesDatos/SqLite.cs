@@ -50,6 +50,7 @@ namespace BasesDatos
 		}
 		public override bool UpdateConJoin{ get{ return false; } }
 		public override bool InternosForzarAs { get { return true; } }
+		public override string FuncionLn{ get{ return "LOGoLN";} }
 	}
 	[TestFixture]
 	public class ProbarSqLite{

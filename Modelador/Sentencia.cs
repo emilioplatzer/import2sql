@@ -615,7 +615,9 @@ namespace Modelador
 					rta.Append(PreOperador+"D"+Operador+"("+PostOperador+"'"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
 					           +db.StuffTabla(TablaSumandis.NombreTabla));
 					           */
-					rta.Append(PreOperador+"D"+Operador+"("+PostOperador+"'"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
+					rta.Append(PreOperador+"D"+Operador+"("+
+					           (PostOperador=="LOG("?db.FuncionLn+"(":PostOperador)
+			                   +"'"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
 					           +TablaSumandis.ToSql(db));
 					Separador and=new Separador("','"," AND ");
 					if(Expresion!=null){

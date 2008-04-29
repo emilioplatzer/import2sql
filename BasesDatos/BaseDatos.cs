@@ -207,6 +207,7 @@ namespace BasesDatos
 		public virtual bool UpdateSelectSumViaDSum{ get{ return false; } }
 		public virtual bool UpdateSoloUnaTabla{ get{ return false; } }
 		public abstract bool InternosForzarAs{ get; } 
+		public abstract string FuncionLn{ get; }
 	}
 	public class SentenciaSql{
 		StringBuilder sentencia;
