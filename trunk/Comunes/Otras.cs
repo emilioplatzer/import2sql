@@ -214,6 +214,7 @@ namespace Comunes
 	public class Conjunto<T>:System.Collections.Generic.Dictionary<T, int>{
 		public Conjunto(){}
 		public Conjunto(T t){ this.Add(t); }
+		public Conjunto(Conjunto<T> t){ this.AddRange(t); }
 		Conjunto<T> AddAdd(T t,int cuanto){
 			if(this.ContainsKey(t)){
 				this[t]+=cuanto;

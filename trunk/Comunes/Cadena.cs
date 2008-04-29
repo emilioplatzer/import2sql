@@ -108,6 +108,16 @@ namespace Comunes
 				return frase+ultimosCaracteres;
 			}
 		}
+		/// <summary>
+		/// Devuelve un string aún cuando el parámetro es nulo
+		/// </summary>
+		public static string DelValor(object o){
+			if(o==null){
+				return "#null#";
+			}else{
+				return o.ToString();
+			}
+		}
 	}
 
 	[TestFixture]
