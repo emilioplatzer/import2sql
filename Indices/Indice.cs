@@ -163,12 +163,23 @@ namespace Indices
 					RelVar rv=new RelVar();
 					rv.UsarFk();
 					Variedades v=rv.fkVariedades;
-					ej.Ejecutar(
+					ej.Ejecutar( // promediar los precios efectivamente relevados
 						new SentenciaInsert(cei)
 						.Select(rv,cei.cCalculo.Es(cal.cCalculo.Valor),v.cEspecificacion,cei.cPromedio.EsPromedioGeometrico(rv.cPrecio))
 						.Where(rv.cPrecio.Mayor(0))
 					);
-					ej.E
+					CalEspInf cei0=new CalEspInf();
+					Calculos c=new Calculos();
+					cei0.LiberadaDelContextoDelEjecutador=true;
+					// c.EsFkDe(cei0,c.cPeriodoAnterior.Es(cei0.cPeriodo));
+					c.EsFkDe(cei0,cei0.cPeriodo.Es(c.cPeriodoAnterior));
+					cei.Alias="cx";
+					ej.Ejecutar(
+						new SentenciaInsert(cei)
+						.Select(c,cei.cPromedio.Es(null),cei0)
+						.Where(cei.NoExistePara(c,cei0))
+					);
+					Calculos cc=new Calculos();
 					/*
 					NovEspInf nei=new NovEspInf();
 					CalEspInf cei=new CalEspInf();
@@ -468,7 +479,7 @@ namespace Indices
 		public ProbarIndiceD3(){
 			BaseDatos db;
 			#pragma warning disable 162
-			switch(3){ 
+			switch(1){ 
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					repo=new RepositorioPruebaIndice(db);

@@ -36,6 +36,7 @@ namespace Modelador
 		public bool LiberadaDelContextoDelEjecutador; // Del contexto del ejecutador
 		public bool RegistroConDatos=false;
 		public SentenciaSelect SentenciaSubSelect;
+		public SelectInterno SelectInterno;
 		public Tabla()
 		{
 			Construir();
@@ -256,18 +257,19 @@ namespace Modelador
 			foreach(FieldInfo m in ms){
 				if(m.FieldType.IsSubclassOf(typeof(Campo))){
 					Campo c=(Campo)m.GetValue(this);
-					System.Console.WriteLine("ver "+c.NombreCampo);
-					System.Console.WriteLine("valor "+SelectAbierto[c.NombreCampo]);
 					c.AsignarValor(SelectAbierto[c.NombreCampo]);
 				}
   			}
 		}
-		public override ConjuntoTablas Tablas(){
-			ConjuntoTablas rta=new ConjuntoTablas();
-			if(SentenciaSubSelect==null){
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
+			if(SelectInterno==null){
+				return new ConjuntoTablas(this);
+			}else{
+				ConjuntoTablas rta=new ConjuntoTablas();
+				rta.AddRange(SelectInterno.Tablas(queTablas));
 				rta.Add(this);
+				return rta;
 			}
-			return rta;
 		}
 		public override ListaSqlizable<Campo> Campos(){
 			return Campos(null);
@@ -380,7 +382,6 @@ namespace Modelador
 	  								foreach(Campo c in fkTabla.CamposPk()){
 	  									Campos.Add((fkTabla.CamposRelacionadosFk[c]).UnicoCampo().ValorSinTipo);
 	  								}
-	  								System.Console.WriteLine("Leyendo fkTabla {0} \n{1}",m.Name,Objeto.ExpandirMiembros(Campos.ToArray()));
 	  								fkTabla.Buscar(db,Campos.ToArray());
 	  							}
 	  						}
@@ -392,9 +393,9 @@ namespace Modelador
 		}
 		public override string ToSql(BaseDatos db)
 		{
-			return (SentenciaSubSelect==null
+			return (SelectInterno==null
 					?db.StuffTabla(this.NombreTabla)
-					:"("+new Ejecutador(db).Dump(SentenciaSubSelect,true)+")")
+					:"("+SelectInterno.ToSql(db)+")")
 				+(this.Alias==null?"":" "+this.Alias);
 		}
 		public override bool CandidatoAGroupBy{ 
@@ -423,6 +424,7 @@ namespace Modelador
 		}
 		public SentenciaSelect SubSelect(params Campo[] Campos){
 			SentenciaSubSelect=new SentenciaSelect(Campos);
+			SelectInterno=new SelectInterno(SentenciaSubSelect);
 			return SentenciaSubSelect;
 		}
 		public ExpresionSql NoExistePara(params Campable[] CamposOTablas){
@@ -434,7 +436,6 @@ namespace Modelador
 					if(this.TieneElCampo(c) && c.EsPk){
 						ExpresionesWhere.Add(this.CampoIndirecto(c).Igual(c));
 						if(c.TablaContenedora!=this){
-							System.Console.WriteLine("Tabla libre: "+c.TablaContenedora.NombreTabla);
 							TablasLibres.Add(c.TablaContenedora);
 						}
 					}
@@ -561,7 +562,7 @@ namespace Modelador
 	}
 	public abstract class Sqlizable{
 		public abstract string ToSql(BaseDatos db);
-		public abstract ConjuntoTablas Tablas();
+		public abstract ConjuntoTablas Tablas(QueTablas queTablas);
 		public abstract bool CandidatoAGroupBy{ get; }
 	}
 	public abstract class Campable:Sqlizable{
@@ -576,15 +577,14 @@ namespace Modelador
 			return Literal;
 		}
 		public override bool CandidatoAGroupBy{ get{return false;} }
-		public override ConjuntoTablas Tablas(){
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
 			return new ConjuntoTablas();
 		}
 	}
 	public abstract class OperadorDependienteDeLaBase:Sqlizable{
 		public override bool CandidatoAGroupBy{ get{return false;} }
-		public override ConjuntoTablas Tablas(){
-			ConjuntoTablas rta=new ConjuntoTablas();
-			return rta;
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
+			return new ConjuntoTablas();
 		}
 	}
 	public class OperadorConcatenacionIzquierda:OperadorDependienteDeLaBase{
@@ -622,9 +622,9 @@ namespace Modelador
 				return false;
 			}
 		}
-		public override ConjuntoTablas Tablas(){
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
 			if(Valor is Sqlizable){
-				return (Valor as Sqlizable).Tablas();
+				return (Valor as Sqlizable).Tablas(queTablas);
 			}
 			return new ConjuntoTablas();
 		}
@@ -636,7 +636,7 @@ namespace Modelador
 			return "null";
 		}
 		public override bool CandidatoAGroupBy{ get{return false;} }
-		public override ConjuntoTablas Tablas(){
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
 			return new ConjuntoTablas();
 		}
 	}

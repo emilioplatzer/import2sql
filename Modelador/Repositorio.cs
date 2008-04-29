@@ -22,7 +22,6 @@ namespace Modelador
 			this.db=db;
 		}
 		public static void CrearTabla(Assembly assem,BaseDatos db,Type t){
-			System.Console.WriteLine(t.FullName);
 			bool crear=true;
 			foreach(System.Attribute attr in t.GetCustomAttributes(true)){
 				if(attr is Vista){
@@ -39,7 +38,6 @@ namespace Modelador
       		System.Type[] ts=assem.GetExportedTypes();
 			foreach(Type t in ts){
       			if(t.Namespace==NombreNamespace){
-      				System.Console.WriteLine("recorriendo [{0}].namespace={1}",t.FullName,t.Namespace);
 					if(t.IsSubclassOf(typeof(Tabla))){
 						CrearTabla(assem,db,t);
 					}
@@ -56,7 +54,6 @@ namespace Modelador
 			}
 		}
 		private static void RegistrarParaEliminarTabla(Assembly assem,System.Collections.Generic.Stack<string> NombresTablasABorrar,Type t){
-			System.Console.WriteLine(t.FullName);
 			bool borrar=true;
 			foreach(System.Attribute attr in t.GetCustomAttributes(true)){
 				if(attr is Vista){
