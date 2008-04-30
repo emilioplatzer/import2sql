@@ -72,7 +72,7 @@ namespace Tareas
 		}
 		[Test]
 		public void Proceso(){
-			string nombreArchivo="tempAccesABorrar2.mdb";
+			string nombreArchivo="tempAccesABorrar22.mdb";
 			string directorio="temp_borrar";
 			Archivo.Borrar(nombreArchivo);
 			Assert.IsTrue(!Archivo.Existe(nombreArchivo),"no debería existir");
