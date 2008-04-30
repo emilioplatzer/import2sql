@@ -26,7 +26,12 @@ namespace Indices
 	public class CampoPrecio:CampoRealOpcional{};
 	public class CampoIndice:CampoReal{};
 	public class CampoFactor:CampoReal{};
-	public class CampoPeriodo:CampoChar{ public CampoPeriodo():base(4+2){} }
+	public class CampoPeriodo:CampoChar{ 
+		public CampoPeriodo():base(4+2
+		                           #if Semanal
+		                           +1
+		                           #endif
+		                          ){} }
 	public class CampoVersion:CampoEntero{};
 	public class CampoInformante:CampoEntero{};
 	public class CampoTipo:CampoChar{ public CampoTipo():base(1){} };
@@ -75,6 +80,9 @@ namespace Indices
 		[Pk] public CampoPeriodo cPeriodo;
 		public CampoEntero cAno;
 		public CampoEntero cMes;
+		#if Semanal
+		public CampoEntero cSemana;
+		#endif
 		public Periodos(BaseDatos db,int ano, int mes){
 			LeerNoPk(db,"ano",ano,"mes",mes);
 		}
@@ -137,12 +145,12 @@ namespace Indices
 		public CampoPonderador cPonderadorTipoInf;
 		[Fk] public Productos fkProductos;
 	}
-	public class CalTipoInf:Tabla{
+	public class CalProdTI:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
 		[Pk] public CampoProducto cProducto;
 		[Pk] public CampoTipo cTipoInf;
-		public CampoPrecio cPromedio;
+		public CampoPrecio cPromedioProdTI;
 		[Fk] public Periodos fkPeriodos;
 		[Fk] public Calculos fkCalculos;
 		[Fk] public Productos fkProductos;
@@ -155,10 +163,11 @@ namespace Indices
 		public CampoProducto cProducto;
 		[Fk] public Productos fkProductos;
 	}
-	public class CalEsp:Tabla{
+	public class CalEspTI:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
 		[Pk] public CampoEspecificacion cEspecificacion;
+		[Pk] public CampoTipo cTipoInf;
 		public CampoPrecio cPromedioEsp;
 		public CampoPrecio cPromedioEspMatchingActual;
 		public CampoPrecio cPromedioEspMatchingAnterior;
@@ -177,6 +186,7 @@ namespace Indices
 		[Fk] public Periodos fkPeriodos;
 		[Fk] public Calculos fkCalculos;
 		[Fk] public Especificaciones fkEspecificaciones;
+		[Fk] public Informantes fkInformantes;
 	}
 	public class NovEspInf:Tabla{
 		public enum Estados{Alta,Baja,Reemplazo};

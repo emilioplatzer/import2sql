@@ -92,11 +92,13 @@ namespace Tareas
 			repo=new RepositorioIndice(db);
 		}
 		public void ArmarBase(){
+			System.Console.WriteLine("Recreando la base");
 			Archivo.Borrar(param.NombreBase);
 			BdAccess.Crear(param.NombreBase);
 			AbrirBase();
 			repo.CrearTablas();
 			ProcesoLevantarPlanillas.CrearTablaReceptora(db);
+			System.Console.WriteLine("Importando codigos");
 			db.EjecutrarSecuencia(
 				@"INSERT INTO productos (producto,nombreproducto) "+
 				@"SELECT codigoproducto,nombreproducto FROM productos IN '"+param.NombreBaseCodigos+"';"+
@@ -132,6 +134,63 @@ namespace Tareas
 					GROUP BY PreciosImportados.Cod_Var, PreciosImportados.Nombre, PreciosImportados.Especificacion, PreciosImportados.Variedad, PreciosImportados.Origen
 					"
 			);
+			string periodoAnterior;
+			string periodoActual;
+			periodoAnterior="null";
+			for(int mes=4;mes<=DateTime.Today.Month;mes++){
+				for(int semana=1;semana<=4;semana++){
+					periodoActual="'20080"+mes.ToString()+semana.ToString()+"'";
+					db.EjecutrarSecuencia(
+						@"INSERT INTO periodos VALUES ("+periodoActual+",2008,"+mes.ToString()+","+semana.ToString()+@");"+
+						@"INSERT INTO calculos VALUES ("+periodoActual+",0,'N',"+periodoAnterior+")"
+					);
+					periodoAnterior=periodoActual;
+				}
+			}
+			{
+				periodoAnterior="null";
+				int mes=4;
+				for(int semana=4;semana>=1;semana--){
+					periodoActual="'20080"+mes.ToString()+semana.ToString()+"'";
+					db.EjecutrarSecuencia(
+						@"INSERT INTO calculos VALUES ("+periodoActual+",-1,'S',"+periodoAnterior+")"
+					);
+					periodoAnterior=periodoActual;
+				}
+			}
+			System.Console.WriteLine("Importando Precios");
+			{
+			db.EjecutrarSecuencia(
+				@"CREATE INDEX PreciosImportados_ind ON PreciosImportados (ano,mes,variedad,informante);"+
+				@"CREATE INDEX PreciosImportados_ind2 ON PreciosImportados (variedad,informante,ano,mes);"+
+				@"CREATE UNIQUE INDEX periodos_ind ON periodos (ano,mes,semana);"+
+				@"INSERT INTO RelVar 
+				    SELECT p.periodo, r.cod_var as variedad, r.cod_info as informante, max(r.precio) as precio
+				      FROM periodos p,
+				      	[preciosimportados] r,
+				      	informantes i,
+				      	variedades v
+				      WHERE p.ano=r.ano
+				        AND p.mes=r.mes
+				        AND p.semana=r.semana
+				        AND r.cod_var=v.variedad
+				        AND r.cod_info=i.informante
+				        AND r.precio>0
+				        AND r.semana>0
+				        AND r.mes>3
+				        AND r.mes<10
+				        AND r.cod_var IN ('P102','P180','P332','P391','P495')
+				      GROUP BY p.periodo, r.cod_var, r.cod_info 
+				"
+			);
+			}
+			repo.CalcularMatrizBase(2);
+			Calculos cals=new Calculos();
+			string ultimoCodigoPeriodo="";
+			foreach(Calculos cal in new Calculos().Algunos(db,cals.cEsPeriodoBase.Igual(false))){
+				repo.CalcularPreciosPeriodo(cal);
+				ultimoCodigoPeriodo=cal.cPeriodo.Valor;
+			}
 			db.Close();
 		}
 		public void Reponderar(){
