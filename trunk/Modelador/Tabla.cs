@@ -441,7 +441,7 @@ namespace Modelador
 			ConjuntoTablas TablasLibres=new ConjuntoTablas();
 			foreach(Campable cc in CamposOTablas){
 				foreach(Campo c in cc.Campos()){
-					if(this.TieneElCampo(c) && c.EsPk){
+					if(this.TieneElCampo(c) && this.CampoIndirecto(c).EsPk){
 						ExpresionesWhere.Add(this.CampoIndirecto(c).Igual(c));
 						if(c.TablaContenedora!=this){
 							TablasLibres.Add(c.TablaContenedora);

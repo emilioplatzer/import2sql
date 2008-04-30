@@ -129,7 +129,6 @@ namespace BasesDatos
 				return true;
 			}catch(DbException ex){
 				if(ex.Message.StartsWith(ErrorCode_NoExisteTabla)){
-					System.Console.WriteLine("EliminarTablaSiExiste. Ex:"+ex.Message);
 					return false; // ok, no existía la tabla por eso salto la excepción
 				}
 				System.Console.WriteLine("EliminarTablaSiExiste. Ex:"+ex.Message);
@@ -142,10 +141,10 @@ namespace BasesDatos
 				ExecuteNonQuery("DROP VIEW "+StuffTabla(nombreTabla));
 				return true;
 			}catch(DbException ex){
-				System.Console.WriteLine("EliminarVistaSiExiste. Ex:"+ex.Message);
 				if(ex.Message.StartsWith(ErrorCode_NoExisteVista)){
 					return false; // ok, no existía la tabla por eso salto la excepción
 				}
+				System.Console.WriteLine("EliminarVistaSiExiste. Ex:"+ex.Message);
 				throw;
 			}
 		}
