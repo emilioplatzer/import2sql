@@ -568,10 +568,14 @@ namespace Modelador
 			return (Campo)Partes[0];
 		}
 		public ExpresionSql Operado<T>(string OperadorTextual,T expresion){
-			return new ExpresionSql(this,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
+			if(OperadorTextual.Contains("(")){
+				return new ExpresionSql(this,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion),new LiteralSql(")".PadRight(Cadena.CantidadOcurrencias('(',OperadorTextual),')')));
+			}else{
+				return new ExpresionSql(this,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
+			}
 		}
 		public ExpresionSql Dividido<T2>(T2 Valor){
-			return Operado<T2>("/",Valor);
+			return Operado<T2>("/(",Valor);
 		}
 		public static ExpresionSql Agrupada<T>(string Operador, T expresion){
 			ExpresionSql nueva=new ExpresionSql(new LiteralSql(Operador+"("),new ValorSql<T>(expresion),new LiteralSql(")"));

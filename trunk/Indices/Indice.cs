@@ -202,55 +202,93 @@ namespace Indices
 						       .Or(n.cEstado.Igual(NovEspInf.Estados.Reemplazo)))
 					);
 					*/
-					NovEspInf nei=new NovEspInf();
-					CalEspInf cei=new CalEspInf();
-					CalEspInf cei0=new CalEspInf();
-					cei0.LiberadaDelContextoDelEjecutador=true;
-					Calculos c=new Calculos();
-					RelVar rv=new RelVar();
-					ej.Ejecutar(
-						new SentenciaInsert(cei)
-						.Select(c.cPeriodo,
-						        cei.cPromedio.Es(null),
-								cei.cAntiguedadConPrecio.Es(cei0.cAntiguedadConPrecio.Mas(1)),
-						        cei.cAntiguedadSinPrecio.Es(cei0.cAntiguedadSinPrecio.Mas(1)),
-						        cei0)
-						.Where(c.SiguienteDe(cei0))
-					);
-					ej.Ejecutar(
-						new SentenciaInsert(cei)
-						.Select(nei)
-						.Where(cei.NoExistePara(nei),nei.cEstado.Igual(NovEspInf.Estados.Alta).Or(nei.cEstado.Igual(NovEspInf.Estados.Reemplazo)))
-					);
-					CalEspInf ceiss=new CalEspInf();
-					rv.UsarFk();
-					Variedades v=rv.fkVariedades;
-					ceiss.SubSelect(rv.cPeriodo,ceiss.cCalculo.Es(cal.cCalculo.Valor),ceiss.cPromedio.EsPromedioGeometrico(rv.cPrecio),rv.cInformante,v.cEspecificacion)
-						.Where(rv.cPrecio.Mayor(0));
-					cei.EsFkDe(ceiss);
-					if(db is BdAccess){
-						db.EliminarVistaSiExiste("RelEsp");
-						ej.ExecuteNonQuery(
+					{
+						NovEspInf nei=new NovEspInf();
+						CalEspInf cei=new CalEspInf();
+						CalEspInf cei0=new CalEspInf();
+						cei0.LiberadaDelContextoDelEjecutador=true;
+						Calculos c=new Calculos();
+						RelVar rv=new RelVar();
+						ej.Ejecutar(
+							new SentenciaInsert(cei)
+							.Select(c.cPeriodo,
+							        cei.cPromedioEspInf.Es(null),
+									cei.cAntiguedadConPrecio.Es(cei0.cAntiguedadConPrecio.Mas(1)),
+							        cei.cAntiguedadSinPrecio.Es(cei0.cAntiguedadSinPrecio.Mas(1)),
+							        cei0)
+							.Where(c.SiguienteDe(cei0))
+						);
+						ej.Ejecutar(
+							new SentenciaInsert(cei)
+							.Select(nei)
+							.Where(cei.NoExistePara(nei),nei.cEstado.Igual(NovEspInf.Estados.Alta).Or(nei.cEstado.Igual(NovEspInf.Estados.Reemplazo)))
+						);
+						CalEspInf ceiss=new CalEspInf();
+						rv.UsarFk();
+						Variedades v=rv.fkVariedades;
+						ceiss.SubSelect(rv.cPeriodo,ceiss.cCalculo.Es(cal.cCalculo.Valor),ceiss.cPromedioEspInf.EsPromedioGeometrico(rv.cPrecio),rv.cInformante,v.cEspecificacion)
+							.Where(rv.cPrecio.Mayor(0));
+						cei.EsFkDe(ceiss);
+						if(db is BdAccess){
+							db.EliminarVistaSiExiste("RelEsp");
+							ej.ExecuteNonQuery(
 							@"create view RelEsp as
 SELECT r.periodo, -1 AS calculo, EXP(AVG(LOG(r.precio))) AS promedio, r.informante, v.especificacion FROM relvar r, variedades v WHERE r.precio>0 AND v.variedad=r.variedad GROUP BY r.periodo, r.informante, v.especificacion
 							"
-						);
-						ej.ExecuteNonQuery(
+							);
+							ej.ExecuteNonQuery(
 							@"
-UPDATE calespinf c SET c.promedio=
+UPDATE calespinf c SET c.promedioEspInf=
    DLOOKUP('promedio',
      'RelEsp',
 	 'periodo=''' & c.periodo & ''' AND calculo=' & c.calculo & ' AND especificacion=''' & c.especificacion & ''' AND informante=' & c.informante & '')
  WHERE c.periodo='"+cal.cPeriodo.Valor+@"'
  AND c.calculo=-1; 
 							"
+							);
+						}else{
+						ej.Ejecutar( // Calcular el promedio si hay
+							new SentenciaUpdate(cei,cei.cPromedioEspInf.Set(cei.SelectSuma(ceiss.cPromedioEspInf)))
 						);
-					}else{
-					ej.Ejecutar(
-						new SentenciaUpdate(cei,cei.cPromedio.Set(cei.SelectSuma(ceiss.cPromedio)))
-					);
+						}
+						CalEsp ce=new CalEsp();
+						CalEspInf cei1=new CalEspInf();
+						cei1.EsFkDe(cei0,cei1.cPeriodo.Es(c.cPeriodo));
+						ej.Ejecutar( // Calcular los relativos de imputación
+						    new SentenciaInsert(ce)
+						    .Select(c,cei1,ce.cPromedioEspMatchingActual.EsPromedioGeometrico(cei1.cPromedioEspInf),
+						            ce.cPromedioEspMatchingAnterior.EsPromedioGeometrico(cei0.cPromedioEspInf))
+						    .Where(cei1.cPromedioEspInf.Mayor(0),cei0.cPromedioEspInf.Mayor(0),c.SiguienteDe(cei0))
+						);
 					}
-					// rv.UsarFk();
+					{ // Imputación 
+						CalEspInf cei=new CalEspInf();
+						CalEsp ce=new CalEsp();
+						Calculos c=new Calculos();
+						CalEspInf cei0=new CalEspInf();
+						ce.EsFkDe(cei);
+						c.EsFkDe(cei);
+						cei0.EsFkDe(cei,cei0.cPeriodo.Es(c.cPeriodoAnterior));
+						cei0.LiberadaDelContextoDelEjecutador=true;
+						if(db is BdAccess){
+							ej.ExecuteNonQuery(
+								@"UPDATE ((calespinf c INNER JOIN calesp ca ON c.periodo=ca.periodo AND c.calculo=ca.calculo AND c.especificacion=ca.especificacion)
+ INNER JOIN calculos calc ON c.periodo=calc.periodo AND c.calculo=calc.calculo)
+ INNER JOIN calespinf cal ON calc.periodoanterior=cal.periodo AND c.calculo=cal.calculo AND c.especificacion=cal.especificacion AND c.informante=cal.informante
+ SET c.promedioespinf=ca.promedioespmatchingactual/(ca.promedioespmatchinganterior/(cal.promedioespinf))
+ WHERE c.promedioespinf IS NULL
+ AND calc.periodoanterior=cal.periodo
+ AND calc.calculo=cal.calculo
+ AND c.periodo='"+cal.cPeriodo.Valor+@"'
+ AND c.calculo=-1"
+							);
+						}else{
+						ej.Ejecutar(
+							new SentenciaUpdate(cei,cei.cPromedioEspInf.Set(ce.cPromedioEspMatchingActual.Dividido(ce.cPromedioEspMatchingAnterior.Dividido(cei0.cPromedioEspInf))))
+							.Where(cei.cPromedioEspInf.EsNulo(),c.SiguienteDe(cei0))
+						);
+						}
+					}
 				}
 			}
 		}
@@ -521,7 +559,7 @@ UPDATE calespinf c SET c.promedio=
 		public ProbarIndiceD3(){
 			BaseDatos db;
 			#pragma warning disable 162
-			switch(3){ 
+			switch(3){ // No anda con sqlite hasta que no implemente EXP 
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					repo=new RepositorioPruebaIndice(db);
@@ -668,11 +706,24 @@ UPDATE calespinf c SET c.promedio=
 				Assert.AreEqual(esperado2[cantidad,1],cei.cEspecificacion.Valor);
 				Assert.AreEqual(-1,cei.cCalculo.Valor);
 				if(cantidad!=5){ // 5 es nulo
-					Assert.AreEqual((double)esperado2[cantidad,3],(double)cei.cPromedio.Valor,0.001);
+					Assert.AreEqual((double)esperado2[cantidad,3],(double)cei.cPromedioEspInf.Valor,Controlar.DeltaDouble);
 				}
 				cantidad++;
 			}
 			Assert.AreEqual(esperado2.GetLength(0),cantidad,"cantidad de registros vistos");
+			CalEsp ce=new CalEsp();
+			ce.Leer(repo.db,"200201",-1,"P100");
+			Assert.AreEqual(Math.Sqrt(2.0*2.60),(double)ce.cPromedioEspMatchingAnterior.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(2.0,(double)ce.cPromedioEspMatchingActual.Valor,Controlar.DeltaDouble);
+			CalEspInf cei1=new CalEspInf();
+			cei1.Leer(repo.db,cei1.cPeriodo.Es("200201"),cei1.cCalculo.Es(-1),cei1.cEspecificacion.Es("P100"),cei1.cInformante.Es(2));
+			Assert.AreEqual(2.2*(2.0/Math.Sqrt(2.0*2.60)),(double)cei1.cPromedioEspInf.Valor,Controlar.DeltaDouble);
+			
+			/*
+			ce.Leer(repo.db,"200201",-1,"P100");
+			Assert.AreEqual(Math.Sqrt(2.0*3.0),(double)ce.cPromedioEspMatchingAnterior.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(Math.Sqrt(2.0*Math.Sqrt(3.0*3.60)),(double)ce.cPromedioEspMatchingActual.Valor,Controlar.DeltaDouble);
+			*/
 		}
 		[Test]
 		public void VerCanasta(){

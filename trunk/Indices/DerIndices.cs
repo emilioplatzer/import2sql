@@ -159,7 +159,9 @@ namespace Indices
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
 		[Pk] public CampoEspecificacion cEspecificacion;
-		public CampoPrecio cPromedio;
+		public CampoPrecio cPromedioEsp;
+		public CampoPrecio cPromedioEspMatchingActual;
+		public CampoPrecio cPromedioEspMatchingAnterior;
 		[Fk] public Periodos fkPeriodos;
 		[Fk] public Calculos fkCalculos;
 		[Fk] public Especificaciones fkEspecificaciones;
@@ -169,7 +171,7 @@ namespace Indices
 		[Pk] public CampoVersion cCalculo;
 		[Pk] public CampoEspecificacion cEspecificacion;
 		[Pk] public CampoInformante cInformante;
-		public CampoPrecio cPromedio;
+		public CampoPrecio cPromedioEspInf;
 		public CampoEnteroOpcional cAntiguedadConPrecio;
 		public CampoEnteroOpcional cAntiguedadSinPrecio;
 		[Fk] public Periodos fkPeriodos;

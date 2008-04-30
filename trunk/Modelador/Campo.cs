@@ -75,7 +75,11 @@ namespace Modelador
 			}
 		}
 		public ExpresionSql Operado<T>(string OperadorTextual,T expresion){
-			return new ExpresionSql(this.Expresion,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
+			if(OperadorTextual.Contains("(")){
+				return new ExpresionSql(this.Expresion,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion),new LiteralSql(")".PadRight(Cadena.CantidadOcurrencias('(',OperadorTextual),')')));
+			}else{
+				return new ExpresionSql(this.Expresion,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
+			}
 		}
 		public ExpresionSql Igual<T>(T expresion){
 			return Operado<T>("=",expresion);
@@ -344,7 +348,7 @@ namespace Modelador
 			return Operado<T2>("*",Valor);
 		}
 		public ExpresionSql Dividido<T2>(T2 Valor){
-			return Operado<T2>("/",Valor);
+			return Operado<T2>("/(",Valor);
 		}
 	}
 	public class CampoEntero:CampoNumericoTipo<int>{
