@@ -141,15 +141,15 @@ namespace Indices
 	}
 	public class ProdTipoInf:Tabla{
 		[Pk] public CampoProducto cProducto;
-		[Pk] public CampoTipo cTipoInf;
-		public CampoPonderador cPonderadorTipoInf;
+		[Pk] public CampoTipo cTipoInformante;
+		public CampoPonderador cPonderadorTI;
 		[Fk] public Productos fkProductos;
 	}
 	public class CalProdTI:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
 		[Pk] public CampoProducto cProducto;
-		[Pk] public CampoTipo cTipoInf;
+		[Pk] public CampoTipo cTipoInformante;
 		public CampoPrecio cPromedioProdTI;
 		[Fk] public Periodos fkPeriodos;
 		[Fk] public Calculos fkCalculos;
@@ -167,7 +167,7 @@ namespace Indices
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
 		[Pk] public CampoEspecificacion cEspecificacion;
-		[Pk] public CampoTipo cTipoInf;
+		[Pk] public CampoTipo cTipoInformante;
 		public CampoPrecio cPromedioEsp;
 		public CampoPrecio cPromedioEspMatchingActual;
 		public CampoPrecio cPromedioEspMatchingAnterior;

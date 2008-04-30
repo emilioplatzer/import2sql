@@ -72,8 +72,8 @@ namespace TodoASql
 			    p.G_Enumerados();
 			    */
 			    // new prTabla().SubselectGroupBy();
-			    new Tareas.PruebasExternas().Generar();
-			    /*
+			    // new Tareas.PruebasExternas().Generar();
+			    // /*
 			    ProbarIndiceD3 p=new ProbarIndiceD3();
 			    p.A01CalculosBase();
 			    p.A02CalculosTipoInf();
