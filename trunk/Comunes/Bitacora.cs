@@ -25,8 +25,8 @@ namespace Comunes
 			string carpeta=Cadena.AgregarSiFalta(System.Environment.GetEnvironmentVariable("TEMP"),@"\");
 			this.nombreArchivoTodosRegistros=carpeta+nombreArchivoTodosRegistros;
 			this.nombreArchivoUltimoRegistro=carpeta+nombreArchivoUltimoRegistro;
-			if(nombreArchivoTodosRegistros!=null){
-				Archivo.Borrar(nombreArchivoTodosRegistros);
+			if(this.nombreArchivoTodosRegistros!=null){
+				Archivo.Borrar(this.nombreArchivoTodosRegistros);
 			}
 		}
 		public T Registrar<T>(T mensaje){
