@@ -29,12 +29,15 @@ namespace Comunes
 				Archivo.Borrar(this.nombreArchivoTodosRegistros);
 			}
 		}
+		public string prefijo(){
+			return "-- "+DateTime.Now.Hour+":"+DateTime.Now.Minute+":"+DateTime.Now.Second+"\r\n";
+		}
 		public T Registrar<T>(T mensaje){
 			if(nombreArchivoUltimoRegistro!=null){
-				Archivo.Escribir(nombreArchivoUltimoRegistro,mensaje.ToString());
+				Archivo.Escribir(nombreArchivoUltimoRegistro,prefijo()+mensaje.ToString());
 			}
 			if(nombreArchivoTodosRegistros!=null){
-				Archivo.Agregar(nombreArchivoTodosRegistros,Cadena.AgregarSiFalta(mensaje.ToString(),"\n"));
+				Archivo.Agregar(nombreArchivoTodosRegistros,prefijo()+Cadena.AgregarSiFalta(mensaje.ToString(),"\n"));
 			}
 			return mensaje;
 		}

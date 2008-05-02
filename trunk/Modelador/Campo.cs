@@ -395,4 +395,8 @@ namespace Modelador
 	   		campo.EsPk=true;
 	    }
 	}
+	public class Uk:AplicadorCampo{
+	   	public override void Aplicar(ref Campo campo){
+	    }
+	}
 }

@@ -16,25 +16,41 @@ namespace Indices
 {
 	/********************* CAMPOS ***************************/
 	public class CampoProducto:CampoChar{ public CampoProducto():base(4){} };
-	public class CampoEspecificacion:CampoChar{ public CampoEspecificacion():base(8){} };
-	public class CampoVariedad:CampoChar{ public CampoVariedad():base(12){} };
+	public class CampoCodigoVariedad:CampoChar{ public CampoCodigoVariedad():base(12){} };
+	public class CampoEspecificacion:CampoEntero{};
+	public class CampoVariedad:CampoEntero{};
 	public class CampoNombre:CampoChar{ public CampoNombre():base(250){} };
 	public class CampoAgrupacion:CampoChar{ public CampoAgrupacion():base(9){} };
 	public class CampoGrupo:CampoChar{ public CampoGrupo():base(9){} };
+	public class CampoImputacion:CampoChar{ public CampoImputacion():base(9){ this.Obligatorio=true; } };
 	public class CampoPonderador:CampoReal{};
 	public class CampoNivel:CampoEnteroOpcional{}
 	public class CampoPrecio:CampoRealOpcional{};
 	public class CampoIndice:CampoReal{};
 	public class CampoFactor:CampoReal{};
 	public class CampoPeriodo:CampoChar{ 
-		public CampoPeriodo():base(4+2
+		public CampoPeriodo():base(5+3
 		                           #if Semanal
-		                           +1
+		                           +2
 		                           #endif
-		                          ){} }
+		                          ){} 
+		public override string Valor{ 
+			get{ return valor;} 
+			set{ valor=value;
+				if(valor!=null){
+					if(valor.Substring(0,1)!="a"){
+						throw new InvalidOperationException("el periodo no tiene la 'a'");
+					}
+					if(valor.Substring(5,1)!="m"){
+						throw new InvalidOperationException("el periodo no tiene la 'm'");
+					}
+				}
+			}
+		}
+	}
 	public class CampoVersion:CampoEntero{};
 	public class CampoInformante:CampoEntero{};
-	public class CampoTipo:CampoChar{ public CampoTipo():base(1){} };
+	public class CampoTipo:CampoChar{ public CampoTipo():base(1){this.Obligatorio=true;} };
 	public class CampoNovedad<T>:CampoEnumerado<T>{};
 	/********************* TABLAS ***************************/
 	public class Productos:Tabla{
@@ -108,7 +124,7 @@ namespace Indices
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
 		[Pk] public CampoProducto cProducto;
-		public CampoPrecio cPromedio;
+		public CampoPrecio cPromedioProd;
 		[Fk] public Periodos fkPeriodos;
 		[Fk] public Calculos fkCalculos;
 		[Fk] public Productos fkProductos;
@@ -139,11 +155,16 @@ namespace Indices
 		public CampoNombre cCadena;
 		public CampoNombre cDireccion;
 	}
+	public class TipoInf:Tabla{
+		[Pk] public CampoTipo cTipoInformante;
+		CampoTipo cOtroTipoInformante;
+	}
 	public class ProdTipoInf:Tabla{
 		[Pk] public CampoProducto cProducto;
 		[Pk] public CampoTipo cTipoInformante;
 		public CampoPonderador cPonderadorTI;
 		[Fk] public Productos fkProductos;
+		[Fk] public TipoInf fkTipoInf;
 	}
 	public class CalProdTI:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
@@ -157,15 +178,16 @@ namespace Indices
 		[Fk] public ProdTipoInf fkProdTipoInf;
 	}
 	public class Especificaciones:Tabla{
+		[Pk] public CampoProducto cProducto;
 		[Pk] public CampoEspecificacion cEspecificacion;
 		public CampoNombre cNombreEspecificacion;
 		public CampoRealOpcional cTamannoNormal;
-		public CampoProducto cProducto;
 		[Fk] public Productos fkProductos;
 	}
 	public class CalEspTI:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
+		[Pk] public CampoProducto cProducto;
 		[Pk] public CampoEspecificacion cEspecificacion;
 		[Pk] public CampoTipo cTipoInformante;
 		public CampoPrecio cPromedioEsp;
@@ -178,9 +200,12 @@ namespace Indices
 	public class CalEspInf:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
+		[Pk] public CampoProducto cProducto;
 		[Pk] public CampoEspecificacion cEspecificacion;
 		[Pk] public CampoInformante cInformante;
+		public CampoTipo cTipoInformante;
 		public CampoPrecio cPromedioEspInf;
+		public CampoImputacion cImputacionEspInf;
 		public CampoEnteroOpcional cAntiguedadConPrecio;
 		public CampoEnteroOpcional cAntiguedadSinPrecio;
 		[Fk] public Periodos fkPeriodos;
@@ -192,6 +217,7 @@ namespace Indices
 		public enum Estados{Alta,Baja,Reemplazo};
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
+		[Pk] public CampoProducto cProducto;
 		[Pk] public CampoEspecificacion cEspecificacion;
 		[Pk] public CampoInformante cInformante;
 		public CampoNovedad<Estados> cEstado;
@@ -201,15 +227,19 @@ namespace Indices
 		[Fk] public Informantes fkInformantes;
 	}
 	public class Variedades:Tabla{
+		[Pk] public CampoProducto cProducto;
+		[Pk] public CampoEspecificacion cEspecificacion;
 		[Pk] public CampoVariedad cVariedad;
 		public CampoNombre cNombreVariedad;
 		public CampoRealOpcional cTamanno;
 		public CampoNombre cUnidad;
-		public CampoEspecificacion cEspecificacion;
+		[Uk] public CampoCodigoVariedad cCodigoVariedad;
 		[Fk] public Especificaciones fkEspecificaciones;
 	}
 	public class RelVar:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
+		[Pk] public CampoProducto cProducto;
+		[Pk] public CampoEspecificacion cEspecificacion;
 		[Pk] public CampoVariedad cVariedad;
 		[Pk] public CampoInformante cInformante;
 		public CampoPrecio cPrecio;
