@@ -44,5 +44,11 @@ namespace Comunes
 		public static string CarpetaActual(){
 			return Directory.GetCurrentDirectory();
 		}
+		public static void Copiar(string ArchivoViejo,string ArchivoNuevo){
+			File.Copy(ArchivoViejo,ArchivoNuevo,false);
+		}
+		public static void CopiarPisando(string ArchivoViejo,string ArchivoNuevo){
+			File.Copy(ArchivoViejo,ArchivoNuevo,true);
+		}
 	}
 }
