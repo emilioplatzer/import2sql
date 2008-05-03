@@ -16,8 +16,7 @@ using Comunes;
 
 namespace BasesDatos
 {
-	public class SqLite:BaseDatos
-	{
+	public class SqLite:BaseDatos{
 		SqLite(){}
 		SqLite(OdbcConnection con)
 			:base(con)
@@ -51,6 +50,7 @@ namespace BasesDatos
 		public override bool UpdateConJoin{ get{ return false; } }
 		public override bool InternosForzarAs { get { return true; } }
 		public override string FuncionLn{ get{ return "LOGoLN";} }
+		public override string MarcaMotor{ get{ return "Sqlite"; }}
 	}
 	[TestFixture]
 	public class ProbarSqLite{

@@ -66,6 +66,7 @@ namespace BasesDatos
 		public override bool UpdateConJoin{ get{ return false; } }
 		public override bool InternosForzarAs { get { return false; } }
 		public override string FuncionLn{ get{ return "LN";} }
+		public override string MarcaMotor{ get{ return "PostgreSql"; }}
 	}
 	[TestFixture]
 	public class ProbarPostgreSql{

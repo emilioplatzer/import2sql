@@ -1,34 +1,30 @@
 /*
  * Created by SharpDevelop.
  * User: Administrador
- * Date: 04/04/2008
- * Time: 05:38 p.m.
+ * Date: 03/05/2008
+ * Time: 12:39 p.m.
  * 
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 
 using System;
-using System.Reflection;
-using System.Text;
-using System.Data;
-using System.Data.Common;
 
 using Comunes;
 using BasesDatos;
-using Modelador;
 
-namespace Modelador
+namespace ModeladorSql
 {
-	public abstract class Campo:Campable{
+	public abstract class Campo:IConCampos{
 		public string Nombre;
 		public string NombreCampo;
-		public abstract string TipoCampo{ get; }
 		public bool EsPk;
 		public bool Obligatorio;
 		public Tabla TablaContenedora;
 		public string DireccionOrderBy;
-		public Campo(){
+		public Lista<Campo> Campos(){
+			return new Lista<Campo>(this);
 		}
+		public abstract string TipoCampo{ get; }
 		public object this[InsertadorSql ins]{
 			set{
 				if(value is Campo){
@@ -40,27 +36,11 @@ namespace Modelador
 		}
 		public abstract object ValorSinTipo{ get; }
 		public abstract void AsignarValor(object valor);
-		public virtual ExpresionSql Expresion{
-			get{
-				return new ExpresionSql(this);
-			}
-		}
-		/*
-		public void Entablar(Tabla tabla){ // marcarlo como perteneciente a la tabla
-			TablaContenedora=tabla;
-		}
-		*/
-		public virtual ExpresionSql EsNulo(){
-			return new ExpresionSql(this,new LiteralSql(" IS NULL"));
-		}
-		public virtual ExpresionSql NoEsNulo(){
-			return new ExpresionSql(this,new LiteralSql(" IS NOT NULL"));
-		}
 		public virtual string Opcionalidad{ 
 			get{ if(Obligatorio){ return " not null"; }else{ return ""; } }
 		}
 		public abstract string DefinicionPorDefecto(BaseDatos db);
-		public override string ToSql(BaseDatos db)
+		public virtual string ToSql(BaseDatos db)
 		{
 			if(this.TablaContenedora==null || this.TablaContenedora.Alias==null){
 				return db.StuffCampo(this.NombreCampo);
@@ -68,42 +48,15 @@ namespace Modelador
 				return this.TablaContenedora.Alias+"."+db.StuffCampo(NombreCampo);
 			}
 		}
-		public override bool CandidatoAGroupBy{ 
+		public virtual bool CandidatoAGroupBy{ 
 			get{
 				return true;
 			}
 		}
-		public ExpresionSql Operado<T>(string OperadorTextual,T expresion){
-			if(OperadorTextual.Contains("(")){
-				return new ExpresionSql(this.Expresion,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion),new LiteralSql(")".PadRight(Cadena.CantidadOcurrencias('(',OperadorTextual),')')));
-			}else{
-				return new ExpresionSql(this.Expresion,new LiteralSql(OperadorTextual),new ValorSql<T>(expresion));
-			}
-		}
-		public ExpresionSql Igual<T>(T expresion){
-			return Operado<T>("=",expresion);
-		}
-		public ExpresionSql MayorOIgual<T>(T expresion){
-			return Operado<T>(">=",expresion);
-		}
-		public ExpresionSql Mayor<T>(T expresion){
-			return Operado<T>(">",expresion);
-		}
-		public ExpresionSql Distinto<T>(T expresion){
-			return Operado<T>("<>",expresion);
-		}
-		public CampoAlias Es(ExpresionSql expresion){
+		public CampoAlias Es(IExpresion expresion){
 			return new CampoAlias(this,expresion);
 		}
-		public CampoAlias Es(Campo campo){
-			return Es(new ExpresionSql(campo));
-		}
-		public override ListaSqlizable<Campo> Campos(){
-			ListaSqlizable<Campo> rta=new ListaSqlizable<Campo>();
-			rta.Add(this);
-			return rta;
-		}
-		public override ConjuntoTablas Tablas(QueTablas queTablas){
+		public virtual ConjuntoTablas Tablas(QueTablas queTablas){
 			if(TablaContenedora==null){
 				return new ConjuntoTablas();
 			}else{
@@ -118,19 +71,19 @@ namespace Modelador
 	}
 	public class CampoAlias:Campo{
 		public Campo CampoReceptor;
-		public ExpresionSql ExpresionBase;
-		public CampoAlias(Campo CampoReceptor,bool EsAgrupada,ExpresionSql ExpresionBase){
+		public IExpresion ExpresionBase;
+		public CampoAlias(Campo CampoReceptor,IExpresion ExpresionBase){
 			this.NombreCampo=CampoReceptor.NombreCampo;
 			this.Nombre=CampoReceptor.Nombre;
 			// this.TablaContenedora=CampoDestino.TablaContenedora;
 			this.CampoReceptor=CampoReceptor;
 			this.ExpresionBase=ExpresionBase;
-			this.ExpresionBase.TipoAgrupada=EsAgrupada;
-			FieldInfo f=CampoReceptor.GetType().GetField("CampoContenedor");
+			System.Reflection.FieldInfo f=CampoReceptor.GetType().GetField("CampoContenedor");
 			if(f!=null){
 				f.SetValue(CampoReceptor,this);
 			}
 		}
+		/*
 		public CampoAlias(Campo CampoReceptor,bool EsAgrupada,params Sqlizable[] Partes)
 			:this(CampoReceptor,EsAgrupada,new ExpresionSql(Partes)){
 		}
@@ -140,6 +93,7 @@ namespace Modelador
 		public CampoAlias(Campo CampoReceptor,ExpresionSql ExpresionBase)
 			:this(CampoReceptor,ExpresionBase.TipoAgrupada,ExpresionBase){
 		}
+		*/
 		public override object ValorSinTipo {
 			get { 
 				Falla.Detener("Un campo base no tiene Valor propio");
@@ -169,18 +123,20 @@ namespace Modelador
 				return false;
 			}
 		}
-		public override ExpresionSql Expresion{
+		/*
+		public override IExpresion Expresion{
 			get{
 				return ExpresionBase;
 			}
 		}
+		*/
 		public override ConjuntoTablas Tablas(QueTablas queTablas){
 			ConjuntoTablas rta=new ConjuntoTablas();
 			rta.AddRange(ExpresionBase.Tablas(queTablas));
 			return rta;
 		}
 	}
-	public class CampoTipo<T>:Campo{
+	public class CampoTipo<T>:Campo,IElementoTipado<T>{
 		protected T valor;
 		public object ValorPorDefecto;
 		public virtual T Valor{ get{ return valor;} set{ valor=value; } }
@@ -197,6 +153,18 @@ namespace Modelador
 			}else{
 				return tipo.Name; 
 			}
+		}
+		public virtual bool EsAgrupada{ 
+			get{ return false; }
+		}
+		public int Precedencia{
+			get{ return 9;}
+		}
+		public virtual IExpresion EsNulo(){
+			return new OperacionSufijaLogica<T>(this,OperadorSufijoLogico.EsNulo);
+		}
+		public virtual IExpresion NoEsNulo(){
+			return new OperacionSufijaLogica<T>(this,OperadorSufijoLogico.NoEsNulo);
 		}
 		public override string TipoCampo{ 
 			get {
@@ -228,21 +196,15 @@ namespace Modelador
 				return "";
 			}
 		}
-		public virtual SentenciaUpdate.Sets Set(T valor){
-			return new SentenciaUpdate.Sets(this,new ExpresionSql(new ValorSql<T>(valor)));
+		/*
+		public virtual CampoAlias Es(IExpresion expresion){
+			return new CampoAlias(this, expresion);
 		}
-		public virtual SentenciaUpdate.Sets Set(ExpresionSql expresion){
-			return new SentenciaUpdate.Sets(this,expresion);
+		*/
+		public virtual CampoAlias SeaNulo(){
+			return Es(Constante<T>.Nula);
 		}
-		public virtual SentenciaUpdate.Sets Set(Campo campo){
-			return new SentenciaUpdate.Sets(this,new ExpresionSql(campo));
-		}
-		public virtual SentenciaUpdate.Sets SetNull(){
-			return new SentenciaUpdate.Sets(this,new ExpresionSql(new ValorSqlNulo()));
-		}
-		public CampoAlias Es(T valor){
-			return Es(new ExpresionSql(new ValorSql<T>(valor)));
-		}
+		/*
 		public CampoAlias EsExpresionAgrupada(string operador,ExpresionSql expresion,string subOperador,string postOperador){
 			ListaSqlizable<Sqlizable> nueva=new ListaSqlizable<Sqlizable>();
 			if(subOperador.Contains("LOG")){
@@ -260,20 +222,27 @@ namespace Modelador
 		public CampoAlias EsExpresionAgrupada(string operador,ExpresionSql expresion){
 			return EsExpresionAgrupada(operador,expresion,"","");
 		}
-		public Campo EsMax(ExpresionSql expresion){
-			return EsExpresionAgrupada("MAX",expresion);
+		*/
+		public IExpresion Igual(IElementoTipado<T> expresion){
+			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Igual,expresion);
 		}
-		public Campo EsMax(Campo campo){
-			return EsExpresionAgrupada("MAX",new ExpresionSql(campo));
+		public IExpresion MayorOIgual(IElementoTipado<T> expresion){
+			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.MayorOIgual,expresion);
+		}
+		public IExpresion Mayor(IElementoTipado<T> expresion){
+			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Mayor,expresion);
+		}
+		public IExpresion Distinto(IElementoTipado<T> expresion){
+			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Distinto,expresion);
+		}
+		public Campo EsMax(IElementoTipado<T> expresion){
+			return Es(new FuncionAgrupacion<T>(expresion,OperadorAgrupada.Maximo));
 		}
 		public Campo EsCount(){
-			return new CampoAlias(this,true,new ExpresionSql(new LiteralSql("COUNT(*)")));
+			return Es(new FuncionCount());
 		}
-		public Campo EsCount(ExpresionSql expresion){
-			return EsExpresionAgrupada("COUNT",expresion);
-		}
-		public Campo EsCount(Campo campo){
-			return EsExpresionAgrupada("COUNT",new ExpresionSql(campo));
+		public Campo EsCount(IExpresion expresion){
+			return Es(new FuncionCount(expresion));
 		}
 		#if NuncaAccess
 		// habilitar esto si nunca se va a trabajar en Access
@@ -310,6 +279,7 @@ namespace Modelador
 			get { return "varchar("+LongitudDefinicion+")"; }
 		}
 	}
+	/*
 	public class CampoDestino<T>:CampoNumericoTipo<T>{
 		public CampoAlias CampoContenedor;
 		public CampoDestino(string NombreCampo){
@@ -327,27 +297,22 @@ namespace Modelador
 			}
 		}
 	}
+	*/
 	public class CampoNumericoTipo<T>:CampoTipo<T>{
-		public Campo EsSuma(ExpresionSql expresion){
-			return EsExpresionAgrupada("SUM",expresion);
+		public Campo EsSuma(IElementoTipado<T> expresion){
+			return Es(new FuncionAgrupacion<T>(expresion,OperadorAgrupada.Suma));
 		}
-		public Campo EsSuma(Campo campo){
-			return EsExpresionAgrupada("SUM",new ExpresionSql(campo));
+		public Campo EsPromedioGeometrico(IElementoTipado<T> expresion){
+			return Es(new FuncionAgrupacion<T>(expresion,OperadorAgrupada.PromedioGeometrico));
 		}
-		public Campo EsPromedioGeometrico(ExpresionSql expresion){
-			return EsExpresionAgrupada("EXP",expresion,"AVG(LOG(","))");
+		public IExpresion Mas(IElementoTipado<T> Valor){
+			return new Binomio<T>(this,OperadorBinario.Mas,Valor);
 		}
-		public Campo EsPromedioGeometrico(Campo campo){
-			return EsExpresionAgrupada("EXP",new ExpresionSql(campo),"AVG(LOG(","))");
+		public IExpresion Por(IElementoTipado<T> Valor){
+			return new Binomio<T>(this,OperadorBinario.Por,Valor);
 		}
-		public ExpresionSql Mas<T2>(T2 Valor){
-			return Operado<T2>("+",Valor);
-		}
-		public ExpresionSql Por<T2>(T2 Valor){
-			return Operado<T2>("*",Valor);
-		}
-		public ExpresionSql Dividido<T2>(T2 Valor){
-			return Operado<T2>("/(",Valor);
+		public IExpresion Dividido(IElementoTipado<T> Valor){
+			return new Binomio<T>(this,OperadorBinario.Dividido,Valor);
 		}
 	}
 	public class CampoEntero:CampoNumericoTipo<int>{
@@ -365,10 +330,8 @@ namespace Modelador
 		public override string TipoCampo{ 
 			get { return "varchar("+Largo.ToString()+")"; }
 		}
-		public ExpresionSql Concatenado<T>(T expresion){
-			return new ExpresionSql(new OperadorConcatenacionIzquierda()
-			                        ,this,new OperadorConcatenacionMedio()
-			                        ,new ValorSql<T>(expresion),new OperadorConcatenacionDerecha());
+		public IElementoTipado<string> Concatenado<T>(IElementoTipado<T> expresion){
+			return new Binomio3T<string,T,string>(this,OperadorBinario.Concatenado,expresion);
 		}
 	};
 	public class CampoReal:CampoNumericoTipo<double>{

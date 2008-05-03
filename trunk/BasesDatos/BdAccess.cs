@@ -17,8 +17,7 @@ using Comunes;
 
 namespace BasesDatos
 {
-	public class BdAccess:BaseDatos
-	{
+	public class BdAccess:BaseDatos{
 		BdAccess(OleDbConnection con)
 			:base(con)
 		{
@@ -63,6 +62,7 @@ namespace BasesDatos
 		public override bool UpdateSelectSumViaDSum{ get{ return true; } }
 		public override bool InternosForzarAs { get { return false; } }
 		public override string FuncionLn{ get{ return "LOG";} }
+		public override string MarcaMotor{ get{ return "MS Access"; }}
 	}
 	[TestFixture]
 	public class ProbarBdAccess{
