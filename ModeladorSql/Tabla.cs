@@ -9,6 +9,8 @@
 
 using System;
 using System.Data;
+using System.Reflection;
+using System.Text;
 
 using Comunes;
 using BasesDatos;
@@ -25,7 +27,8 @@ namespace ModeladorSql
 		public bool IniciadasFk=false;
 		public Tabla TablaRelacionada;
 		public Lista<Tabla> TablasFk;
-		public System.Collections.Generic.Dictionary<string, Campo> CamposFkAlias=new System.Collections.Generic.Dictionary<string, Campo>();
+		public Diccionario<string, Campo> CamposFkAlias=new Diccionario<string, Campo>();
+		public Diccionario<Campo, IExpresion> CamposRelacionFk=new Diccionario<Campo, IExpresion>();
 		public Fk.Tipo TipoFk=Fk.Tipo.Obligatoria;
 		public bool LiberadaDelContextoDelEjecutador; // Del contexto del ejecutador
 		public bool RegistroConDatos=false;
@@ -68,6 +71,7 @@ namespace ModeladorSql
 			return nombreField.Substring(1);
 		}
 		protected virtual void ConstruirCampos(){
+			campos=new Lista<Campo>();
       		Assembly assem = Assembly.GetExecutingAssembly();
       		System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			foreach(FieldInfo m in ms){
@@ -91,6 +95,7 @@ namespace ModeladorSql
       							CamposFkAlias[fk.Alias]=c;
       						}
       					}
+      					campos.Add(c);
       				}
 				}
 			}
@@ -101,16 +106,12 @@ namespace ModeladorSql
 		public string SentenciaCreateTable(BaseDatos db){
 			StringBuilder rta=new StringBuilder();
 			StringBuilder pk=new StringBuilder("\t"+"primary key (");
-      		System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
 			rta.AppendLine("create table "+this.NombreTabla+"(");
       		Separador comapk=new Separador(",");
-			foreach(FieldInfo m in ms){
-				if(m.FieldType.IsSubclassOf(typeof(Campo))){
-					Campo c=(Campo)m.GetValue(this);
-					rta.AppendLine("\t"+c.NombreCampo+" "+c.TipoCampo+c.Opcionalidad+c.DefinicionPorDefecto(db)+",");
-					if(c.EsPk){
-						pk.Append(comapk+c.NombreCampo);
-					}
+      		foreach(Campo c in campos){
+				rta.AppendLine("\t"+c.NombreCampo+" "+c.TipoCampo+c.Opcionalidad+c.DefinicionPorDefecto(db)+",");
+				if(c.EsPk){
+					pk.Append(comapk+c.NombreCampo);
 				}
 			}
       		pk.Append(")");
@@ -122,9 +123,10 @@ namespace ModeladorSql
 		      			StringBuilder camposFkEsta=new StringBuilder();
 		      			StringBuilder camposFkOtra=new StringBuilder();
 		      			Separador coma=new Separador(",");
-		      			foreach(Campo c in t.CamposPk()){
-		      				camposFkEsta.Append(coma+t.CamposRelacionadosFk[c].UnicoCampo().NombreCampo);
-		      				camposFkOtra.Append(coma.mismo()+c.NombreCampo);
+		      			foreach(System.Collections.Generic.KeyValuePair<Campo, IExpresion> p in CamposRelacionFk){
+							Campo c=p.Value as Campo;		      				
+		      				camposFkEsta.Append(coma+c.NombreCampo);
+		      				camposFkOtra.Append(coma.mismo()+p.Key.NombreCampo);
 		      			}
 		      			rta.Append(",\n\t"+"foreign key ("+camposFkEsta.ToString()+") references "+t.NombreTabla+" ("+camposFkOtra.ToString()+")");
       				}
@@ -133,11 +135,13 @@ namespace ModeladorSql
 			rta.AppendLine("\n);");
 			return rta.ToString();
 		}
-		public virtual void InsertarValores(BaseDatos db,params Campable[] Campos){
+		/*
+		public virtual void InsertarValores(BaseDatos db,params IConCampos[] Campos){
 			Sentencia s=new SentenciaInsert(this).Valores(Campos);
 			Ejecutador ej=new Ejecutador(db);
 			ej.Ejecutar(s);
 		}
+		*/
 		public virtual Tabla InsertarDirecto(BaseDatos db,params object[] Valores){
 			int i=0;
 			using(Insertador ins=new Insertador(db,this)){
@@ -178,7 +182,7 @@ namespace ModeladorSql
 		}
 		bool BuscarYLeer(BaseDatos db,bool LanzaExcepcion,params object[] Codigos){
 			this.db=db;
-			List<object> Valores=new List<object>();
+			Lista<object> Valores=new Lista<object>();
 			foreach(object o in Codigos){
 				if(o is Campo){
 					Campo c=o as Campo;
@@ -279,7 +283,7 @@ namespace ModeladorSql
   			}
 		}
 		public virtual ListaElementos<Campo> Campos(Filtro filtro){
-			ListaSqlizable<Campo> rta=new ListaSqlizable<Campo>();
+			ListaElementos<Campo> rta=new ListaElementos<Campo>();
 			foreach(Campo c in campos){
 				if(filtro==null || filtro(c)){
 					rta.Add(c);
@@ -298,32 +302,12 @@ namespace ModeladorSql
 			}
 			return rta.ToString();
 		}
-		public virtual bool TieneElCampo(Campo campo){
-			ListaSqlizable<Campo> rta=new ListaSqlizable<Campo>();
-  			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-			foreach(FieldInfo m in ms){
-				if(m.FieldType.IsSubclassOf(typeof(Campo))){
-					Campo c=(Campo)m.GetValue(this);
-					if(c.Nombre==campo.Nombre){
-						return true;
-					}
-				}
-  			}
-  			return false;
-		}
 		public virtual Campo CampoIndirecto(string campoNombre){
-			ListaSqlizable<Campo> rta=new ListaSqlizable<Campo>();
-  			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-			foreach(FieldInfo m in ms){
-				if(m.FieldType.IsSubclassOf(typeof(Campo))){
-					Campo c=(Campo)m.GetValue(this);
-					if(c.Nombre==campoNombre){
-						return c;
-					}
+			return campos.Find(
+				delegate(Campo c){
+					return c.Nombre==campoNombre;
 				}
-  			}
-  			Falla.Detener("Debió encontrar el campo "+campoNombre);
-  			return null;
+			);
 		}
 		public virtual Campo CampoIndirecto(Campo campo){
 			return CampoIndirecto(campo.Nombre);
@@ -339,25 +323,30 @@ namespace ModeladorSql
 		public void EsFkDe(Tabla maestra,Fk.Tipo TipoFk,params Campo[] CamposReemplazo){
 			this.TablaRelacionada=maestra;
 			int cantidadCamposFk=CamposPk().Count;
-			ListaSqlizable<Campo> CampoAReemplazar=new ListaSqlizable<Campo>();
-			Lista<ExpresionSql> ExpresionDeReemplazo=new Lista<ExpresionSql>();
-			CamposRelacionadosFk=new Diccionario<Campo,ExpresionSql>();
+			ListaElementos<Campo> CampoAReemplazar=new ListaElementos<Campo>();
+			ListaElementos<IExpresion> ExpresionDeReemplazo=new ListaElementos<IExpresion>();
+			ListaElementos<Campo> CampoASaltear=new ListaElementos<Campo>();
+			CamposRelacionFk=new Diccionario<Campo,IExpresion>();
 			foreach(Campo CampoReemplazo in CamposReemplazo){
 				if(CampoReemplazo!=null){
 					if(CampoReemplazo.TablaContenedora==maestra){
 						CampoAReemplazar.Add(CamposPk()[cantidadCamposFk-1]);
-						ExpresionDeReemplazo.Add(new ExpresionSql(CampoReemplazo));
+						ExpresionDeReemplazo.Add(CampoReemplazo);
 					}else if(CampoReemplazo is CampoAlias){
 						CampoAReemplazar.Add((CampoReemplazo as CampoAlias).CampoReceptor);
 						ExpresionDeReemplazo.Add((CampoReemplazo as CampoAlias).ExpresionBase);
+					}else if(CampoReemplazo.TablaContenedora==this){ // No es un alisa, quitar
+						CampoASaltear.Add(CampoReemplazo);
 					}
 				}
 			}
 			foreach(Campo c in CamposPk()){
-				if(CampoAReemplazar!=null && CampoAReemplazar.IndexOf(c)>=0){
-					CamposRelacionadosFk[c]=ExpresionDeReemplazo[CampoAReemplazar.IndexOf(c)];
-				}else{
-					CamposRelacionadosFk[c]=new ExpresionSql(maestra.CampoIndirecto(c));
+				if(!CampoASaltear.Contains(c)){
+					if(CampoAReemplazar!=null && CampoAReemplazar.IndexOf(c)>=0){
+						CamposRelacionFk[c]=ExpresionDeReemplazo[CampoAReemplazar.IndexOf(c)];
+					}else{
+						CamposRelacionFk[c]=maestra.CampoIndirecto(c);
+					}
 				}
 			}
 			this.TipoFk=TipoFk;
@@ -387,10 +376,13 @@ namespace ModeladorSql
 	  							if(RegistroConDatos){
 	  								Tabla fkTabla=(Tabla) this.GetType().GetField(m.Name).GetValue(this);
 	  								Lista<object> Campos=new Lista<object>();
+	  								foreach(System.Collections.Generic.KeyValuePair<Campo,IExpresion> p in CamposRelacionFk){
+	  									Campos.Add(	);
+	  								}
 	  								foreach(Campo c in fkTabla.CamposPk()){
 	  									Campos.Add((fkTabla.CamposRelacionadosFk[c]).UnicoCampo().ValorSinTipo);
 	  								}
-	  								fkTabla.Buscar(db,Campos.ToArray());
+	  								fkTabla.BuscarYLeerNoPk(db,Campos.ToArray());
 	  							}
 	  						}
 	  					}
@@ -399,7 +391,7 @@ namespace ModeladorSql
 	  			IniciadasFk=true;
 			}
 		}
-		public override bool CandidatoAGroupBy{ 
+		public virtual bool CandidatoAGroupBy{ 
 			get{ // No tiene en el sentido de que no es una expresión
 				Falla.Detener("No debería preguntar si una tabla tiene variables");
 				return false; 
@@ -410,24 +402,26 @@ namespace ModeladorSql
 			return new ExpresionSql.SelectSuma(this,CampoSumar,ExpresionWhere);
 		}
 		*/
-		public ExpresionSql SelectSuma(Campo CampoSumar){
-			return new ExpresionSql.SelectAgrupado(this,CampoSumar,null,"SUM","","");
+		public IElementoTipado<T> SelectSuma<T>(IElementoTipado<T> expresion){
+			return new SubSelectAgrupado(expresion,OperadorAgrupada.Suma,this);
 		}
-		public ExpresionSql SelectPromedioGeometrico(Campo CampoSumar){
-			return new ExpresionSql.SelectAgrupado(this,CampoSumar,null,"AVG","","");
-			// return new ExpresionSql.SelectAgrupado(this,CampoSumar,null,"AVG","EXP(","LOG(");
+		public IElementoTipado<T> SelectPromedioGeometrico<T>(IElementoTipado<T> expresion){
+			return new SubSelectAgrupado(expresion,OperadorAgrupada.PromedioGeometrico,this);
 		}
 		public RegistrosEnumerables Todos(BaseDatos db){
 			return new RegistrosEnumerables(this,db);
 		}
-		public RegistrosEnumerables Algunos(BaseDatos db,ExpresionSql ExpresionWhere,params Campo[] CamposOrden){
+		public RegistrosEnumerables Algunos(BaseDatos db,ElementosClausulaWhere ClausulaWhere,params Campo[] CamposOrden){
 			return new RegistrosEnumerables(this,db,ExpresionWhere,CamposOrden);
 		}
+		/*
 		public SentenciaSelect SubSelect(params Campo[] Campos){
 			SentenciaSubSelect=new SentenciaSelect(Campos);
 			SelectInterno=new SelectInterno(SentenciaSubSelect);
 			return SentenciaSubSelect;
 		}
+		*/
+		/*
 		public ExpresionSql NoExistePara(params Campable[] CamposOTablas){
 			ListaSqlizable<Campo> Campos=new ListaSqlizable<Campo>();
 			ListaSqlizable<ExpresionSql> ExpresionesWhere=new ListaSqlizable<ExpresionSql>();
@@ -447,6 +441,7 @@ namespace ModeladorSql
 				.Libres(TablasLibres);
 			return new ExpresionSql(new LiteralSql("NOT EXISTS ("),new SelectInterno(s),new LiteralSql(")"));
 		}
+		*/
 		/*
 		public ExpresionSql NotIn(Tabla t){
 			ListaSqlizable<Sqlizable> Partes1=new ListaSqlizable<Sqlizable>();
@@ -473,12 +468,12 @@ namespace ModeladorSql
 	public class RegistrosEnumerables{
 		BaseDatos db;
 		Tabla TablaARecorrer;
-		ExpresionSql ExpresionWhere;
+		ElementosClausulaWhere ClausulaWhere;
 		Campo[] CamposOrden;
 		public RegistrosEnumerables(Tabla TablaARecorrer,BaseDatos db)
 			:this(TablaARecorrer,db,null,new Campo[]{})
 		{}
-		public RegistrosEnumerables(Tabla TablaARecorrer,BaseDatos db,ExpresionSql ExpresionWhere,Campo[] CamposOrden){
+		public RegistrosEnumerables(Tabla TablaARecorrer,BaseDatos db,ElementosClausulaWhere ClausulaWhere,Campo[] CamposOrden){
 			this.db=db;
 			this.TablaARecorrer=TablaARecorrer;
 			this.ExpresionWhere=ExpresionWhere;
@@ -494,7 +489,7 @@ namespace ModeladorSql
 		BaseDatos db;
 		bool HayActual;
 		string Sentencia;
-		public IteradorRegistro(Tabla TablaBase,BaseDatos db,ExpresionSql expresionWhere,params Campo[] Campos){
+		public IteradorRegistro(Tabla TablaBase,BaseDatos db,ElementosClausulaWhere ClausulaWhere,params Campo[] Campos){
 			this.db=db;
 			this.RegistroActual=TablaBase;
 			StringBuilder s=new StringBuilder();
@@ -566,9 +561,6 @@ namespace ModeladorSql
 		public abstract string ToSql(BaseDatos db);
 		public abstract ConjuntoTablas Tablas(QueTablas queTablas);
 		public abstract bool CandidatoAGroupBy{ get; }
-	}
-	public abstract class Campable:Sqlizable{
-		public abstract ListaSqlizable<Campo> Campos();
 	}
 	public class LiteralSql:Sqlizable{
 		public string Literal;
