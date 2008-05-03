@@ -215,8 +215,38 @@ namespace ModeladorSql
 			get { return true; }
 		}
 	}
-	public class SubSelectAgrupado:IElementoTipado<T>{
-		Tabla ;
-		Campo
+	public class SubSelectAgrupado<T>:IElementoTipado<T>{
+		IElementoTipado<T> Expresion;
+		OperadorAgrupada Operador;
+		Tabla TablaContexto;
+		public SubSelectAgrupado(IElementoTipado<T> Expresion,OperadorAgrupada Operador,Tabla TablaContexto){
+			this.Expresion=Expresion;
+			this.Operador=Operador;
+			this.TablaContexto=TablaContexto;
+		}
+		public int Precedencia {
+			get{ return 0; }
+		}
+		public bool CandidatoAGroupBy {
+			get{ return false; }
+		}
+		public bool EsAgrupada {
+			get{ return true; }
+		}
+		public string ToSql(BaseDatos db)
+		{
+			throw new NotImplementedException();
+		}
+		
+		public ConjuntoTablas Tablas(QueTablas queTablas)
+		{
+			if(queTablas==QueTablas.Aliasables){
+				ConjuntoTablas rta=new ConjuntoTablas();
+				rta.AddRange(Expresion.Tablas(queTablas));
+				rta.Add(TablaContexto);
+				return rta;
+			}
+			throw new NotImplementedException();
+		}
 	}
 }

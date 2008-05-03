@@ -14,7 +14,7 @@ using BasesDatos;
 
 namespace ModeladorSql
 {
-	public abstract class Campo:IConCampos{
+	public abstract class Campo:IConCampos,IExpresion{
 		public string Nombre;
 		public string NombreCampo;
 		public bool EsPk;
@@ -68,6 +68,7 @@ namespace ModeladorSql
 			this.DireccionOrderBy=" DESC";
 			return this;
 		}
+		public abstract bool EsAgrupada{ get; }
 	}
 	public class CampoAlias:Campo{
 		public Campo CampoReceptor;
@@ -100,16 +101,13 @@ namespace ModeladorSql
 				return null; 
 			}
 		}
-		public override void AsignarValor(object valor)
-		{
+		public override void AsignarValor(object valor){
 			Falla.Detener("Un campo base no tiene Valor propio (no se le puede asignar)");
 		}
-		public override string ToSql(BaseDatos db)
-		{
+		public override string ToSql(BaseDatos db){
 			return ExpresionBase.ToSql(db)/*+" AS "+CampoDestino.ToSql(db)*/;
 		}
-		public override string DefinicionPorDefecto(BaseDatos db)
-		{
+		public override string DefinicionPorDefecto(BaseDatos db){
 			return "";
 		}
 		public override string TipoCampo {
@@ -122,6 +120,9 @@ namespace ModeladorSql
 			get{
 				return false;
 			}
+		}
+		public override bool EsAgrupada {
+			get { return ExpresionBase.EsAgrupada; }
 		}
 		/*
 		public override IExpresion Expresion{
@@ -154,7 +155,7 @@ namespace ModeladorSql
 				return tipo.Name; 
 			}
 		}
-		public virtual bool EsAgrupada{ 
+		public override bool EsAgrupada{ 
 			get{ return false; }
 		}
 		public int Precedencia{

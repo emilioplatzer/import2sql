@@ -26,6 +26,7 @@ namespace ModeladorSql
 		}
 	}
 	public class ElementosClausulaSelect:ListaElementos<IConCampos>{}
+	public class ElementosClausulaWhere:ListaElementos<IElementoTipado<bool>>{}
 	public class InstruccionSelect:Instruccion{
 		public ElementosClausulaSelect ClausulaSelect;
 	}
