@@ -1,42 +1,36 @@
 /*
  * Created by SharpDevelop.
  * User: Administrador
- * Date: 04/04/2008
- * Time: 05:38 p.m.
+ * Date: 03/05/2008
+ * Time: 11:16 a.m.
  * 
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 
 using System;
-using System.Reflection;
-using System.Text;
 using System.Data;
-using System.Data.Common;
-using System.Collections.Generic;
-using NUnit.Framework;
 
 using Comunes;
 using BasesDatos;
-using Modelador;
 
-namespace Modelador
+namespace ModeladorSql
 {
 	public delegate bool Filtro(Campo c);
-	public abstract class Tabla:Campable{
+	public class Tabla:IConCampos{
+		Lista<Campo> campos;
+		public string Alias;
 		public string NombreTabla;
 		public BaseDatos db;
 		public int CantidadCamposPk;
-		public string Alias;
 		public bool IniciadasFk=false;
 		public Tabla TablaRelacionada;
-		public Diccionario<Campo,ExpresionSql> CamposRelacionadosFk;
 		public Lista<Tabla> TablasFk;
 		public System.Collections.Generic.Dictionary<string, Campo> CamposFkAlias=new System.Collections.Generic.Dictionary<string, Campo>();
 		public Fk.Tipo TipoFk=Fk.Tipo.Obligatoria;
 		public bool LiberadaDelContextoDelEjecutador; // Del contexto del ejecutador
 		public bool RegistroConDatos=false;
-		public SentenciaSelect SentenciaSubSelect;
-		public SelectInterno SelectInterno;
+		// public SentenciaSelect SentenciaSubSelect;
+		// public SelectInterno SelectInterno;
 		public Tabla()
 		{
 			Construir();
@@ -46,6 +40,29 @@ namespace Modelador
 			:this()
 		{
 			Leer(db,Claves);
+		}
+		public bool ContieneMismoNombre(Campo c){
+			return campos.Exists(
+				delegate(Campo contenido){ 
+					return contenido.NombreCampo==c.NombreCampo; 
+				}
+			);
+		}
+		public Lista<Campo> Campos(){
+			return campos;
+		}
+		public virtual string ToSql(BaseDatos db){
+			/*
+			return (SelectInterno==null
+					?db.StuffTabla(this.NombreTabla)
+					:"("+SelectInterno.ToSql(db)+")")
+				+(this.Alias==null?"":" "+this.Alias);
+			*/
+			return db.StuffTabla(this.NombreTabla)+(this.Alias==null?"":" "+this.Alias);
+		}
+		public ConjuntoTablas Tablas(QueTablas queTablas)
+		{
+			return new ConjuntoTablas();
 		}
 		public static string NombreFieldANombreCampo(string nombreField){
 			return nombreField.Substring(1);
@@ -261,33 +278,16 @@ namespace Modelador
 				}
   			}
 		}
-		public override ConjuntoTablas Tablas(QueTablas queTablas){
-			if(SelectInterno==null){
-				return new ConjuntoTablas(this);
-			}else{
-				ConjuntoTablas rta=new ConjuntoTablas();
-				rta.AddRange(SelectInterno.Tablas(queTablas));
-				rta.Add(this);
-				return rta;
-			}
-		}
-		public override ListaSqlizable<Campo> Campos(){
-			return Campos(null);
-		}
-		public virtual ListaSqlizable<Campo> Campos(Filtro filtro){
+		public virtual ListaElementos<Campo> Campos(Filtro filtro){
 			ListaSqlizable<Campo> rta=new ListaSqlizable<Campo>();
-  			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-			foreach(FieldInfo m in ms){
-				if(m.FieldType.IsSubclassOf(typeof(Campo))){
-					Campo c=(Campo)m.GetValue(this);
-					if(filtro==null || filtro(c)){
-						rta.Add(c);
-					}
+			foreach(Campo c in campos){
+				if(filtro==null || filtro(c)){
+					rta.Add(c);
 				}
   			}
   			return rta;
 		}
-		public virtual ListaSqlizable<Campo> CamposPk(){
+		public virtual ListaElementos<Campo> CamposPk(){
 			return Campos(delegate(Campo c){ return c.EsPk; });
 		}
 		public virtual string OrderBy(BaseDatos db){
@@ -398,13 +398,6 @@ namespace Modelador
 	  			}
 	  			IniciadasFk=true;
 			}
-		}
-		public override string ToSql(BaseDatos db)
-		{
-			return (SelectInterno==null
-					?db.StuffTabla(this.NombreTabla)
-					:"("+SelectInterno.ToSql(db)+")")
-				+(this.Alias==null?"":" "+this.Alias);
 		}
 		public override bool CandidatoAGroupBy{ 
 			get{ // No tiene en el sentido de que no es una expresión

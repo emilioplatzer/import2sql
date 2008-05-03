@@ -29,7 +29,9 @@ namespace DelOffice
 				if(NombreCampo!=null && NombreCampo!=""){
 					try{
 						string valor=r[simplificar(NombreCampo)].ToString();
+						#pragma warning disable 168
 					}catch(System.IndexOutOfRangeException ex){
+						#pragma warning restore 168
 						System.Console.WriteLine("Campo nuevo: {0}",NombreCampo);
 						CamposAAgregar.Add(NombreCampo);
 					}

@@ -40,18 +40,18 @@ namespace BasesDatos
 		protected EjecutadorBaseDatos(){
 		}
 		public IDataReader ExecuteReader(SentenciaSql sentencia){
-			Assert.IsNotNull(con);
+			Falla.SiEsNulo(con);
 			IDbCommand cmd_local=con.CreateCommand();
 			cmd_local.CommandText=bitacora.RegistrarSql(AdaptarSentecia(sentencia));
 			return cmd_local.ExecuteReader();
 		}
 		public object ExecuteScalar(SentenciaSql sentencia){
-			Assert.IsNotNull(cmd);
+			Falla.SiEsNulo(cmd);
 			cmd.CommandText=AdaptarSentecia(sentencia);
 			return cmd.ExecuteScalar();
 		}
 		public int ExecuteNonQuery(SentenciaSql sentencia){
-			Assert.IsNotNull(cmd);
+			Falla.SiEsNulo(cmd);
 			cmd.CommandText=bitacora.RegistrarSql(AdaptarSentecia(sentencia));
 				return cmd.ExecuteNonQuery();
 		}
@@ -73,7 +73,7 @@ namespace BasesDatos
 				bitacoraAsertos.Registrar(explicacion+"\n"+Dump(rdr,10));
 			}
 			rdr.Close();
-			Assert.IsTrue(rta,explicacion);
+			Advertir.SiEsFalso(rta,explicacion);
 		}
 		public static string Dump(IDataReader rdr,int maxRegistros){
 			StringBuilder rta=new StringBuilder("");
@@ -110,8 +110,12 @@ namespace BasesDatos
 			}
 		}
 	}
-	public abstract class BaseDatos:EjecutadorBaseDatos,IDisposable
-	{
+	public enum OperadorBinario{Mas,Menos,Por,Dividido,Concatenado}
+	public enum OperadorBinarioRelacional{Igual,Distinto,Mayor,Menor,MayorOIgual,MenorOIgual}
+	public enum OperadorSufijoLogico{EsNulo,NoEsNulo}
+	public enum OperadorAgrupada{Suma,Maximo,Minimo,Promedio,PromedioGeometrico}
+	public enum OperadorFuncion{Exp,LogE}
+	public abstract class BaseDatos:EjecutadorBaseDatos,IDisposable{
 		public enum TipoStuff { Siempre, Inteligente, Nunca };
 		public TipoStuff TipoStuffActual=TipoStuff.Inteligente;
 		protected BaseDatos(IDbConnection con)
@@ -123,7 +127,7 @@ namespace BasesDatos
 		{
 		}
 		public bool EliminarTablaSiExiste(string nombreTabla){
-			Assert.IsNotNull(cmd);
+			Falla.SiEsNulo(cmd);
 			try{
 				ExecuteNonQuery("DROP TABLE "+StuffTabla(nombreTabla)+";");
 				return true;
@@ -136,7 +140,7 @@ namespace BasesDatos
 			}
 		}
 		public bool EliminarVistaSiExiste(string nombreTabla){
-			Assert.IsNotNull(cmd);
+			Falla.SiEsNulo(cmd);
 			try{
 				ExecuteNonQuery("DROP VIEW "+StuffTabla(nombreTabla));
 				return true;
@@ -186,6 +190,66 @@ namespace BasesDatos
 		public void Dispose(){
 			Close();
 		}
+		public string FaltaOperador(object Operador){
+			Falla.Detener("En la base de datos "+MarcaMotor+" falta definir "+Operador.ToString());
+			return null;
+		}
+		public string OperadorToSql(OperadorBinario Operador){
+			switch(Operador){
+				case OperadorBinario.Mas: return "+"; 
+				case OperadorBinario.Menos: return "-"; 
+				case OperadorBinario.Por: return "*"; 
+				case OperadorBinario.Dividido: return "/"; 
+				default:return FaltaOperador(Operador);
+			}
+		}
+		public string OperadorToSql(OperadorBinarioRelacional Operador){
+			switch(Operador){
+				case OperadorBinarioRelacional.Igual: return "="; 
+				case OperadorBinarioRelacional.Distinto: return "<>"; 
+				case OperadorBinarioRelacional.Menor: return "<"; 
+				case OperadorBinarioRelacional.Mayor: return ">"; 
+				case OperadorBinarioRelacional.MenorOIgual: return "<="; 
+				case OperadorBinarioRelacional.MayorOIgual: return ">="; 
+				default: return FaltaOperador(Operador);
+			}
+		}
+		public string OperadorToSql(OperadorSufijoLogico Operador){
+			switch(Operador){
+				case OperadorSufijoLogico.EsNulo: return " IS NULL"; 
+				case OperadorSufijoLogico.NoEsNulo: return " IS NOT NULL"; 
+				default: return FaltaOperador(Operador);
+			}
+		}
+		public virtual string OperadorToSqlPrefijo(OperadorFuncion Operador){
+			switch(Operador){
+				case OperadorFuncion.Exp: return "EXP(";
+				case OperadorFuncion.LogE: return FaltaOperador(Operador);
+				default: return FaltaOperador(Operador);
+			}
+		}
+		public virtual string OperadorToSqlPrefijo(OperadorAgrupada Operador){
+			switch(Operador){
+				case OperadorAgrupada.Suma: return "SUM(";
+				case OperadorAgrupada.Maximo: return "MAX(";
+				case OperadorAgrupada.Minimo: return "MIN(";
+				case OperadorAgrupada.Promedio: return "AVG(";
+				case OperadorAgrupada.PromedioGeometrico: 
+					return OperadorToSqlPrefijo(OperadorFuncion.Exp)+"AVG("+OperadorToSqlPrefijo(OperadorFuncion.LogE);
+				default: return FaltaOperador(Operador);
+			}
+		}
+		public virtual string OperadorToSqlSufijo(OperadorFuncion Operador){
+			switch(Operador){
+				default: return ")";
+			}
+		}
+		public virtual string OperadorToSqlSufijo(OperadorAgrupada Operador){
+			switch(Operador){
+				case OperadorAgrupada.PromedioGeometrico:return ")))";
+				default: return ")";
+			}
+		}
 		public bool DebeStuffear(string nombreTabla){
 			return TipoStuffActual==TipoStuff.Siempre 
 			   || TipoStuffActual==TipoStuff.Inteligente
@@ -207,6 +271,7 @@ namespace BasesDatos
 		public virtual bool UpdateSoloUnaTabla{ get{ return false; } }
 		public abstract bool InternosForzarAs{ get; } 
 		public abstract string FuncionLn{ get; }
+		public abstract string MarcaMotor{ get; }
 	}
 	public class SentenciaSql{
 		StringBuilder sentencia;
@@ -379,7 +444,7 @@ namespace BasesDatos
 				System.Console.WriteLine("Correcto. Dio una excepción: "+ex.Message);
 			}
 			if(NoFalloYDebia && db.GetType()!=typeof(SqLite) && db.GetType()!=typeof(BdAccess)){
-				Assert.Fail("Debió dar error porque no la pudo borrar porque estaba relacionada");
+				Falla.Detener("Debió dar error porque no la pudo borrar porque estaba relacionada");
 			}
 			db.EliminarTablaSiExiste("esta_no_existe");
 			db.EliminarVistaSiExiste("v_temporaria_a_borrar");

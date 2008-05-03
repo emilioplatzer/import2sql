@@ -55,6 +55,8 @@
     <Compile Include="Comunes\Bitacora.cs" />
     <Compile Include="Comunes\Cadena.cs" />
     <Compile Include="Comunes\Carpeta.cs" />
+    <Compile Include="Comunes\Colecciones.cs" />
+    <Compile Include="Comunes\Falla.cs" />
     <Compile Include="Comunes\Parametros.cs" />
     <Compile Include="DelOffice\Excel.cs" />
     <Compile Include="DelOffice\MatrizExcelASql.cs" />
@@ -65,6 +67,11 @@
     <Compile Include="Indices\Indice.cs" />
     <Compile Include="Interactivo\Formulario.cs" />
     <Compile Include="Interactivo\PruebaFormularios.cs" />
+    <Compile Include="ModeladorSql\Campo.cs" />
+    <Compile Include="ModeladorSql\Expresiones.cs" />
+    <Compile Include="ModeladorSql\Instrucciones.cs" />
+    <Compile Include="ModeladorSql\prModeladorSql.cs" />
+    <Compile Include="ModeladorSql\Tabla.cs" />
     <Compile Include="Modelador\Campo.cs" />
     <Compile Include="Modelador\PrModelador.cs" />
     <Compile Include="Modelador\Repositorio.cs" />
@@ -99,6 +106,7 @@
     <Folder Include="Comunes" />
     <Folder Include="BasesDatos" />
     <Folder Include="Interactivo" />
+    <Folder Include="ModeladorSql" />
     <Folder Include="Tareas" />
     <Folder Include="Pruebas" />
   </ItemGroup>

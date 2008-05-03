@@ -214,6 +214,7 @@ EXP(DAVG('LOG(precio)','RelVar','precio>0 AND periodo=''' & c.periodo & ''' AND 
 c.ImputacionEspInf='R' & DCOUNT('precio','RelVar','precio>0 AND periodo=''' & c.periodo & ''' AND producto=''' & c.producto & ''' AND especificacion=' & c.especificacion & ' AND informante=' & c.informante & '')
 WHERE c.periodo='"+cal.cPeriodo.Valor+@"'
 AND c.calculo="+cal.cCalculo.Valor;
+						#pragma warning disable 162
 						if("todo junto"=="no"){
 							ej.ExecuteNonQuery(
 								sUpdateImputados
@@ -226,6 +227,7 @@ AND c.calculo="+cal.cCalculo.Valor;
 								);
 							}
 						}
+						#pragma warning restore 162
 					}else{
 					RelVar rv2=new RelVar();
 					cei.EsFkDe(rv2,cei.cCalculo.Es(cal.cCalculo.Valor));

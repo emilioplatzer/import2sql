@@ -21,37 +21,11 @@ using Modelador;
 namespace Modelador
 {
 	public enum QueTablas{Aliasables, AlFrom};
-	public class Diccionario<TKey, TValue>:System.Collections.Generic.Dictionary<TKey, TValue>{};
-	public class Lista<T>:System.Collections.Generic.List<T>{};
 	public class ConjuntoTablas:Conjunto<Tabla>{
 		public ConjuntoTablas(){}
 		public ConjuntoTablas(Tabla t):base(t){}
 		public ConjuntoTablas(ConjuntoTablas t):base(t){}
 	};
-	/*
-	public class ConjuntoTablas:System.Collections.Generic.Dictionary<Tabla, int>{
-		ConjuntoTablas AddAdd(Tabla t,int cuanto){
-			if(this.ContainsKey(t)){
-				this[t]+=cuanto;
-			}else{
-				this.Add(t,cuanto);
-			}
-			return this;
-		}
-		public ConjuntoTablas Add(Tabla t){
-			return AddAdd(t,1);
-		}
-		public ConjuntoTablas AddRange(ConjuntoTablas conj){
-			foreach(System.Collections.Generic.KeyValuePair<Tabla, int> t in conj){
-				this.AddAdd(t.Key,t.Value);
-			}
-			return this;
-		}
-		public bool Contains(Tabla t){
-			return ContainsKey(t);
-		}
-	}
-	*/
 	public class ListaSqlizable<TSqlizable>:Lista<TSqlizable> where TSqlizable : Sqlizable{
 		public ListaSqlizable(){}
 		public ListaSqlizable(params TSqlizable[] elementos){
@@ -211,7 +185,7 @@ namespace Modelador
 			}
 			public override bool CandidatoAGroupBy{ 
 				get{
-					Assert.Fail("No debería preguntar si un Set tiene variables");
+					Falla.Detener("No debería preguntar si un Set tiene variables");
 					return false;
 				}
 			}
