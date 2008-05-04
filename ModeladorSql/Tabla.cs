@@ -36,8 +36,8 @@ namespace ModeladorSql
 		// public SelectInterno SelectInterno;
 		public Tabla()
 		{
-			Construir();
 			NombreTabla=this.GetType().Name.ToLowerInvariant();
+			Construir();
 		}
 		public Tabla(BaseDatos db,params object[] Claves)
 			:this()
@@ -95,9 +95,9 @@ namespace ModeladorSql
       							CamposFkAlias[fk.Alias]=c;
       						}
       					}
-      					campos.Add(c);
       				}
-				}
+   					campos.Add(c);
+   				}
 			}
 		}
 		protected void Construir(){
@@ -105,8 +105,8 @@ namespace ModeladorSql
 		}
 		public string SentenciaCreateTable(BaseDatos db){
 			StringBuilder rta=new StringBuilder();
-			StringBuilder pk=new StringBuilder("\t"+"primary key (");
-			rta.AppendLine("create table "+this.NombreTabla+"(");
+			StringBuilder pk=new StringBuilder("\t"+"PRIMARY KEY (");
+			rta.AppendLine("CREATE TABLE "+this.NombreTabla+"(");
       		Separador comapk=new Separador(",");
       		foreach(Campo c in campos){
 				rta.AppendLine("\t"+c.NombreCampo+" "+c.TipoCampo+c.Opcionalidad+c.DefinicionPorDefecto(db)+",");
@@ -118,17 +118,22 @@ namespace ModeladorSql
       		rta.Append(pk);
       		UsarFk();
       		if(TablasFk!=null){
+      			// System.Console.WriteLine("La tabla {0} tiene Fk",this.NombreTabla);
 	      		foreach(Tabla t in TablasFk){
+      				// System.Console.WriteLine("  tablaFk {0}",t.NombreTabla);
       				if(t.TipoFk==Fk.Tipo.Obligatoria || t.TipoFk!=Fk.Tipo.Sugerida && db.SoportaFkMixta){
+      					// System.Console.Write("     Tipo {0}:",t.TipoFk.ToString());
 		      			StringBuilder camposFkEsta=new StringBuilder();
 		      			StringBuilder camposFkOtra=new StringBuilder();
 		      			Separador coma=new Separador(",");
-		      			foreach(System.Collections.Generic.KeyValuePair<Campo, IExpresion> p in CamposRelacionFk){
+		      			foreach(System.Collections.Generic.KeyValuePair<Campo, IExpresion> p in t.CamposRelacionFk){
+		      				// System.Console.Write(" [{0},{1}]",p.Key.NombreCampo,p.Value.ToString());
 							Campo c=p.Value as Campo;		      				
 		      				camposFkEsta.Append(coma+c.NombreCampo);
 		      				camposFkOtra.Append(coma.mismo()+p.Key.NombreCampo);
 		      			}
-		      			rta.Append(",\n\t"+"foreign key ("+camposFkEsta.ToString()+") references "+t.NombreTabla+" ("+camposFkOtra.ToString()+")");
+		      			// System.Console.WriteLine();
+		      			rta.Append(",\n\t"+"FOREIGN KEY ("+camposFkEsta.ToString()+") REFERENCES "+t.NombreTabla+" ("+camposFkOtra.ToString()+")");
       				}
 	      		}
       		}
@@ -340,14 +345,20 @@ namespace ModeladorSql
 					}
 				}
 			}
+			System.Console.WriteLine("Relacion entre {0} y {1}",this.NombreTabla,maestra.NombreTabla);
 			foreach(Campo c in CamposPk()){
+				System.Console.Write("   Revisando Campo {0}",c.Nombre);
 				if(!CampoASaltear.Contains(c)){
+					System.Console.Write(" La otra tabla lo tiene");
 					if(CampoAReemplazar!=null && CampoAReemplazar.IndexOf(c)>=0){
+						System.Console.Write(" debe ser reemplazado ");
 						CamposRelacionFk[c]=ExpresionDeReemplazo[CampoAReemplazar.IndexOf(c)];
 					}else{
+						System.Console.Write(" campo normal ");
 						CamposRelacionFk[c]=maestra.CampoIndirecto(c);
 					}
 				}
+				System.Console.WriteLine();
 			}
 			this.TipoFk=TipoFk;
 		}
@@ -377,12 +388,13 @@ namespace ModeladorSql
 	  								Tabla fkTabla=(Tabla) this.GetType().GetField(m.Name).GetValue(this);
 	  								Lista<object> Campos=new Lista<object>();
 	  								foreach(System.Collections.Generic.KeyValuePair<Campo,IExpresion> p in CamposRelacionFk){
-	  									Campos.Add(	);
+	  									if(p.Value is Campo){
+	  										Campos.Add(p.Value);
+	  									}else{
+	  										Campos.Add(p.Key.Es(p.Value));
+	  									}
 	  								}
-	  								foreach(Campo c in fkTabla.CamposPk()){
-	  									Campos.Add((fkTabla.CamposRelacionadosFk[c]).UnicoCampo().ValorSinTipo);
-	  								}
-	  								fkTabla.BuscarYLeerNoPk(db,Campos.ToArray());
+	  								fkTabla.BuscarYLeerNoPk(db,false,Campos.ToArray());
 	  							}
 	  						}
 	  					}
@@ -403,16 +415,16 @@ namespace ModeladorSql
 		}
 		*/
 		public IElementoTipado<T> SelectSuma<T>(IElementoTipado<T> expresion){
-			return new SubSelectAgrupado(expresion,OperadorAgrupada.Suma,this);
+			return new SubSelectAgrupado<T>(expresion,OperadorAgrupada.Suma,this);
 		}
 		public IElementoTipado<T> SelectPromedioGeometrico<T>(IElementoTipado<T> expresion){
-			return new SubSelectAgrupado(expresion,OperadorAgrupada.PromedioGeometrico,this);
+			return new SubSelectAgrupado<T>(expresion,OperadorAgrupada.PromedioGeometrico,this);
 		}
 		public RegistrosEnumerables Todos(BaseDatos db){
 			return new RegistrosEnumerables(this,db);
 		}
 		public RegistrosEnumerables Algunos(BaseDatos db,ElementosClausulaWhere ClausulaWhere,params Campo[] CamposOrden){
-			return new RegistrosEnumerables(this,db,ExpresionWhere,CamposOrden);
+			return new RegistrosEnumerables(this,db,ClausulaWhere,CamposOrden);
 		}
 		/*
 		public SentenciaSelect SubSelect(params Campo[] Campos){
@@ -476,11 +488,11 @@ namespace ModeladorSql
 		public RegistrosEnumerables(Tabla TablaARecorrer,BaseDatos db,ElementosClausulaWhere ClausulaWhere,Campo[] CamposOrden){
 			this.db=db;
 			this.TablaARecorrer=TablaARecorrer;
-			this.ExpresionWhere=ExpresionWhere;
+			this.ClausulaWhere=ClausulaWhere;
 			this.CamposOrden=CamposOrden;
 		}
 		public IteradorRegistro GetEnumerator(){
-			return new IteradorRegistro(TablaARecorrer,db,ExpresionWhere,CamposOrden);
+			return new IteradorRegistro(TablaARecorrer,db,ClausulaWhere,CamposOrden);
 		}
 	}
 	public class IteradorRegistro{
@@ -494,8 +506,8 @@ namespace ModeladorSql
 			this.RegistroActual=TablaBase;
 			StringBuilder s=new StringBuilder();
 			s.Append("SELECT * FROM "+db.StuffTabla(TablaBase.NombreTabla));
-			if(expresionWhere!=null){
-				s.Append(" WHERE "+expresionWhere.ToSql(db));
+			if(ClausulaWhere!=null){
+				s.Append(" WHERE "+ClausulaWhere.ToSql(db));
 			}
 			if(Campos.Length==0){
 				s.Append(" ORDER BY "+TablaBase.OrderBy(db));
