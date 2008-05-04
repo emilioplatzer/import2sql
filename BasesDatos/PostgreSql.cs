@@ -60,13 +60,22 @@ namespace BasesDatos
 		public static PostgreSql SinAbrir(){
 			return new PostgreSql();
 		}
-		public override string OperadorConcatenacionMedio{ 
-			get { return "||"; }
-		}
 		public override bool UpdateConJoin{ get{ return false; } }
 		public override bool InternosForzarAs { get { return false; } }
-		public override string FuncionLn{ get{ return "LN";} }
 		public override string MarcaMotor{ get{ return "PostgreSql"; }}
+		public override string OperadorToSql(OperadorBinario Operador){
+			switch(Operador){
+				case OperadorBinario.Concatenado: return "||";
+				default:return base.OperadorToSql(Operador);
+			}
+		}
+		public override string OperadorToSqlPrefijo(OperadorFuncion Operador){
+			switch(Operador){
+				case OperadorFuncion.LogE: return "LN(";
+				case OperadorFuncion.Str: return "STR(";
+				default: return base.OperadorToSqlPrefijo(Operador);
+			}
+		}
 	}
 	[TestFixture]
 	public class ProbarPostgreSql{

@@ -252,6 +252,9 @@ namespace Comunes
 		string CadenaSeparadora;
 		string CadenaComenzadora;
 		int Vez;
+		int? anchoMaximo;
+		int? LongitudAnterior;
+		bool InvertirEspacioFinDeLinea;
 		public Separador(string cadenaSeparadora)
 			:this("",cadenaSeparadora)
 		{} 
@@ -270,13 +273,68 @@ namespace Comunes
 			}
 			return CadenaSeparadora;
 		}
-		public static string Concatenar(ArrayList elementos,string separador){
+		public string Concatenar(object[] elementos){
 			StringBuilder rta=new StringBuilder();
-			Separador s=new Separador(separador);
 			foreach(string elemento in elementos){
-				rta.Append(s+elemento);
+				//rta.Append(s+elemento);
+				AgregarEn(rta,elemento);
 			}
 			return rta.ToString();
+		}
+		public static string Concatenar(ArrayList elementos,string separador){
+			return Concatenar(elementos.ToArray(),separador);
+		}
+		public static string Concatenar(object[] elementos,string separador){
+			Separador s=new Separador(separador);
+			return s.Concatenar(elementos);
+		}
+		public Separador AnchoMaximo(int cual){
+			anchoMaximo=cual-CadenaSeparadora.Length*2;
+			return this;
+		}
+		public Separador AnchoMaximo(){
+			return AnchoMaximo(72);
+		}
+		public Separador AnchoLimitadoConIdentacion(){
+			InvertirEspacioFinDeLinea=true;
+			return AnchoMaximo();
+		}
+		public string ConFinDeLinea(){
+			string rta=this;
+			if(InvertirEspacioFinDeLinea && rta.EndsWith(" ")){
+				return rta.Substring(0,rta.Length-1)+"\n ";
+			}else{
+				return rta+"\n";
+			}
+		}
+		public void AgregarEn<T>(StringBuilder rta,T valor){
+			System.Console.WriteLine("LongAnt {0}+({1}).Len={2} de ({3}).Len={4},",LongitudAnterior,valor,valor.ToString().Length,rta.ToString(),rta.Length);
+			if(anchoMaximo!=null){
+				if(LongitudAnterior==null){
+					int SaltoEnComenzador=CadenaComenzadora.LastIndexOf('\n');
+					if(SaltoEnComenzador>=0){
+						LongitudAnterior=rta.Length+SaltoEnComenzador;
+					}else{
+						LongitudAnterior=rta.ToString().LastIndexOf('\n');
+						if(LongitudAnterior<0){
+							
+							LongitudAnterior=0;
+						}
+					}
+				}
+				int longitudAgregando=valor.ToString().Length;
+				if(rta.Length+longitudAgregando-LongitudAnterior>anchoMaximo){
+					rta.Append(this.ConFinDeLinea());
+					rta.Append(valor);
+					LongitudAnterior=rta.Length;
+				}else{
+					rta.Append(this);
+					rta.Append(valor);
+				}
+			}else{
+				rta.Append(this);
+				rta.Append(valor);
+			}
 		}
 	}
 	[TestFixture]
@@ -326,6 +384,41 @@ namespace Comunes
 				lista+=and+letras[i]+"="+numeros[i];
 			}
 			Assert.AreEqual("WHERE uno=1 AND dos=2 AND tres=3",lista);
+		}
+		[Test]
+		public void ProbarAnchoMaximo(){
+			string[] numeros={"uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez"};
+			{
+				Separador coma=new Separador(", ").AnchoMaximo(13);
+				Assert.AreEqual(
+					"uno, dos, \ntres, \ncuatro, \ncinco, seis, \nsiete, ocho, \nnueve, diez"
+					,coma.Concatenar(numeros)
+				);
+			}
+			{
+				StringBuilder s=new StringBuilder();
+				s.Append("El primer renglon\n");
+				Separador coma=new Separador(", ").AnchoMaximo(13);
+				foreach(string n in numeros){
+					coma.AgregarEn(s,n);
+				}
+				Assert.AreEqual(
+					"El primer renglon\nuno, dos, \ntres, \ncuatro, \ncinco, seis, \nsiete, ocho, \nnueve, diez"
+					,s.ToString()
+				);
+			}
+			{
+				StringBuilder s=new StringBuilder();
+				s.Append("El primer renglon");
+				Separador coma=new Separador(", ").AnchoMaximo(13);
+				foreach(string n in numeros){
+					coma.AgregarEn(s,n);
+				}
+				Assert.AreEqual(
+					"El primer renglon\nuno, dos, \ntres, \ncuatro, \ncinco, seis, \nsiete, ocho, \nnueve, diez"
+					,s.ToString()
+				);
+			}
 		}
 	}
 }

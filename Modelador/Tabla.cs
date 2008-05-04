@@ -26,7 +26,7 @@ namespace Modelador
 		public string NombreTabla;
 		public BaseDatos db;
 		public int CantidadCamposPk;
-		public string Alias;
+		public string ElAlias;
 		public bool IniciadasFk=false;
 		public Tabla TablaRelacionada;
 		public Diccionario<Campo,ExpresionSql> CamposRelacionadosFk;
@@ -404,7 +404,7 @@ namespace Modelador
 			return (SelectInterno==null
 					?db.StuffTabla(this.NombreTabla)
 					:"("+SelectInterno.ToSql(db)+")")
-				+(this.Alias==null?"":" "+this.Alias);
+				+(this.ElAlias==null?"":" "+this.ElAlias);
 		}
 		public override bool CandidatoAGroupBy{ 
 			get{ // No tiene en el sentido de que no es una expresión
@@ -598,22 +598,22 @@ namespace Modelador
 	}
 	public class OperadorConcatenacionIzquierda:OperadorDependienteDeLaBase{
 		public override string ToSql(BaseDatos db){
-			return db.OperadorConcatenacionIzquierda;
+			return "(";
 		}
 	}
 	public class OperadorConcatenacionDerecha:OperadorDependienteDeLaBase{
 		public override string ToSql(BaseDatos db){
-			return db.OperadorConcatenacionDerecha;
+			return ")";
 		}
 	}
 	public class OperadorConcatenacionMedio:OperadorDependienteDeLaBase{
 		public override string ToSql(BaseDatos db){
-			return db.OperadorConcatenacionMedio;
+			return "||";
 		}
 	}
 	public class FuncionLn:OperadorDependienteDeLaBase{
 		public override string ToSql(BaseDatos db){
-			return db.FuncionLn;
+			return "LN";
 		}
 	}
 	public class ValorSql<T>:Sqlizable{

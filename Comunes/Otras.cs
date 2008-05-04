@@ -63,7 +63,7 @@ namespace Comunes
 				FinLinea="\n";
 			}
 			if(o!=null){
-				if(vistos.Contains(o)){
+				if(vistos.Contiene(o)){
 					return "#"+FinLinea;
 				} 
 				vistos.Add(o);

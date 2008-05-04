@@ -147,6 +147,7 @@ namespace Indices
 			Leer(db,p.cPeriodo,p.cCalculo,a.cAgrupacion,a.cAgrupacion);
 		}
 	}
+	// [Alias("i")]
 	public class Informantes:Tabla{
 		[Pk] public CampoInformante cInformante;
 		public CampoNombre cNombreInformante;

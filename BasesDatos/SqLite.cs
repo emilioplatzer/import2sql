@@ -44,13 +44,22 @@ namespace BasesDatos
 		public override string StuffFecha(DateTime fecha){
 			return "'"+fecha.Year+"/"+fecha.Month+"/"+fecha.Day+"'";
 		}
-		public override string OperadorConcatenacionMedio{ 
-			get { return "||"; }
-		}
 		public override bool UpdateConJoin{ get{ return false; } }
 		public override bool InternosForzarAs { get { return true; } }
-		public override string FuncionLn{ get{ return "LOGoLN";} }
 		public override string MarcaMotor{ get{ return "Sqlite"; }}
+		public override string OperadorToSql(OperadorBinario Operador){
+			switch(Operador){
+				case OperadorBinario.Concatenado: return "||";
+				default:return base.OperadorToSql(Operador);
+			}
+		}
+		public override string OperadorToSqlPrefijo(OperadorFuncion Operador){
+			switch(Operador){
+				//case OperadorFuncion.LogE: return "LOG(";
+				case OperadorFuncion.Str: return "STR(";
+				default: return base.OperadorToSqlPrefijo(Operador);
+			}
+		}
 	}
 	[TestFixture]
 	public class ProbarSqLite{

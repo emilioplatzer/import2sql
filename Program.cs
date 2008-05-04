@@ -72,10 +72,13 @@ namespace TodoASql
 			    p.G_Enumerados();
 			    */
 			    // new prTabla().SubselectGroupBy();
-			    new Tareas.PruebasExternas().Generar();
+			    new PrModeladorSql.prModelador().SentenciaInsert();
+			    // new Tareas.PruebasExternas().Generar();
+			    /*
 				Console.WriteLine("Listo!");
 				Console.Write("presione cualquier tecla . . . ");
 				System.Windows.Forms.MessageBox.Show("Listo");
+				*/
 			    /*
 			    ProbarIndiceD3 p=new ProbarIndiceD3();
 			    p.A01CalculosBase();

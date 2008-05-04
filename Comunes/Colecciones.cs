@@ -47,7 +47,7 @@ namespace Comunes
 			}
 			return this;
 		}
-		public bool Contains(T t){
+		public bool Contiene(T t){
 			return ContainsKey(t);
 		}
 		public override string ToString(){
@@ -65,7 +65,7 @@ namespace Comunes
 		public void probar(){
 			Conjunto<string> colores=new Conjunto<string>();
 			colores.AddRange("Rojo","Verde","Azul");
-			Assert.IsTrue(colores.Contains("Verde"));
+			Assert.IsTrue(colores.Contiene("Verde"));
 			Conjunto<string> otroscolores=new Conjunto<string>();
 			otroscolores.AddRange("Amarillo","Naranja");
 			colores.AddRange(otroscolores);
