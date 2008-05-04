@@ -187,11 +187,11 @@ namespace Modelador
 		public override object ValorSinTipo{ get{ return valor;} }
 		string TipoCampoS(Type tipo){
 			if(tipo==typeof(int)){
-				return "integer";
+				return "INTEGER";
 			}else if(tipo==typeof(string)){
-				return "varchar";
+				return "VARCHAR";
 	         }else if(tipo==typeof(double)){
-				return "double precision";
+				return "DOUBLE PRECISION";
 			}else if(tipo.IsGenericType){
 				return TipoCampoS(tipo.GetGenericArguments()[0]);
 			}else{

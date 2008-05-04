@@ -26,7 +26,25 @@ namespace ModeladorSql
 		}
 	}
 	public class ElementosClausulaSelect:ListaElementos<IConCampos>{}
-	public class ElementosClausulaWhere:ListaElementos<IElementoTipado<bool>>{}
+	public class ElementosClausula:ListaElementos<IElementoTipado<bool>>,IElemento{
+		
+		public string ToSql(BaseDatos db){
+			StringBuilder rta=new StringBuilder();
+			Separador and=new Separador("\n AND ");
+			foreach(IElementoTipado<bool> e in this){
+				rta.Append(and+e.ToSql(db));
+			}
+			return rta.ToString();
+		}
+		public ConjuntoTablas Tablas(QueTablas queTablas){
+			ConjuntoTablas rta=new ConjuntoTablas();
+			foreach(IElementoTipado<bool> e in this){
+				rta.AddRange(e.Tablas(queTablas));
+			}
+			return rta;
+		}
+	}
+	public class ElementosClausulaWhere:ElementosClausula{}
 	public class InstruccionSelect:Instruccion{
 		public ElementosClausulaSelect ClausulaSelect;
 	}
