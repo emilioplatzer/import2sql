@@ -49,8 +49,8 @@ namespace ModeladorSql
 		public ElementosClausulaSelect ClausulaSelect;
 	}
 	public class InstruccionInsert:Instruccion{
-		protected Tabla TablaBase;
-		protected InstruccionSelect InstruccionSelectBase;
+		public Tabla TablaBase;
+		public InstruccionSelect InstruccionSelectBase;
 		public override string ToSql(BaseDatos db){
 			StringBuilder rta=new StringBuilder();
 			rta.Append("INSERT INTO ");

@@ -68,9 +68,11 @@
     <Compile Include="Interactivo\Formulario.cs" />
     <Compile Include="Interactivo\PruebaFormularios.cs" />
     <Compile Include="ModeladorSql\Campo.cs" />
+    <Compile Include="ModeladorSql\Ejecutador.cs" />
     <Compile Include="ModeladorSql\Expresiones.cs" />
     <Compile Include="ModeladorSql\Instrucciones.cs" />
     <Compile Include="ModeladorSql\prModeladorSql.cs" />
+    <Compile Include="ModeladorSql\Sentencias.cs" />
     <Compile Include="ModeladorSql\Tabla.cs" />
     <Compile Include="Modelador\Campo.cs" />
     <Compile Include="Modelador\PrModelador.cs" />
