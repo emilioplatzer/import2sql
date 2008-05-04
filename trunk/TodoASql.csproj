@@ -72,7 +72,6 @@
     <Compile Include="ModeladorSql\Expresiones.cs" />
     <Compile Include="ModeladorSql\Instrucciones.cs" />
     <Compile Include="ModeladorSql\prModeladorSql.cs" />
-    <Compile Include="ModeladorSql\Sentencias.cs" />
     <Compile Include="ModeladorSql\Tabla.cs" />
     <Compile Include="Modelador\Campo.cs" />
     <Compile Include="Modelador\PrModelador.cs" />

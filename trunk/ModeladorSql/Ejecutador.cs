@@ -31,7 +31,7 @@ namespace ModeladorSql
 			base.ExecuteNonQuery(Dump(s));
 		}
 		public string Dump(Sentencia laSentencia){
-			return laSentencia.ToSql(db);
+			return laSentencia.ToSql(db)+";\n";
 		}
 	}
 }

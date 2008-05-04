@@ -19,16 +19,19 @@ namespace PrModeladorSql
 	public class CampoProducto:CampoChar{ public CampoProducto():base(4){} };
 	public class CampoNombre:CampoChar{ public CampoNombre():base(250){} };
 	#pragma warning disable 649
+	[Alias("pe")]
 	public class Periodos:Tabla{
 		[Pk] public CampoEntero cAno;
 		[Pk] public CampoEntero cMes;
 		public CampoEnteroOpcional cAnoAnt;
 		public CampoEnteroOpcional cMesAnt;
 	}
+	[Alias("e")]
 	public class Empresas:Tabla{
 		[Pk] public CampoEntero cEmpresa;
 		public CampoNombre cNombreEmpresa;
 	}
+	[Alias("p")]
 	public class Piezas:Tabla{
 		[Pk] public CampoEntero cEmpresa;
 		[Pk] public CampoPieza cPieza;
@@ -37,6 +40,7 @@ namespace PrModeladorSql
 		public CampoRealOpcional cCosto;
 		[Fk] public Empresas fkEmpresas;
 	}
+	[Alias("pp")]
 	public class PartesPiezas:Tabla{
 		[Pk] public CampoEntero cEmpresa;
 		[Pk] public CampoPieza cPieza;
@@ -48,6 +52,7 @@ namespace PrModeladorSql
 		[Fk] public Piezas fkPiezas;
 		[FkMixta("ant")] public PartesPiezas fkParteAnterior;
 	}
+	[Alias("np")]
 	public class NovedadesPiezas:Tabla{
 		[Pk] public CampoEntero cEmpresa;
 		[Pk] public CampoPieza cPiezaAuxiliar;
@@ -56,6 +61,7 @@ namespace PrModeladorSql
 	public class Numeros:Tabla{
 		[Pk] public CampoEntero cNumero;
 	}
+	[Alias("cc")]
 	public class ColoresCompuestos:Tabla{
 		public enum ColorPrimario{Rojo,Verde,Azul};
 		[Pk] public CampoEntero cColorCompuesto;
@@ -64,9 +70,7 @@ namespace PrModeladorSql
 	#pragma warning restore 649
 	public class CampoPieza:CampoProducto{};
 	[TestFixture]
-	public class prTabla{
-		public prTabla(){
-		}
+	public class prModelador{
 		[Test]
 		public void CreacionTablas(){
 			BdAccess dba=BdAccess.SinAbrir();
@@ -94,7 +98,7 @@ namespace PrModeladorSql
 		public void SentenciaInsert(){
 			Piezas p=new Piezas();
 			BaseDatos dba=BdAccess.SinAbrir();
-			Assert.AreEqual("INSERT INTO piezas (pieza, nombrepieza) SELECT p.pieza, p.pieza AS nombrepieza\n FROM piezas p;\n",
+			Assert.AreEqual("INSERT INTO piezas (pieza, nombrepieza)\n SELECT p.pieza, p.pieza AS nombrepieza\n FROM piezas p;\n",
 				new Ejecutador(dba)
 				.Dump(new SentenciaInsert(new Piezas()).Select(p.cPieza,p.cNombrePieza.Es(p.cPieza))));
 			PartesPiezas pp=new PartesPiezas();
@@ -102,25 +106,25 @@ namespace PrModeladorSql
 			Piezas pr=pp.fkPiezas;
 			NovedadesPiezas np=new NovedadesPiezas();
 			np.EsFkDe(pr,pr.cPieza);
-			Assert.AreEqual("INSERT INTO partespiezas (pieza, cantidad, nombreparte) SELECT p.pieza, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n FROM piezas p, novedadespiezas n\n WHERE n.empresa=p.empresa\n AND n.piezaauxiliar=p.pieza\n GROUP BY p.pieza, n.nuevoestado;\n",
+			Assert.AreEqual("INSERT INTO partespiezas (pieza, cantidad, nombreparte)\n SELECT p.pieza, SUM(p.estado) AS cantidad,\n STR(np.nuevoestado) AS nombreparte\n FROM piezas p, novedadespiezas np\n WHERE np.empresa=p.empresa\n AND np.piezaauxiliar=p.pieza\n GROUP BY p.pieza, STR(np.nuevoestado);\n",
 				new Ejecutador(dba)
-				.Dump(new SentenciaInsert(pp).Select(pr.cPieza,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado))));
-			Assert.AreEqual("INSERT INTO partespiezas (pieza, cantidad, nombreparte) " +
-			                "SELECT p.pieza, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n " +
-			                "FROM piezas p, novedadespiezas n\n " +
-			                "WHERE n.empresa=p.empresa\n AND n.piezaauxiliar=p.pieza\n " +
-			                "GROUP BY p.pieza, n.nuevoestado\n " +
-			                "HAVING COUNT(*)>=2\n AND COUNT(p.costo)>=1;\n",
+				.Dump(new SentenciaInsert(pp).Select(pr.cPieza,pp.cCantidad.EsSuma(pr.cEstado),pp.cNombreParte.Es(np.cNuevoEstado.NumeroACadena()))));
+			Assert.AreEqual("INSERT INTO partespiezas (pieza, cantidad, nombreparte)\n " +
+			                "SELECT p.pieza, SUM(p.costo) AS cantidad,\n STR(np.nuevoestado) AS nombreparte\n " +
+			                "FROM piezas p, novedadespiezas np\n " +
+			                "WHERE np.empresa=p.empresa\n AND np.piezaauxiliar=p.pieza\n " +
+			                "GROUP BY p.pieza, STR(np.nuevoestado)\n " +
+			                "HAVING COUNT(*)>=2\n AND COUNT(np.costo)>=1;\n",
 				new Ejecutador(dba)
 				.Dump(new SentenciaInsert(pp)
-				      .Select(pr.cPieza,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado))
+				      .Select(pr.cPieza,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado.NumeroACadena()))
 				      .Having(new CampoDestino<int>("cantidad_registros").EsCount().MayorOIgual(2),
-				              new CampoDestino<int>("suma_costos").EsCount(p.cCosto).MayorOIgual(1))
+				              new CampoDestino<int>("suma_costos").EsCount(pr.cCosto).MayorOIgual(1))
 				     )
 			);
 			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza, cantidad, nombreparte) SELECT 1 AS empresa, p.pieza, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n FROM piezas p, novedadespiezas n\n WHERE n.empresa=p.empresa\n AND n.piezaauxiliar=p.pieza\n GROUP BY p.pieza, n.nuevoestado;\n",
 				new Ejecutador(dba)
-				.Dump(new SentenciaInsert(pp).Select(pp.cEmpresa.Es(1),pr.cPieza,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado))));
+				.Dump(new SentenciaInsert(pp).Select(pp.cEmpresa.Es(1),pr.cPieza,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado.NumeroACadena()))));
 			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza) VALUES (1, 'PROD1');\n",
 			    new Ejecutador(dba)
 			    .Dump(new SentenciaInsert(pp).Valores(pp.cEmpresa.Es(1),pr.cPieza.Es("PROD1"))));

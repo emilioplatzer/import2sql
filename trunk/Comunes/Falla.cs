@@ -20,6 +20,9 @@ namespace Comunes
 		public static void SiEsNulo(object objeto){
 			Assert.IsNotNull(objeto);
 		}
+		public static void SiNoEsNulo(object objeto,string mensaje){
+			Assert.IsNull(objeto,mensaje);
+		}
 	}
 	public class Advertir
 	{

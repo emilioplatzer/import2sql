@@ -114,7 +114,7 @@ namespace BasesDatos
 	public enum OperadorBinarioRelacional{Igual,Distinto,Mayor,Menor,MayorOIgual,MenorOIgual}
 	public enum OperadorSufijoLogico{EsNulo,NoEsNulo}
 	public enum OperadorAgrupada{Suma,Maximo,Minimo,Promedio,PromedioGeometrico}
-	public enum OperadorFuncion{Exp,LogE}
+	public enum OperadorFuncion{Exp,LogE,Str}
 	public abstract class BaseDatos:EjecutadorBaseDatos,IDisposable{
 		public enum TipoStuff { Siempre, Inteligente, Nunca };
 		public TipoStuff TipoStuffActual=TipoStuff.Inteligente;
@@ -194,7 +194,7 @@ namespace BasesDatos
 			Falla.Detener("En la base de datos "+MarcaMotor+" falta definir "+Operador.ToString());
 			return null;
 		}
-		public string OperadorToSql(OperadorBinario Operador){
+		public virtual string OperadorToSql(OperadorBinario Operador){
 			switch(Operador){
 				case OperadorBinario.Mas: return "+"; 
 				case OperadorBinario.Menos: return "-"; 
@@ -263,14 +263,10 @@ namespace BasesDatos
 		public abstract string StuffFecha(DateTime fecha);
 		public virtual string StuffCampo(string nombreCampo){ return StuffTabla(nombreCampo); }
 		public virtual bool SoportaFkMixta{ get{ return true;}}
-		public abstract string OperadorConcatenacionMedio{ get; }
-		public virtual string OperadorConcatenacionIzquierda{ get{ return "("; } }
-		public virtual string OperadorConcatenacionDerecha{ get{ return ")"; } } 
 		public abstract bool UpdateConJoin{ get; }
 		public virtual bool UpdateSelectSumViaDSum{ get{ return false; } }
 		public virtual bool UpdateSoloUnaTabla{ get{ return false; } }
 		public abstract bool InternosForzarAs{ get; } 
-		public abstract string FuncionLn{ get; }
 		public abstract string MarcaMotor{ get; }
 	}
 	public class SentenciaSql{

@@ -107,7 +107,7 @@ namespace Modelador
 				}
 			}
 			AliasTablas.Add(Alias,t.NombreTabla);
-			t.Alias=Alias;
+			t.ElAlias=Alias;
 		}
 		public void AsignarAlias(){
 			AliasTablas=new System.Collections.Generic.Dictionary<string, string>();
@@ -263,7 +263,7 @@ namespace Modelador
 				ParteSeparadora coma=new ParteSeparadora(", ");
 				todas.Add(new LiteralSql("\n FROM "));
 				foreach(Tabla t in Tablas(QueTablas.AlFrom).Keys){
-					if(!TablasLibres.Contains(t)){
+					if(!TablasLibres.Contiene(t)){
 						coma.AgregarEn(todas,t);
 					}
 				}
@@ -330,7 +330,7 @@ namespace Modelador
 			ListaSqlizable<Sqlizable> valores=new ListaSqlizable<Sqlizable>();
 			todas.Add(new LiteralSql("INSERT INTO "));
 			todas.Add(TablaBase);
-			TablaBase.Alias=null;
+			TablaBase.ElAlias=null;
 			ParteSeparadora coma=new ParteSeparadora(" (",", ");
 			ParteSeparadora vcoma=new ParteSeparadora("VALUES (",", ");
 			foreach(Campo c in Campos){
@@ -383,7 +383,7 @@ namespace Modelador
 				SentenciaUpdate su=s as SentenciaUpdate;
 				ConjuntoTablas suTablas=su.Tablas(QueTablas.AlFrom);
 				if((suTablas.Count<=1 || !db.UpdateConJoin) && db.UpdateSoloUnaTabla){
-					su.TablaBase.Alias=null;
+					su.TablaBase.ElAlias=null;
 				}
 				rta.Append(su.TablaBase.ToSql(db));
 				string prefijoSet="";
@@ -391,7 +391,7 @@ namespace Modelador
 				if(db.UpdateConJoin){
 					foreach(Tabla t in su.Tablas(QueTablas.AlFrom).Keys){
 						if(t!=su.TablaBase){
-							if(t.TablaRelacionada!=null && su.Tablas(QueTablas.AlFrom).Contains(t.TablaRelacionada)){
+							if(t.TablaRelacionada!=null && su.Tablas(QueTablas.AlFrom).Contiene(t.TablaRelacionada)){
 								rta.Append(" INNER JOIN "+t.ToSql(db)+" ON ");
 								Separador and=new Separador(" AND ");
 								foreach(Campo c in t.CamposPk()){
@@ -417,8 +417,8 @@ namespace Modelador
 					Separador coma=new Separador(" FROM ",", ");
 					foreach(Tabla t in su.Tablas(QueTablas.AlFrom).Keys){
 						if(t!=su.TablaBase){
-							if(t.TablaRelacionada!=null && su.Tablas(QueTablas.AlFrom).Contains(t.TablaRelacionada)){
-								if(!s.TablasLibres.Contains(t)){
+							if(t.TablaRelacionada!=null && su.Tablas(QueTablas.AlFrom).Contiene(t.TablaRelacionada)){
+								if(!s.TablasLibres.Contiene(t)){
 									parteFrom.Append(coma+t.ToSql(db));
 								}
 								foreach(Campo c in t.CamposPk()){
@@ -460,7 +460,7 @@ namespace Modelador
 					ss.Campos=nuevaLista;
 				}
 				foreach(Tabla t in s.Tablas(QueTablas.AlFrom).Keys){
-					if(t.TablaRelacionada!=null && s.Tablas(QueTablas.AlFrom).Contains(t.TablaRelacionada)){
+					if(t.TablaRelacionada!=null && s.Tablas(QueTablas.AlFrom).Contiene(t.TablaRelacionada)){
 						foreach(Campo c in t.CamposPk()){
 							s.Where(c.Igual(t.CamposRelacionadosFk[c]));
 						}
@@ -588,13 +588,14 @@ namespace Modelador
 				StringBuilder rta=new StringBuilder();
 				if(db.UpdateSelectSumViaDSum){
 					Tabla TablaSumandis=CampoSumar.TablaContenedora;
-					TablaSumandis.Alias=null;
+					TablaSumandis.ElAlias=null;
 					/*
 					rta.Append(PreOperador+"D"+Operador+"("+PostOperador+"'"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
 					           +db.StuffTabla(TablaSumandis.NombreTabla));
 					           */
+					          
 					rta.Append(PreOperador+"D"+Operador+"("+
-					           (PostOperador=="LOG("?db.FuncionLn+"(":PostOperador)
+					           (PostOperador)
 			                   +"'"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
 					           +TablaSumandis.ToSql(db));
 					Separador and=new Separador("','"," AND ");

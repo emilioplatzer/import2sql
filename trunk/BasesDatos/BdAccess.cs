@@ -55,14 +55,23 @@ namespace BasesDatos
 		public override bool SoportaFkMixta {
 			get { return false; }
 		}
-		public override string OperadorConcatenacionMedio{ 
-			get { return " & "; }
-		}
 		public override bool UpdateConJoin{ get{ return true; } }
 		public override bool UpdateSelectSumViaDSum{ get{ return true; } }
 		public override bool InternosForzarAs { get { return false; } }
-		public override string FuncionLn{ get{ return "LOG";} }
 		public override string MarcaMotor{ get{ return "MS Access"; }}
+		public override string OperadorToSql(OperadorBinario Operador){
+			switch(Operador){
+				case OperadorBinario.Concatenado: return " & ";
+				default:return base.OperadorToSql(Operador);
+			}
+		}
+		public override string OperadorToSqlPrefijo(OperadorFuncion Operador){
+			switch(Operador){
+				case OperadorFuncion.LogE: return "LOG(";
+				case OperadorFuncion.Str: return "STR(";
+				default: return base.OperadorToSqlPrefijo(Operador);
+			}
+		}
 	}
 	[TestFixture]
 	public class ProbarBdAccess{

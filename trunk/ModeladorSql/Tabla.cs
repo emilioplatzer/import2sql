@@ -65,7 +65,18 @@ namespace ModeladorSql
 		}
 		public ConjuntoTablas Tablas(QueTablas queTablas)
 		{
-			return new ConjuntoTablas();
+			return new ConjuntoTablas(this);
+			/*
+			if(SelectInterno==null){
+				return new ConjuntoTablas(this);
+			}else{
+				ConjuntoTablas rta=new ConjuntoTablas();
+				rta.AddRange(SelectInterno.Tablas(queTablas));
+				rta.Add(this);
+				return rta;
+			}
+			*/
+			
 		}
 		public static string NombreFieldANombreCampo(string nombreField){
 			return nombreField.Substring(1);
@@ -101,6 +112,11 @@ namespace ModeladorSql
 			}
 		}
 		protected void Construir(){
+			foreach(System.Attribute attr in this.GetType().GetCustomAttributes(true)){
+				if(attr is Alias){
+					Alias=(attr as Alias).alias;
+				}
+			}
 			ConstruirCampos();
 		}
 		public string SentenciaCreateTable(BaseDatos db){
@@ -193,8 +209,8 @@ namespace ModeladorSql
 					Campo c=o as Campo;
 					if(c.ValorSinTipo!=null){
 						Valores.Add(c);
-					}else if(c is CampoAlias && (c as CampoAlias).ExpresionBase.CandidatoAGroupBy==false){
-						Valores.Add((c as CampoAlias).ExpresionBase);
+					}else if(c is ICampoAlias && (c as ICampoAlias).ExpresionBase.CandidatoAGroupBy==false){
+						Valores.Add((c as ICampoAlias).ExpresionBase);
 					}else{
 						Falla.Detener("BuscarYLeer un parámetro Campo ("+c.Nombre+") no tiene valor ni expresion base");
 					}
@@ -247,8 +263,8 @@ namespace ModeladorSql
 				if(campo is Campo){
 					Campo c=campo as Campo;
 					campo=c.NombreCampo;
-					if(c is CampoAlias){
-						valor=(c as CampoAlias).ExpresionBase.ToSql(db);
+					if(c is ICampoAlias){
+						valor=(c as ICampoAlias).ExpresionBase.ToSql(db);
 					}else{
 						valor=db.StuffValor(c.ValorSinTipo);
 					}
@@ -337,28 +353,22 @@ namespace ModeladorSql
 					if(CampoReemplazo.TablaContenedora==maestra){
 						CampoAReemplazar.Add(CamposPk()[cantidadCamposFk-1]);
 						ExpresionDeReemplazo.Add(CampoReemplazo);
-					}else if(CampoReemplazo is CampoAlias){
-						CampoAReemplazar.Add((CampoReemplazo as CampoAlias).CampoReceptor);
-						ExpresionDeReemplazo.Add((CampoReemplazo as CampoAlias).ExpresionBase);
+					}else if(CampoReemplazo is ICampoAlias){
+						CampoAReemplazar.Add((CampoReemplazo as ICampoAlias).CampoReceptor);
+						ExpresionDeReemplazo.Add((CampoReemplazo as ICampoAlias).ExpresionBase);
 					}else if(CampoReemplazo.TablaContenedora==this){ // No es un alisa, quitar
 						CampoASaltear.Add(CampoReemplazo);
 					}
 				}
 			}
-			System.Console.WriteLine("Relacion entre {0} y {1}",this.NombreTabla,maestra.NombreTabla);
 			foreach(Campo c in CamposPk()){
-				System.Console.Write("   Revisando Campo {0}",c.Nombre);
 				if(!CampoASaltear.Contains(c)){
-					System.Console.Write(" La otra tabla lo tiene");
 					if(CampoAReemplazar!=null && CampoAReemplazar.IndexOf(c)>=0){
-						System.Console.Write(" debe ser reemplazado ");
 						CamposRelacionFk[c]=ExpresionDeReemplazo[CampoAReemplazar.IndexOf(c)];
 					}else{
-						System.Console.Write(" campo normal ");
 						CamposRelacionFk[c]=maestra.CampoIndirecto(c);
 					}
 				}
-				System.Console.WriteLine();
 			}
 			this.TipoFk=TipoFk;
 		}
@@ -547,6 +557,12 @@ namespace ModeladorSql
 	}
 	/////////////
 	public class Vista:System.Attribute{}
+	public class Alias:System.Attribute{
+		public string alias;
+		public Alias(string alias){
+			this.alias=alias;
+		}
+	}
 	public class Fk:System.Attribute{		
 		public enum Tipo { Obligatoria, Mixta/*puede tener algún campo null y otro no*/, Sugerida/*solo para los joins*/ };
 		public Tipo TipoFk;
@@ -569,6 +585,7 @@ namespace ModeladorSql
 			:base(db,tabla.NombreTabla)
 		{}
 	}
+	/*
 	public abstract class Sqlizable{
 		public abstract string ToSql(BaseDatos db);
 		public abstract ConjuntoTablas Tablas(QueTablas queTablas);
@@ -651,4 +668,5 @@ namespace ModeladorSql
 			return new ConjuntoTablas();
 		}
 	}
+	*/
 }

@@ -62,10 +62,10 @@ namespace Modelador
 		public abstract string DefinicionPorDefecto(BaseDatos db);
 		public override string ToSql(BaseDatos db)
 		{
-			if(this.TablaContenedora==null || this.TablaContenedora.Alias==null){
+			if(this.TablaContenedora==null || this.TablaContenedora.ElAlias==null){
 				return db.StuffCampo(this.NombreCampo);
 			}else{
-				return this.TablaContenedora.Alias+"."+db.StuffCampo(NombreCampo);
+				return this.TablaContenedora.ElAlias+"."+db.StuffCampo(NombreCampo);
 			}
 		}
 		public override bool CandidatoAGroupBy{ 

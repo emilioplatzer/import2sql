@@ -16,7 +16,15 @@ using BasesDatos;
 
 namespace ModeladorSql
 {
-	public class ListaElementos<TIE>:Lista<TIE> where TIE:IElemento{}
+	public class ListaElementos<TIE>:Lista<TIE> where TIE:IElemento{
+		public ConjuntoTablas Tablas(QueTablas queTablas){
+			ConjuntoTablas rta=new ConjuntoTablas();
+			foreach(IElemento e in this){
+				rta.AddRange(e.Tablas(queTablas));
+			}
+			return rta;
+		}
+	}
 	public enum QueTablas{Aliasables, AlFrom};
 	public class ConjuntoTablas:Conjunto<Tabla>{
 		public ConjuntoTablas(){}
@@ -29,6 +37,8 @@ namespace ModeladorSql
 	}
 	public interface IElementoTipado<T>:IElemento,IExpresion{
 		int Precedencia{ get; }
+	}
+	public interface IElementoNumerico<T>:IElementoTipado<T>{		
 	}
 	public interface IConCampos:IElemento{
 		Lista<Campo> Campos();
@@ -169,7 +179,18 @@ namespace ModeladorSql
 			return E1.ToSql(db)+db.OperadorToSql(Operador);
 		}
 	}
-	public class FuncionAgrupacion<T>:ExpresionTipada<T,T,T>{
+	public class OperacionFuncion<T,TR>:ExpresionTipada<T,T,TR>{
+		OperadorFuncion Operador;
+		public OperacionFuncion(IElementoTipado<T> E, OperadorFuncion Operador)
+			:base(E)
+		{
+			this.Operador=Operador;
+		}
+		public override string ToSql(BaseDatos db){
+			return db.OperadorToSqlPrefijo(Operador)+E1.ToSql(db)+db.OperadorToSqlSufijo(Operador);
+		}
+	}
+	public class FuncionAgrupacion<T,TR>:ExpresionTipada<T,T,TR>{
 		OperadorAgrupada Operador;
 		public FuncionAgrupacion(IElementoTipado<T> E, OperadorAgrupada Operador)
 			:base(E)
@@ -186,7 +207,7 @@ namespace ModeladorSql
 			get { return true; }
 		}
 	}
-	public class FuncionCount:IExpresion{
+	public class FuncionCount:ElementoTipado<int>{
 		IExpresion E;
 		public FuncionCount(){
 			
@@ -194,26 +215,31 @@ namespace ModeladorSql
 		public FuncionCount(IExpresion E){
 			this.E=E;
 		}
-		public virtual string ToSql(BaseDatos db){
+		public override string ToSql(BaseDatos db){
 			if(E==null){
 				return "COUNT(*)";
 			}else{
 				return "COUNT("+E.ToSql(db)+")";
 			}
 		}
-		public virtual ConjuntoTablas Tablas(QueTablas queTablas){
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
 			if(E==null){
 				return new ConjuntoTablas();
 			}else{
 				return E.Tablas(queTablas);
 			}
 		}
-		public virtual bool CandidatoAGroupBy{ 
+		public override bool CandidatoAGroupBy{ 
 			get{ return false; }
 		}
-		public virtual bool EsAgrupada {
+		public override bool EsAgrupada {
 			get { return true; }
 		}
+		/*
+		public int Precedencia {
+			get { return 9; }
+		}
+		*/
 	}
 	public class SubSelectAgrupado<T>:IElementoTipado<T>{
 		IElementoTipado<T> Expresion;
