@@ -110,7 +110,7 @@ namespace BasesDatos
 			}
 		}
 	}
-	public enum OperadorBinario{Mas,Menos,Por,Dividido,Concatenado}
+	public enum OperadorBinario{Mas,Menos,Por,Dividido,Concatenado,Or,And}
 	public enum OperadorBinarioRelacional{Igual,Distinto,Mayor,Menor,MayorOIgual,MenorOIgual}
 	public enum OperadorSufijoLogico{EsNulo,NoEsNulo}
 	public enum OperadorAgrupada{Suma,Maximo,Minimo,Promedio,PromedioGeometrico}
@@ -200,6 +200,8 @@ namespace BasesDatos
 				case OperadorBinario.Menos: return "-"; 
 				case OperadorBinario.Por: return "*"; 
 				case OperadorBinario.Dividido: return "/"; 
+				case OperadorBinario.And:return " AND ";
+				case OperadorBinario.Or:return " OR ";
 				default:return FaltaOperador(Operador);
 			}
 		}

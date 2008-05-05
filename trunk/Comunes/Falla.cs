@@ -23,6 +23,9 @@ namespace Comunes
 		public static void SiNoEsNulo(object objeto,string mensaje){
 			Assert.IsNull(objeto,mensaje);
 		}
+		public static void NoImplementadoAun(){
+			Assert.Fail("No implementado aún");
+		}
 	}
 	public class Advertir
 	{
