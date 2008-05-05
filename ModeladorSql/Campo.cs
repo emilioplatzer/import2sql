@@ -69,6 +69,9 @@ namespace ModeladorSql
 		public CampoAlias<object> Es(IExpresion expresion){
 			return new CampoAlias<object>(this,expresion);
 		}
+		public virtual IExpresion Expresion{
+			get{ return this; }
+		}
 	}
 	public interface ICampoAlias{
 		IExpresion ExpresionBase{ get; }
@@ -128,17 +131,13 @@ namespace ModeladorSql
 		public override bool EsAgrupada {
 			get { return ExpresionBase.EsAgrupada; }
 		}
-		/*
-		public override IExpresion Expresion{
-			get{
-				return ExpresionBase;
-			}
-		}
-		*/
 		public override ConjuntoTablas Tablas(QueTablas queTablas){
 			ConjuntoTablas rta=new ConjuntoTablas();
 			rta.AddRange(ExpresionBase.Tablas(queTablas));
 			return rta;
+		}
+		public override IExpresion Expresion{
+			get{ return ExpresionBase; }
 		}
 	}
 	public class CampoTipo<T>:Campo,IElementoTipado<T>{

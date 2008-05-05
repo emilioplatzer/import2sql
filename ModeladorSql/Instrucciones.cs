@@ -79,7 +79,8 @@ namespace ModeladorSql
 			foreach(IConCampos campos in ClausulaSelect){
 				foreach(Campo c in campos.Campos()){
 					selectComa.AgregarEn(rta,c.ToSql(db));
-					IExpresion e=(c is ICampoAlias)?(c as ICampoAlias).ExpresionBase:c;
+					// IExpresion e=(c is ICampoAlias)?(c as ICampoAlias).ExpresionBase:c;
+					IExpresion e=c.Expresion;
 					TieneAgrupadas=TieneAgrupadas || e.EsAgrupada;
 					if(e.CandidatoAGroupBy){
 						groupbyComa.AgregarEn(groupby,e.ToSql(db));
@@ -106,9 +107,8 @@ namespace ModeladorSql
 			if(TieneAgrupadas){
 				rta.Append(groupby);
 			}
-			Separador havingComa=new Separador("\n HAVING ",", ").AnchoLimitadoConIdentacion();
-			foreach(IExpresion c in ClausulaHaving){
-				IExpresion e=(c is ICampoAlias)?(c as ICampoAlias).ExpresionBase:c;
+			Separador havingComa=new Separador("\n HAVING ","\n AND ").AnchoLimitadoConIdentacion();
+			foreach(IExpresion e in ClausulaHaving){
 				havingComa.AgregarEn(rta,e.ToSql(db));
 			}
 			return rta.ToString();
@@ -124,7 +124,7 @@ namespace ModeladorSql
 	public class SentenciaInsert:Sentencia{
 		Tabla TablaBase;
 		SentenciaSelect SentenciaSelectBase;
-		ListaElementos<IConCampos> ValoresDirectos;
+		ElementosClausulaSelect ValoresDirectos;
 		public SentenciaInsert(Tabla TablaBase){
 			this.TablaBase=TablaBase;
 		}
@@ -135,12 +135,13 @@ namespace ModeladorSql
 			return this;
 		}
 		public SentenciaInsert Having(params IElementoTipado<bool>[] campos){
+			Falla.SiEsNulo(SentenciaSelectBase);
 			SentenciaSelectBase.Having(campos);
 			return this;
 		}
 		public SentenciaInsert Valores(params IConCampos[] campos){
 			Falla.SiNoEsNulo(SentenciaSelectBase,"En una sentencia insert no se puede poner Valores despues de un Select");
-			ValoresDirectos=new ListaElementos<IConCampos>();
+			ValoresDirectos=new ElementosClausulaSelect();
 			ValoresDirectos.AddRange(campos);
 			return this;
 		}
@@ -149,19 +150,29 @@ namespace ModeladorSql
 			rta.Append("INSERT INTO ");
 			rta.Append(db.StuffTabla(TablaBase.NombreTabla));
 			Separador coma=new Separador(" (",", ").AnchoLimitadoConIdentacion();
-			ElementosClausulaSelect nuevaClausula=new ElementosClausulaSelect();
-			foreach(IConCampos e in SentenciaSelectBase.ClausulaSelect){
+			ElementosClausulaSelect nuevaLista=new ElementosClausulaSelect();
+			foreach(IConCampos e in ValoresDirectos??SentenciaSelectBase.ClausulaSelect){
 				foreach(Campo c in e.Campos()){
 					if(TablaBase.ContieneMismoNombre(c)){
-						nuevaClausula.Add(c);
-						rta.Append(coma+db.StuffCampo(c.NombreCampo));
+						if(!nuevaLista.Exists(delegate(IConCampos campo){ return c.Nombre==campo.Campos()[0].Nombre; })){
+							nuevaLista.Add(c);
+							coma.AgregarEn(rta,db.StuffCampo(c.NombreCampo));
+						}
 					}
 				}
 			}
-			SentenciaSelectBase.ClausulaSelect=nuevaClausula;
-			rta.Append(")\n ");
-			SentenciaSelectBase.TablasQueEstanMasArriba=new ConjuntoTablas(TablaBase);
-			rta.Append(SentenciaSelectBase.ToSql(db));
+			if(SentenciaSelectBase==null){
+				Separador valuesComa=new Separador(")\n VALUES (",", ").AnchoLimitadoConIdentacion();
+				foreach(IExpresion e in nuevaLista){
+					valuesComa.AgregarEn(rta,e.Expresion.ToSql(db));
+				}
+				rta.Append(")");
+			}else{
+				SentenciaSelectBase.ClausulaSelect=nuevaLista;
+				rta.Append(")\n ");
+				SentenciaSelectBase.TablasQueEstanMasArriba=new ConjuntoTablas(TablaBase);
+				rta.Append(SentenciaSelectBase.ToSql(db));
+			}
 			return rta.ToString();
 		}
 		public override ConjuntoTablas Tablas(QueTablas queTablas)

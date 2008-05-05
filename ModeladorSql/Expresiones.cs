@@ -56,6 +56,7 @@ namespace ModeladorSql
 	public interface IExpresion:IElemento{
 		bool CandidatoAGroupBy{ get; }
 		bool EsAgrupada{ get; }
+		IExpresion Expresion{ get; }
 	}
 	public abstract class ElementoTipado<T>:IElementoTipado<T>,IExpresion{
 		public abstract string ToSql(BaseDatos db);
@@ -66,13 +67,18 @@ namespace ModeladorSql
 		public static implicit operator ElementoTipado<T>(T constante){
 			return new Constante<T>(constante);
 		}
+		public IExpresion Expresion{
+			get{ return this; }
+		}
 	}
 	public abstract class ExpresionTipada<T1,T2,TR>:ElementoTipado<TR>{
-		protected IElementoTipado<T1> E1;
-		protected IElementoTipado<T2> E2;
+		//protected IElementoTipado<T1> E1;
+		//protected IElementoTipado<T2> E2;
+		protected IExpresion E1;
+		protected IExpresion E2;
 		protected ExpresionTipada(IElementoTipado<T1> E1, IElementoTipado<T2> E2){
-			this.E1=E1;
-			this.E2=E2;
+			if(E1!=null){ this.E1=E1.Expresion; }
+			if(E2!=null){ this.E2=E2.Expresion; }
 		}
 		protected ExpresionTipada(IElementoTipado<T1> E1){
 			this.E1=E1;
@@ -242,37 +248,37 @@ namespace ModeladorSql
 		*/
 	}
 	public class SubSelectAgrupado<T>:IElementoTipado<T>{
-		IElementoTipado<T> Expresion;
+		IElementoTipado<T> ExpresionBase;
 		OperadorAgrupada Operador;
 		Tabla TablaContexto;
 		public SubSelectAgrupado(IElementoTipado<T> Expresion,OperadorAgrupada Operador,Tabla TablaContexto){
-			this.Expresion=Expresion;
+			this.ExpresionBase=Expresion;
 			this.Operador=Operador;
 			this.TablaContexto=TablaContexto;
 		}
-		public int Precedencia {
+		public int Precedencia{
 			get{ return 0; }
 		}
-		public bool CandidatoAGroupBy {
+		public bool CandidatoAGroupBy{
 			get{ return false; }
 		}
 		public bool EsAgrupada {
 			get{ return true; }
 		}
-		public string ToSql(BaseDatos db)
-		{
+		public string ToSql(BaseDatos db){
 			throw new NotImplementedException();
 		}
-		
-		public ConjuntoTablas Tablas(QueTablas queTablas)
-		{
+		public ConjuntoTablas Tablas(QueTablas queTablas){
 			if(queTablas==QueTablas.Aliasables){
 				ConjuntoTablas rta=new ConjuntoTablas();
-				rta.AddRange(Expresion.Tablas(queTablas));
+				rta.AddRange(ExpresionBase.Tablas(queTablas));
 				rta.Add(TablaContexto);
 				return rta;
 			}
 			throw new NotImplementedException();
+		}
+		public IExpresion Expresion{
+			get{ return this; }
 		}
 	}
 }

@@ -114,7 +114,7 @@ namespace PrModeladorSql
 			                "FROM piezas p, novedadespiezas np\n " +
 			                "WHERE np.empresa=p.empresa\n AND np.piezaauxiliar=p.pieza\n " +
 			                "GROUP BY p.pieza, STR(np.nuevoestado)\n " +
-			                "HAVING COUNT(*)>=2\n AND COUNT(np.costo)>=1;\n",
+			                "HAVING COUNT(*)>=2\n AND COUNT(p.costo)>=1;\n",
 				new Ejecutador(dba)
 				.Dump(new SentenciaInsert(pp)
 				      .Select(pr.cPieza,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado.NumeroACadena()))
@@ -122,18 +122,18 @@ namespace PrModeladorSql
 				              new CampoDestino<int>("suma_costos").EsCount(pr.cCosto).MayorOIgual(1))
 				     )
 			);
-			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza, cantidad, nombreparte) SELECT 1 AS empresa, p.pieza, SUM(p.costo) AS cantidad, n.nuevoestado AS nombreparte\n FROM piezas p, novedadespiezas n\n WHERE n.empresa=p.empresa\n AND n.piezaauxiliar=p.pieza\n GROUP BY p.pieza, n.nuevoestado;\n",
+			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza, cantidad, nombreparte)\n SELECT 1 AS empresa, p.pieza, SUM(p.costo) AS cantidad,\n STR(np.nuevoestado) AS nombreparte\n FROM piezas p, novedadespiezas np\n WHERE np.empresa=p.empresa\n AND np.piezaauxiliar=p.pieza\n GROUP BY p.pieza, STR(np.nuevoestado);\n",
 				new Ejecutador(dba)
 				.Dump(new SentenciaInsert(pp).Select(pp.cEmpresa.Es(1),pr.cPieza,pp.cCantidad.EsSuma(pr.cCosto),pp.cNombreParte.Es(np.cNuevoEstado.NumeroACadena()))));
-			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza) VALUES (1, 'PROD1');\n",
+			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza)\n VALUES (1, 'PROD1');\n",
 			    new Ejecutador(dba)
 			    .Dump(new SentenciaInsert(pp).Valores(pp.cEmpresa.Es(1),pr.cPieza.Es("PROD1"))));
-			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza, parte) SELECT p.empresa, p.pieza, 1 AS parte\n FROM piezas p;\n",
+			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza, parte)\n SELECT p.empresa, p.pieza, 1 AS parte\n FROM piezas p;\n",
                 new Ejecutador(dba)
                 .Dump(new SentenciaInsert(pp).Select(p,pp.cParte.Es(1))));
 			p.UsarFk();
 			Empresas e=p.fkEmpresas;
-			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza, parte) SELECT e.empresa, p.pieza, 1 AS parte\n FROM empresas e, piezas p\n WHERE e.empresa=p.empresa;\n",
+			Assert.AreEqual("INSERT INTO partespiezas (empresa, pieza, parte)\n SELECT e.empresa, p.pieza, 1 AS parte\n FROM empresas e, piezas p\n WHERE e.empresa=p.empresa;\n",
                 new Ejecutador(dba)
                 .Dump(new SentenciaInsert(pp).Select(e,p,pp.cParte.Es(1))));
 		}
