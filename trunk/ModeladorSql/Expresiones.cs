@@ -80,13 +80,6 @@ namespace ModeladorSql
 		public IExpresion E1{ get{ return e1; } set{ e1=value.Expresion;}}
 		IExpresion e2;
 		public IExpresion E2{ get{ return e2; } set{ e2=value.Expresion;}}
-		protected ExpresionTipada(IElementoTipado<T1> E1,IElementoTipado<T2> E2){
-			if(E1!=null){ this.E1=E1; }
-			if(E2!=null){ this.E2=E2; }
-		}
-		protected ExpresionTipada(IElementoTipado<T1> E1){
-			this.E1=E1;
-		}
 		public override ConjuntoTablas Tablas(QueTablas queTabla){
 			ConjuntoTablas rta=new ConjuntoTablas();
 			if(E1!=null){ rta.AddRange(E1.Tablas(queTabla)); }
@@ -161,12 +154,7 @@ namespace ModeladorSql
 		}
 	}
 	public class Binomio<T>:ExpresionTipada<T,T,T>{
-		protected OperadorBinario Operador;
-		public Binomio(IElementoTipado<T> E1,OperadorBinario Operador,IElementoTipado<T> E2)
-			:base(E1,E2)
-		{
-			this.Operador=Operador;
-		}
+		public OperadorBinario Operador;
 		public override string ToSql(BaseDatos db){
 			return ToSqlInfijoConParentesisQueHaganFalta(db,db.OperadorToSql(Operador),Precedencia);
 		}
@@ -175,12 +163,7 @@ namespace ModeladorSql
 		}
 	}
 	public class Binomio3T<T1,T2,TR>:ExpresionTipada<T1,T2,TR>{
-		OperadorBinario Operador;
-		public Binomio3T(IElementoTipado<T1> E1,OperadorBinario Operador,IElementoTipado<T2> E2)
-			:base(E1,E2)
-		{
-			this.Operador=Operador;
-		}
+		public OperadorBinario Operador;
 		public override string ToSql(BaseDatos db){
 			return ToSqlInfijoConParentesisQueHaganFalta(db,db.OperadorToSql(Operador),Precedencia);
 		}
@@ -189,10 +172,10 @@ namespace ModeladorSql
 		}
 	}
 	public class BinomioRelacional<T>:ExpresionTipada<T,T,bool>{
-		OperadorBinarioRelacional Operador;
-		public BinomioRelacional(IElementoTipado<T> E1,OperadorBinarioRelacional Operador,IElementoTipado<T> E2)
-			:base(E1,E2)
-		{
+		public OperadorBinarioRelacional Operador;
+		public BinomioRelacional(IElementoTipado<T> E1,OperadorBinarioRelacional Operador,IElementoTipado<T> E2){	
+			this.E1=E1;
+			this.E2=E2;
 			this.Operador=Operador;
 		}
 		public override string ToSql(BaseDatos db){
@@ -204,9 +187,8 @@ namespace ModeladorSql
 	}
 	public class OperacionSufijaLogica<T>:ExpresionTipada<T,T,bool>{
 		OperadorSufijoLogico Operador;
-		public OperacionSufijaLogica(IElementoTipado<T> E, OperadorSufijoLogico Operador)
-			:base(E)
-		{
+		public OperacionSufijaLogica(IElementoTipado<T> E, OperadorSufijoLogico Operador){
+			this.E1=E;
 			this.Operador=Operador;
 		}
 		public override string ToSql(BaseDatos db){
@@ -215,9 +197,8 @@ namespace ModeladorSql
 	}
 	public class OperacionFuncion<T,TR>:ExpresionTipada<T,T,TR>{
 		OperadorFuncion Operador;
-		public OperacionFuncion(IElementoTipado<T> E, OperadorFuncion Operador)
-			:base(E)
-		{
+		public OperacionFuncion(IElementoTipado<T> E, OperadorFuncion Operador){
+			this.E1=E;
 			this.Operador=Operador;
 		}
 		public override string ToSql(BaseDatos db){
@@ -226,9 +207,8 @@ namespace ModeladorSql
 	}
 	public class FuncionAgrupacion<T,TR>:ExpresionTipada<T,T,TR>{
 		OperadorAgrupada Operador;
-		public FuncionAgrupacion(IElementoTipado<T> E, OperadorAgrupada Operador)
-			:base(E)
-		{
+		public FuncionAgrupacion(IElementoTipado<T> E, OperadorAgrupada Operador){
+			this.E1=E;
 			this.Operador=Operador;
 		}
 		public override string ToSql(BaseDatos db){
@@ -311,10 +291,10 @@ namespace ModeladorSql
 	}
 	public static class ExtensionesLogicas{
 		public static ElementoTipado<bool> And(this IElementoTipado<bool> E1, IElementoTipado<bool> E2){
-			return new Binomio<bool>(E1, OperadorBinario.And, E2);
+			return new Binomio<bool>{E1=E1, Operador=OperadorBinario.And, E2=E2};
 		}
 		public static ElementoTipado<bool> Or(this IElementoTipado<bool> E1, IElementoTipado<bool> E2){
-			return new Binomio<bool>(E1, OperadorBinario.Or, E2);
+			return new Binomio<bool>{E1=E1, Operador=OperadorBinario.Or, E2=E2};
 		}
 	}
 }

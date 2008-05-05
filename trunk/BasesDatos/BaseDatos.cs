@@ -215,13 +215,14 @@ namespace BasesDatos
 				case OperadorBinario.Menos: return 6; 
 				case OperadorBinario.Por: return 7; 
 				case OperadorBinario.Dividido: return 7; 
-				case OperadorBinario.And:return 4;
-				case OperadorBinario.Or:return 3;
+				case OperadorBinario.And:return 3;
+				case OperadorBinario.Or:return 2;
+				case OperadorBinario.Concatenado:return 5;
 				default:return FaltaPrecedenciaOperador(Operador);
 			}
 		}
 		public static int Precedencia(OperadorBinarioRelacional Operador){
-			return 5;
+			return 4;
 		}
 		public string OperadorToSql(OperadorBinarioRelacional Operador){
 			switch(Operador){

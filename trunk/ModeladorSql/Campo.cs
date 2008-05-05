@@ -308,13 +308,13 @@ namespace ModeladorSql
 			return Es(new FuncionAgrupacion<T,T>(expresion,OperadorAgrupada.PromedioGeometrico));
 		}
 		public IExpresion Mas(ElementoTipado<T> Valor){
-			return new Binomio<T>(this,OperadorBinario.Mas,Valor);
+			return new Binomio<T>{E1=this,Operador=OperadorBinario.Mas,E2=Valor};
 		}
 		public IExpresion Por(IElementoTipado<T> Valor){
-			return new Binomio<T>(this,OperadorBinario.Por,Valor);
+			return new Binomio<T>{E1=this,Operador=OperadorBinario.Por,E2=Valor};
 		}
 		public IExpresion Dividido(IElementoTipado<T> Valor){
-			return new Binomio<T>(this,OperadorBinario.Dividido,Valor);
+			return new Binomio<T>{E1=this,Operador=OperadorBinario.Dividido,E2=Valor};
 		}
 		public ElementoTipado<string> NumeroACadena(){
 			return new OperacionFuncion<T,string>(this, OperadorFuncion.Str);
@@ -345,13 +345,13 @@ namespace ModeladorSql
 			get { return "VARCHAR("+Largo.ToString()+")"; }
 		}
 		public ElementoTipado<string> Concatenado(string constante){
-			return new Binomio3T<string,string,string>(this,OperadorBinario.Concatenado,new Constante<string>(constante));
+			return new Binomio3T<string,string,string>{E1=this,Operador=OperadorBinario.Concatenado,E2=new Constante<string>(constante)};
 		}
 		public ElementoTipado<string> Concatenado<T>(IElementoTipado<T> expresion){
-			return new Binomio3T<string,T,string>(this,OperadorBinario.Concatenado,expresion);
+			return new Binomio3T<string,T,string>{E1=this,Operador=OperadorBinario.Concatenado,E2=expresion};
 		}
 		public ElementoTipado<string> Concatenado<T>(ElementoTipado<T> expresion){
-			return new Binomio3T<string,T,string>(this,OperadorBinario.Concatenado,expresion);
+			return new Binomio3T<string,T,string>{E1=this,Operador=OperadorBinario.Concatenado,E2=expresion};
 		}
 	}
 	public class CampoReal:CampoNumericoTipo<double>{

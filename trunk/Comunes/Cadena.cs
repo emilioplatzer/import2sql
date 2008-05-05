@@ -336,6 +336,9 @@ namespace Comunes
 				rta.Append(valor);
 			}
 		}
+		public void Reiniciar(){
+			Vez=0;
+		}
 	}
 	[TestFixture]
 	public class ProbarSeparador{

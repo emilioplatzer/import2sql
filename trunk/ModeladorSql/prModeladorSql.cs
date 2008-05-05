@@ -172,7 +172,6 @@ namespace PrModeladorSql
 				Assert.AreEqual(Esperado+";\n",ej.Dump(sentencia));
 			}
 		}	
-		/**/
 		[Test]
 		public void SentenciaCompuesta(){
 			Piezas p=new Piezas();
@@ -195,18 +194,19 @@ namespace PrModeladorSql
 					new SentenciaSelect(pi.cPieza,pi.cNombrePieza,cCantidadPartes.EsSuma(pp.cCantidad));
 				Assert.AreEqual("SELECT p.[pieza], p.[nombrepieza],\n SUM(pp.[cantidad]) AS [cantidadpartes]\n FROM [piezas] p, [partespiezas] pp\n WHERE p.[empresa]=pp.[empresa]\n AND p.[pieza]=pp.[pieza]\n AND p.[empresa]=13\n AND pp.[empresa]=13\n GROUP BY p.[pieza], p.[nombrepieza];\n"
 				                ,ej.Dump(s2));
-				Assert.AreEqual("SELECT SUM(p.[cantidad]) AS [cantidadpartes]\n FROM [partespiezas] p, [piezas] pi\n WHERE pi.[pieza]<>pi.[nombrepieza]\n AND pi.[empresa]=p.[empresa]\n AND pi.[pieza]=p.[pieza]\n AND p.[empresa]=13\n AND pi.[empresa]=13;\n"
+				Assert.AreEqual("SELECT SUM(pp.[cantidad]) AS [cantidadpartes]\n FROM [partespiezas] pp, [piezas] p\n WHERE p.[pieza]<>p.[nombrepieza]\n AND p.[empresa]=pp.[empresa]\n AND p.[pieza]=pp.[pieza]\n AND pp.[empresa]=13\n AND p.[empresa]=13;\n"
 				                ,ej.Dump(new SentenciaSelect(cCantidadPartes.EsSuma(pp.cCantidad)).Where(pi.cPieza.Distinto(pi.cNombrePieza))));
 				Sentencia su=
 					new SentenciaUpdate(pp,pp.cNombreParte.Es(pi.cNombrePieza.Concatenado(pp.cParte.NumeroACadena()))).Where(pp.cNombreParte.EsNulo());
-				Assert.AreEqual("UPDATE [partespiezas] p INNER JOIN [piezas] pi ON p.[empresa]=pi.[empresa] AND p.[pieza]=pi.[pieza]\n " +
-				                "SET p.[nombreparte]=(pi.[nombrepieza] & p.[parte])\n WHERE p.[nombreparte] IS NULL\n AND p.[empresa]=13\n AND pi.[empresa]=13;\n",
+				Console.WriteLine(ej.Dump(su));
+				Assert.AreEqual("UPDATE [partespiezas] pp INNER JOIN [piezas] p ON pp.[empresa]=p.[empresa] AND pp.[pieza]=p.[pieza]\n " +
+				                "SET pp.[nombreparte]=p.[nombrepieza] & pp.[parte]\n WHERE pp.[nombreparte] IS NULL\n AND pp.[empresa]=13\n AND p.[empresa]=13;\n",
 				                ej.Dump(su));
-				Assert.AreEqual("UPDATE [partespiezas] p INNER JOIN [piezas] pi ON p.[empresa]=pi.[empresa] AND p.[pieza]=pi.[pieza]\n " +
-				                "SET p.[nombreparte]=(pi.[nombrepieza] & p.[parte])\n WHERE p.[nombreparte] IS NULL\n AND p.[empresa]=13\n AND pi.[empresa]=13;\n",
+				Assert.AreEqual("UPDATE [partespiezas] pp INNER JOIN [piezas] p ON pp.[empresa]=p.[empresa] AND pp.[pieza]=p.[pieza]\n " +
+				                "SET pp.[nombreparte]=p.[nombrepieza] & pp.[parte]\n WHERE pp.[nombreparte] IS NULL\n AND pp.[empresa]=13\n AND p.[empresa]=13;\n",
 				                ej.Dump(su));
-				Assert.AreEqual("UPDATE partespiezas p " +
-				                "SET nombreparte=(SELECT (pi.nombrepieza||p.parte) FROM piezas pi WHERE pi.empresa=p.empresa AND pi.pieza=p.pieza)\n WHERE p.nombreparte IS NULL\n AND p.empresa=13;\n",
+				Assert.AreEqual("UPDATE partespiezas pp " +
+				                "SET nombreparte=(SELECT p.nombrepieza||pp.parte FROM piezas p WHERE p.empresa=pp.empresa AND p.pieza=pp.pieza)\n WHERE p.nombreparte IS NULL\n AND p.empresa=13;\n",
 				                ejp.Dump(su));
 				dba.TipoStuffActual=BaseDatos.TipoStuff.Inteligente;
 				su=new SentenciaUpdate(pi,pi.cEstado.Es(0)).Where(pi.cEstado.EsNulo());
@@ -222,7 +222,7 @@ namespace PrModeladorSql
 				su=new SentenciaSelect(p.cPieza,p.cNombrePieza,pi.cNombrePieza).Where(p.cPieza.Igual(pi.cPieza.Concatenado<string>("2")));
 				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pi.nombrepieza\n" +
 				                " FROM piezas p, piezas pi\n" +
-				                " WHERE p.pieza=(pi.pieza & '2')\n AND p.empresa=13\n AND pi.empresa=13;\n",
+				                " WHERE p.pieza=pi.pieza & '2'\n AND p.empresa=13\n AND pi.empresa=13;\n",
 				                ej.Dump(su));
 				CampoDestino<string> d=new CampoDestino<string>("otro_nombre");
 				CampoDestino<int> d2=new CampoDestino<int>("otro_estado");
