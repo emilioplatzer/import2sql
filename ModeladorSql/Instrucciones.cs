@@ -16,22 +16,34 @@ using BasesDatos;
 namespace ModeladorSql
 {
 	public class Sentencia:IElemento{
+		public ConjuntoTablas TablasQueEstanMasArriba;
 		public ListaElementos<ElementoTipado<bool>> ClausulaWhere=new ListaElementos<ElementoTipado<bool>>();
 		public virtual string ToSql(BaseDatos db){
 			var TablasIncluidas=Tablas(QueTablas.AlFrom);
 			var rta=new StringBuilder();
-			var whereComa=new Separador("\n WHERE ","\n AND ");
+			var whereAnd=new Separador("\n WHERE ","\n AND ");
+			foreach(Tabla t in TablasIncluidas.Keys){
+				if(t.TablaRelacionada!=null){
+					if(TablasIncluidas.Contiene(t.TablaRelacionada)){
+						foreach(System.Collections.Generic.KeyValuePair<Campo, IExpresion> par in t.CamposRelacionFk){
+							whereAnd.AgregarEn(rta,par.Key.ToSql(db)+"="+par.Value.ToSql(db));
+						}
+					}else if(!TablasQueEstanMasArriba.Contiene(t.TablaRelacionada)){
+						Falla.Detener("Falta la tabla "+t.TablaRelacionada.NombreTabla+" relacionada a "+t.NombreTabla+" en:\n"+rta.ToString());
+					}
+				}
+			}
 			foreach(var e in ClausulaWhere){
-				whereComa.AgregarEn(rta,e.ToSql(db).Replace(" AND ","\n AND "));
+				whereAnd.AgregarEn(rta,e.ToSql(db).Replace(" AND ","\n AND "));
 			}
 			foreach(Tabla t in TablasIncluidas.Keys){
 				if(t.CamposContexto!=null 
-				   && (t.TablaRelacionada==null
-				       || !TablasIncluidas.Contiene(t.TablaRelacionada)))
+				   /*&& (t.TablaRelacionada==null
+				       || !TablasIncluidas.Contiene(t.TablaRelacionada))*/)
 				{
 					foreach(Campo c in t.CamposContexto){
 						if(t.ContieneMismoNombre(c)){
-							whereComa.AgregarEn(rta,t.CampoIndirecto(c).ToSql(db)+"="+db.StuffValor(c.ValorSinTipo));
+							whereAnd.AgregarEn(rta,t.CampoIndirecto(c).ToSql(db)+"="+db.StuffValor(c.ValorSinTipo));
 						}
 					}
 				}
@@ -79,11 +91,15 @@ namespace ModeladorSql
 	public class SentenciaSelect:Sentencia{
 		public ElementosClausulaSelect ClausulaSelect;
 		public ElementosClausulaHaving ClausulaHaving;
-		public ConjuntoTablas TablasQueEstanMasArriba;
 		public SentenciaSelect(){
 			ClausulaSelect=new ElementosClausulaSelect();
 			ClausulaHaving=new ElementosClausulaHaving();
 			TablasQueEstanMasArriba=new ConjuntoTablas();
+		}
+		public SentenciaSelect(params IConCampos[] campos)
+			:this()
+		{
+			ClausulaSelect.AddRange(campos);
 		}
 		public SentenciaSelect Select(params IConCampos[] campos){
 			ClausulaSelect.AddRange(campos);
@@ -115,18 +131,7 @@ namespace ModeladorSql
 			foreach(Tabla t in TablasIncluidas.Keys){
 				fromComa.AgregarEn(rta,t.ToSql(db));
 			}
-			Separador whereAnd=new Separador("\n WHERE ","\n AND ");
-			foreach(Tabla t in TablasIncluidas.Keys){
-				if(t.TablaRelacionada!=null){
-					if(TablasIncluidas.Contiene(t.TablaRelacionada)){
-						foreach(System.Collections.Generic.KeyValuePair<Campo, IExpresion> par in t.CamposRelacionFk){
-							whereAnd.AgregarEn(rta,par.Key.ToSql(db)+"="+par.Value.ToSql(db));
-						}
-					}else if(!TablasQueEstanMasArriba.Contiene(t.TablaRelacionada)){
-						Falla.Detener("Falta la tabla "+t.TablaRelacionada.NombreTabla+" relacionada a "+t.NombreTabla+" en:\n"+rta.ToString());
-					}
-				}
-			}
+			rta.Append(base.ToSql(db));
 			if(TieneAgrupadas){
 				rta.Append(groupby);
 			}
