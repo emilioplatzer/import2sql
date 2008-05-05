@@ -71,6 +71,8 @@ namespace ModeladorSql
 			get{ return this; }
 		}
 	}
+	public interface IElementoLogico:IElementoTipado<bool>{
+	}
 	public abstract class ExpresionTipada<T1,T2,TR>:ElementoTipado<TR>{
 		//protected IElementoTipado<T1> E1;
 		//protected IElementoTipado<T2> E2;
@@ -279,6 +281,19 @@ namespace ModeladorSql
 		}
 		public IExpresion Expresion{
 			get{ return this; }
+		}
+	}
+	public static class ExtensionesLogicas{
+		public static ElementoTipado<bool> And(this IElementoTipado<bool> E1, IElementoTipado<bool> E2){
+			return new Binomio<bool>(E1, OperadorBinario.Mas, E2);
+		}
+		public static ElementoTipado<bool> Or(this IElementoTipado<bool> E1, IElementoTipado<bool> E2){
+			return new Binomio<bool>(E1, OperadorBinario.Mas, E2);
+		}
+	}
+	public static class ParaCadena{
+		public static string revertir(this string esto){
+			return esto+"!";
 		}
 	}
 }

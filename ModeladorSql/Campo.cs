@@ -73,7 +73,7 @@ namespace ModeladorSql
 			get{ return this; }
 		}
 	}
-	public interface ICampoAlias{
+	public interface ICampoAlias:IElemento{
 		IExpresion ExpresionBase{ get; }
 		Campo CampoReceptor{ get; }
 	}
@@ -161,6 +161,9 @@ namespace ModeladorSql
 		public override bool EsAgrupada{ 
 			get{ return false; }
 		}
+		public string prueba<T2,T3>(){
+			return typeof(T2).FullName+typeof(T3).FullName;
+		}
 		public int Precedencia{
 			get{ return 9;}
 		}
@@ -170,10 +173,10 @@ namespace ModeladorSql
 		public CampoAlias<T> Es(ElementoTipado<T> expresion){
 			return new CampoAlias<T>(this,expresion);
 		}
-		public virtual IExpresion EsNulo(){
+		public virtual ElementoTipado<bool> EsNulo(){
 			return new OperacionSufijaLogica<T>(this,OperadorSufijoLogico.EsNulo);
 		}
-		public virtual IExpresion NoEsNulo(){
+		public virtual ElementoTipado<bool> NoEsNulo(){
 			return new OperacionSufijaLogica<T>(this,OperadorSufijoLogico.NoEsNulo);
 		}
 		public override string TipoCampo{ 
@@ -233,16 +236,19 @@ namespace ModeladorSql
 			return EsExpresionAgrupada(operador,expresion,"","");
 		}
 		*/
-		public IExpresion Igual(IElementoTipado<T> expresion){
+		public ElementoTipado<bool> Igual(ElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Igual,expresion);
 		}
-		public IElementoTipado<bool> MayorOIgual(ElementoTipado<T> expresion){
+		public ElementoTipado<bool> MayorOIgual(ElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.MayorOIgual,expresion);
 		}
-		public IExpresion Mayor(IElementoTipado<T> expresion){
+		public ElementoTipado<bool> Mayor(IElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Mayor,expresion);
 		}
-		public IExpresion Distinto(IElementoTipado<T> expresion){
+		public ElementoTipado<bool> Distinto(ElementoTipado<T> expresion){
+			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Distinto,expresion);
+		}
+		public ElementoTipado<bool> Distinto(IElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Distinto,expresion);
 		}
 		public CampoTipo<T> EsMax(IElementoTipado<T> expresion){

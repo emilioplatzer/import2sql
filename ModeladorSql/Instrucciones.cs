@@ -181,6 +181,15 @@ namespace ModeladorSql
 		}
 	}
 	public class SentenciaUpdate:Sentencia{
-		// ListaElementos<IElementoReNombrable> CamposUpdate;
+		Tabla TablaBase;
+		ListaElementos<ICampoAlias> Asignaciones=new ListaElementos<ICampoAlias>();
+		public SentenciaUpdate(Tabla TablaBase,params ICampoAlias[] Asignaciones){
+			this.TablaBase=TablaBase;
+			this.Asignaciones.AddRange(Asignaciones);
+		}
+		public SentenciaUpdate Where(params IElementoTipado<bool>[] ExpresionesWhere){
+			Falla.Detener("No implementado");
+			return this;
+		}
 	}
 }
