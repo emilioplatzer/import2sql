@@ -307,7 +307,7 @@ namespace ModeladorSql
 		public Campo EsPromedioGeometrico(IElementoTipado<T> expresion){
 			return Es(new FuncionAgrupacion<T,T>(expresion,OperadorAgrupada.PromedioGeometrico));
 		}
-		public IExpresion Mas(IElementoTipado<T> Valor){
+		public IExpresion Mas(ElementoTipado<T> Valor){
 			return new Binomio<T>(this,OperadorBinario.Mas,Valor);
 		}
 		public IExpresion Por(IElementoTipado<T> Valor){
@@ -344,7 +344,13 @@ namespace ModeladorSql
 		public override string TipoCampo{ 
 			get { return "VARCHAR("+Largo.ToString()+")"; }
 		}
-		public IElementoTipado<string> Concatenado<T>(IElementoTipado<T> expresion){
+		public ElementoTipado<string> Concatenado(string constante){
+			return new Binomio3T<string,string,string>(this,OperadorBinario.Concatenado,new Constante<string>(constante));
+		}
+		public ElementoTipado<string> Concatenado<T>(IElementoTipado<T> expresion){
+			return new Binomio3T<string,T,string>(this,OperadorBinario.Concatenado,expresion);
+		}
+		public ElementoTipado<string> Concatenado<T>(ElementoTipado<T> expresion){
 			return new Binomio3T<string,T,string>(this,OperadorBinario.Concatenado,expresion);
 		}
 	}

@@ -76,11 +76,13 @@ namespace ModeladorSql
 	public abstract class ExpresionTipada<T1,T2,TR>:ElementoTipado<TR>{
 		//protected IElementoTipado<T1> E1;
 		//protected IElementoTipado<T2> E2;
-		protected IExpresion E1;
-		protected IExpresion E2;
+		IExpresion e1;
+		public IExpresion E1{ get{ return e1; } set{ e1=value.Expresion;}}
+		IExpresion e2;
+		public IExpresion E2{ get{ return e2; } set{ e2=value.Expresion;}}
 		protected ExpresionTipada(IElementoTipado<T1> E1,IElementoTipado<T2> E2){
-			if(E1!=null){ this.E1=E1.Expresion; }
-			if(E2!=null){ this.E2=E2.Expresion; }
+			if(E1!=null){ this.E1=E1; }
+			if(E2!=null){ this.E2=E2; }
 		}
 		protected ExpresionTipada(IElementoTipado<T1> E1){
 			this.E1=E1;
@@ -313,11 +315,6 @@ namespace ModeladorSql
 		}
 		public static ElementoTipado<bool> Or(this IElementoTipado<bool> E1, IElementoTipado<bool> E2){
 			return new Binomio<bool>(E1, OperadorBinario.Or, E2);
-		}
-	}
-	public static class ParaCadena{
-		public static string revertir(this string esto){
-			return esto+"!";
 		}
 	}
 }

@@ -73,7 +73,8 @@ namespace TodoASql
 			    */
 			    // new prTabla().SubselectGroupBy();
 			    // new PrModeladorSql.prModelador().SentenciaInsert();
-			    new PrModeladorSql.prModelador().SentenciaUpdate();
+			    // new PrModeladorSql.prModelador().SentenciaUpdate();
+			    new PrModeladorSql.prModelador().SentenciaCompuesta();
 			    // new Tareas.PruebasExternas().Generar();
 			    /*
 				Console.WriteLine("Listo!");
