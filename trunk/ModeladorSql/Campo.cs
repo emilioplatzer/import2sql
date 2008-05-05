@@ -72,6 +72,9 @@ namespace ModeladorSql
 		public virtual IExpresion Expresion{
 			get{ return this; }
 		}
+		public int Precedencia{
+			get{ return 9; }
+		}
 	}
 	public interface ICampoAlias:IElemento{
 		IExpresion ExpresionBase{ get; }
@@ -163,9 +166,6 @@ namespace ModeladorSql
 		}
 		public string prueba<T2,T3>(){
 			return typeof(T2).FullName+typeof(T3).FullName;
-		}
-		public int Precedencia{
-			get{ return 9;}
 		}
 		public CampoAlias<T> Es(IElementoTipado<T> expresion){
 			return new CampoAlias<T>(this,expresion);

@@ -27,10 +27,15 @@ namespace ModeladorSql
 				}
 			}
 		}
-		public void Ejecutar(Sentencia s){
-			base.ExecuteNonQuery(Dump(s));
+		public void Ejecutar(Sentencia laSentencia){
+			base.ExecuteNonQuery(Dump(laSentencia));
 		}
 		public string Dump(Sentencia laSentencia){
+			foreach(Tabla t in laSentencia.Tablas(QueTablas.Aliasables).Keys){
+				if(!t.LiberadaDelContextoDelEjecutador){
+					t.CamposContexto=CamposContexto;
+				}
+			}
 			return laSentencia.ToSql(db)+";\n";
 		}
 	}
