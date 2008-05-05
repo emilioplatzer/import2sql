@@ -323,7 +323,7 @@ namespace Comunes
 					}
 				}
 				int longitudAgregando=valor.ToString().Length;
-				if(rta.Length+longitudAgregando-LongitudAnterior>anchoMaximo){
+				if(rta.Length+longitudAgregando-LongitudAnterior>anchoMaximo && rta.Length-LongitudAnterior>(CadenaComenzadora.Length+CadenaSeparadora.Length)*2){
 					rta.Append(this.ConFinDeLinea());
 					rta.Append(valor);
 					LongitudAnterior=rta.Length;

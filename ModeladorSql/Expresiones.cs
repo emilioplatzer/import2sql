@@ -36,7 +36,6 @@ namespace ModeladorSql
 		ConjuntoTablas Tablas(QueTablas queTablas);
 	}
 	public interface IElementoTipado<T>:IElemento,IExpresion{
-		int Precedencia{ get; }
 	}
 	public interface IElementoNumerico<T>:IElementoTipado<T>{		
 	}
@@ -57,6 +56,7 @@ namespace ModeladorSql
 		bool CandidatoAGroupBy{ get; }
 		bool EsAgrupada{ get; }
 		IExpresion Expresion{ get; }
+		int Precedencia{ get; }
 	}
 	public abstract class ElementoTipado<T>:IElementoTipado<T>,IExpresion{
 		public abstract string ToSql(BaseDatos db);
@@ -78,7 +78,7 @@ namespace ModeladorSql
 		//protected IElementoTipado<T2> E2;
 		protected IExpresion E1;
 		protected IExpresion E2;
-		protected ExpresionTipada(IElementoTipado<T1> E1, IElementoTipado<T2> E2){
+		protected ExpresionTipada(IElementoTipado<T1> E1,IElementoTipado<T2> E2){
 			if(E1!=null){ this.E1=E1.Expresion; }
 			if(E2!=null){ this.E2=E2.Expresion; }
 		}
@@ -106,6 +106,21 @@ namespace ModeladorSql
 				if(E2!=null) rta=rta || E2.CandidatoAGroupBy;
 				return rta;
 			}
+		}
+		public string ToSqlInfijoConParentesisQueHaganFalta(BaseDatos db,string operador,int precedencia){
+			var rta=new StringBuilder();
+			if(E1.Precedencia<precedencia){
+				rta.Append("("+E1.ToSql(db)+")");
+			}else{
+				rta.Append(E1.ToSql(db));
+			}
+			rta.Append(operador);
+			if(E2.Precedencia<precedencia){
+				rta.Append("("+E2.ToSql(db)+")");
+			}else{
+				rta.Append(E2.ToSql(db));
+			}
+			return rta.ToString();
 		}
 	}
 	public class Constante<T>:ElementoTipado<T>{
@@ -151,7 +166,10 @@ namespace ModeladorSql
 			this.Operador=Operador;
 		}
 		public override string ToSql(BaseDatos db){
-			return E1.ToSql(db)+db.OperadorToSql(Operador)+E2.ToSql(db);
+			return ToSqlInfijoConParentesisQueHaganFalta(db,db.OperadorToSql(Operador),Precedencia);
+		}
+		public override int Precedencia{ 
+			get{ return BaseDatos.Precedencia(Operador);}
 		}
 	}
 	public class Binomio3T<T1,T2,TR>:ExpresionTipada<T1,T2,TR>{
@@ -162,7 +180,10 @@ namespace ModeladorSql
 			this.Operador=Operador;
 		}
 		public override string ToSql(BaseDatos db){
-			return E1.ToSql(db)+db.OperadorToSql(Operador)+E2.ToSql(db);
+			return ToSqlInfijoConParentesisQueHaganFalta(db,db.OperadorToSql(Operador),Precedencia);
+		}
+		public override int Precedencia{ 
+			get{ return BaseDatos.Precedencia(Operador);}
 		}
 	}
 	public class BinomioRelacional<T>:ExpresionTipada<T,T,bool>{
@@ -173,7 +194,10 @@ namespace ModeladorSql
 			this.Operador=Operador;
 		}
 		public override string ToSql(BaseDatos db){
-			return E1.ToSql(db)+db.OperadorToSql(Operador)+E2.ToSql(db);
+			return ToSqlInfijoConParentesisQueHaganFalta(db,db.OperadorToSql(Operador),Precedencia);
+		}
+		public override int Precedencia{ 
+			get{ return BaseDatos.Precedencia(Operador);}
 		}
 	}
 	public class OperacionSufijaLogica<T>:ExpresionTipada<T,T,bool>{
@@ -285,10 +309,10 @@ namespace ModeladorSql
 	}
 	public static class ExtensionesLogicas{
 		public static ElementoTipado<bool> And(this IElementoTipado<bool> E1, IElementoTipado<bool> E2){
-			return new Binomio<bool>(E1, OperadorBinario.Mas, E2);
+			return new Binomio<bool>(E1, OperadorBinario.And, E2);
 		}
 		public static ElementoTipado<bool> Or(this IElementoTipado<bool> E1, IElementoTipado<bool> E2){
-			return new Binomio<bool>(E1, OperadorBinario.Mas, E2);
+			return new Binomio<bool>(E1, OperadorBinario.Or, E2);
 		}
 	}
 	public static class ParaCadena{

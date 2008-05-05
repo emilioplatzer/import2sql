@@ -194,6 +194,10 @@ namespace BasesDatos
 			Falla.Detener("En la base de datos "+MarcaMotor+" falta definir "+Operador.ToString());
 			return null;
 		}
+		public static int FaltaPrecedenciaOperador(object Operador){
+			Falla.Detener("En las bases de datos falta definir la precedencia de "+Operador.ToString());
+			return 0;
+		}
 		public virtual string OperadorToSql(OperadorBinario Operador){
 			switch(Operador){
 				case OperadorBinario.Mas: return "+"; 
@@ -204,6 +208,20 @@ namespace BasesDatos
 				case OperadorBinario.Or:return " OR ";
 				default:return FaltaOperador(Operador);
 			}
+		}
+		public static int Precedencia(OperadorBinario Operador){
+			switch(Operador){
+				case OperadorBinario.Mas: return 6; 
+				case OperadorBinario.Menos: return 6; 
+				case OperadorBinario.Por: return 7; 
+				case OperadorBinario.Dividido: return 7; 
+				case OperadorBinario.And:return 4;
+				case OperadorBinario.Or:return 3;
+				default:return FaltaPrecedenciaOperador(Operador);
+			}
+		}
+		public static int Precedencia(OperadorBinarioRelacional Operador){
+			return 5;
 		}
 		public string OperadorToSql(OperadorBinarioRelacional Operador){
 			switch(Operador){

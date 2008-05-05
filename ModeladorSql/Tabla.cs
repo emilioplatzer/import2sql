@@ -31,6 +31,7 @@ namespace ModeladorSql
 		public Diccionario<Campo, IExpresion> CamposRelacionFk=new Diccionario<Campo, IExpresion>();
 		public Fk.Tipo TipoFk=Fk.Tipo.Obligatoria;
 		public bool LiberadaDelContextoDelEjecutador; // Del contexto del ejecutador
+		public ListaElementos<Campo> CamposContexto; // Para agregar en las clausulas where
 		public bool RegistroConDatos=false;
 		// public SentenciaSelect SentenciaSubSelect;
 		// public SelectInterno SelectInterno;

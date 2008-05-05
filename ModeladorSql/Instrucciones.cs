@@ -16,10 +16,27 @@ using BasesDatos;
 namespace ModeladorSql
 {
 	public class Sentencia:IElemento{
-		protected ListaElementos<ElementoTipado<bool>> ClausulaWhere;
+		public ListaElementos<ElementoTipado<bool>> ClausulaWhere=new ListaElementos<ElementoTipado<bool>>();
 		public virtual string ToSql(BaseDatos db){
-			Falla.Detener("No implementado aún");
-			return null;
+			var TablasIncluidas=Tablas(QueTablas.AlFrom);
+			var rta=new StringBuilder();
+			var whereComa=new Separador("\n WHERE ","\n AND ");
+			foreach(var e in ClausulaWhere){
+				whereComa.AgregarEn(rta,e.ToSql(db).Replace(" AND ","\n AND "));
+			}
+			foreach(Tabla t in TablasIncluidas.Keys){
+				if(t.CamposContexto!=null 
+				   && (t.TablaRelacionada==null
+				       || !TablasIncluidas.Contiene(t.TablaRelacionada)))
+				{
+					foreach(Campo c in t.CamposContexto){
+						if(t.ContieneMismoNombre(c)){
+							whereComa.AgregarEn(rta,t.CampoIndirecto(c).ToSql(db)+"="+db.StuffValor(c.ValorSinTipo));
+						}
+					}
+				}
+			}
+			return rta.ToString();
 		}
 		public virtual ConjuntoTablas Tablas(QueTablas queTablas){
 			return new ConjuntoTablas();
@@ -30,6 +47,12 @@ namespace ModeladorSql
 			foreach(TablasAlias
 		}
 		*/
+	}
+	public static class ParaSentencias{
+		public static TSentencia Where<TSentencia> (this TSentencia s, params ElementoTipado<bool>[] ExpresionesWhere) where TSentencia:Sentencia {
+			s.ClausulaWhere.AddRange(ExpresionesWhere);
+			return s;
+		}
 	}
 	public class ElementosClausulaSelect:ListaElementos<IConCampos>{}
 	public class ElementosClausula:ListaElementos<IElementoTipado<bool>>,IElemento{
@@ -175,9 +198,12 @@ namespace ModeladorSql
 			}
 			return rta.ToString();
 		}
-		public override ConjuntoTablas Tablas(QueTablas queTablas)
-		{
-			return SentenciaSelectBase.Tablas(queTablas);
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
+			if(SentenciaSelectBase!=null){
+				return SentenciaSelectBase.Tablas(queTablas);
+			}else{
+				return new ConjuntoTablas();
+			}
 		}
 	}
 	public class SentenciaUpdate:Sentencia{
@@ -187,9 +213,18 @@ namespace ModeladorSql
 			this.TablaBase=TablaBase;
 			this.Asignaciones.AddRange(Asignaciones);
 		}
-		public SentenciaUpdate Where(params IElementoTipado<bool>[] ExpresionesWhere){
-			Falla.Detener("No implementado");
-			return this;
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
+			return new ConjuntoTablas(TablaBase);
+		}
+		public override string ToSql(BaseDatos db){
+			var rta=new StringBuilder();
+			rta.Append("UPDATE "+TablaBase.ToSql(db));
+			var setComa=new Separador(" SET ",", ").AnchoLimitadoConIdentacion();
+			foreach(var a in Asignaciones){
+				setComa.AgregarEn(rta,a.CampoReceptor.ToSql(db)+"="+a.ExpresionBase.ToSql(db));
+			}
+			rta.Append(base.ToSql(db));
+			return rta.ToString();
 		}
 	}
 }

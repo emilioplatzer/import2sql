@@ -142,10 +142,10 @@ namespace PrModeladorSql
 			Piezas p=new Piezas();
 			BaseDatos dba=BdAccess.SinAbrir();
 			dba.TipoStuffActual=BaseDatos.TipoStuff.Siempre;
-			Assert.AreEqual("UPDATE [piezas] p SET p.[pieza]='P1',\n p.[nombrepieza]='Pieza 1';\n",
+			Assert.AreEqual("UPDATE [piezas] p SET p.[pieza]='P1', p.[nombrepieza]='Pieza 1';\n",
 			                new Ejecutador(dba)
 			                .Dump(new SentenciaUpdate(p,p.cPieza.Es("P1"),p.cNombrePieza.Es("Pieza 1"))));
-			string Esperado="UPDATE [piezas] p SET p.[pieza]='P1',\n p.[nombrepieza]='Pieza 1'\n WHERE p.[pieza]='P3'\n AND (p.[nombrepieza] IS NULL OR p.[nombrepieza]<>p.[pieza])";
+			string Esperado="UPDATE [piezas] p SET p.[pieza]='P1', p.[nombrepieza]='Pieza 1'\n WHERE p.[pieza]='P3'\n AND (p.[nombrepieza] IS NULL OR p.[nombrepieza]<>p.[pieza])";
 			Assert.AreEqual(Esperado+";\n",
 			                new Ejecutador(dba)
 			                .Dump(new SentenciaUpdate(p,p.cPieza.Es("P1"),p.cNombrePieza.Es("Pieza 1"))
@@ -156,8 +156,7 @@ namespace PrModeladorSql
 			sentencia.Where(p.cPieza.Igual("P3")
 			                .And(p.cNombrePieza.EsNulo()
 			                     .Or(p.cNombrePieza.Distinto(p.cPieza))));
-			Assert.AreEqual(1,sentencia.Tablas(QueTablas.AlFrom).Count);
-			//Assert.AreEqual("piezas",(sentencia.Tablas().Keys)[0].NombreTabla);
+			//Assert.AreEqual(1,sentencia.Tablas(QueTablas.AlFrom).Count);
 			sentencia.Where(p.cNombrePieza.Distinto("P0"));
 			Esperado+="\n AND p.[nombrepieza]<>'P0'";
 			Assert.AreEqual(Esperado+";\n",new Ejecutador(dba).Dump(sentencia));
