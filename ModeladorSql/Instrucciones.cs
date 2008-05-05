@@ -15,26 +15,61 @@ using BasesDatos;
 
 namespace ModeladorSql
 {
+	public delegate void ProcesamientoTabla(Tabla tabla);
+	public delegate void ProcesamientoPar(System.Collections.Generic.KeyValuePair<Campo, IExpresion> par);
 	public class Sentencia:IElemento{
 		public ConjuntoTablas TablasQueEstanMasArriba;
 		public ListaElementos<ElementoTipado<bool>> ClausulaWhere=new ListaElementos<ElementoTipado<bool>>();
-		public virtual string ToSql(BaseDatos db){
-			var TablasIncluidas=Tablas(QueTablas.AlFrom);
-			var rta=new StringBuilder();
-			var whereAnd=new Separador("\n WHERE ","\n AND ");
-			foreach(Tabla t in TablasIncluidas.Keys){
-				if(t.TablaRelacionada!=null){
-					if(TablasIncluidas.Contiene(t.TablaRelacionada)){
-						foreach(System.Collections.Generic.KeyValuePair<Campo, IExpresion> par in t.CamposRelacionFk){
-							whereAnd.AgregarEn(rta,par.Key.ToSql(db)+"="+par.Value.ToSql(db));
+		protected bool IncluirJoinEnWhere=true;
+		public void ParaCadaJunta(ConjuntoTablas tablas,Tabla TablaBase,ProcesamientoTabla procesarTabla,ProcesamientoPar procesarPar){
+			var TablasVistas=new ConjuntoTablas();
+			var TablasARevisar=new ConjuntoTablas();
+			TablasARevisar.AddRange(tablas);
+			if(TablaBase!=null){
+				TablasVistas.Add(TablaBase);
+				TablasARevisar.Remove(TablaBase);
+			}
+			var TablasNoIncluidas=new ConjuntoTablas();
+			int CantidadARevisar=TablasARevisar.Count;
+			while(true){
+				foreach(Tabla t in TablasARevisar.Keys){
+					if(t.TablaRelacionada!=null && tablas.Contiene(t.TablaRelacionada)){
+						if(TablasVistas.Contiene(t.TablaRelacionada)){
+							procesarTabla(t);
+							foreach(System.Collections.Generic.KeyValuePair<Campo, IExpresion> par in t.CamposRelacionFk){
+								procesarPar(par);
+							}
+						}else{
+							TablasNoIncluidas.Add(t);
+							if((TablasQueEstanMasArriba==null || !TablasQueEstanMasArriba.Contiene(t.TablaRelacionada)) && !tablas.Contiene(t.TablaRelacionada)){
+								Falla.Detener("Falta la tabla "+t.TablaRelacionada.NombreTabla+" relacionada a "+t.NombreTabla);
+							}
 						}
-					}else if(!TablasQueEstanMasArriba.Contiene(t.TablaRelacionada)){
-						Falla.Detener("Falta la tabla "+t.TablaRelacionada.NombreTabla+" relacionada a "+t.NombreTabla+" en:\n"+rta.ToString());
+					}else{
+						TablasVistas.Add(t);
 					}
 				}
+				if(TablasNoIncluidas.Count==0){
+			break;
+				}else if(TablasNoIncluidas.Count==CantidadARevisar){
+					Falla.Detener("FALLA AL ORDENAR EL JOIN "+TablasNoIncluidas.Count+"="+CantidadARevisar+": "+TablasNoIncluidas.ToString());
+				}else{
+					TablasARevisar=TablasNoIncluidas;
+					TablasNoIncluidas=new ConjuntoTablas();
+				}
 			}
+		}
+		public virtual string ToSql(BaseDatos db){
+			var rta=new StringBuilder();
+			var whereAnd=new Separador("\n WHERE ","\n AND ");
 			foreach(var e in ClausulaWhere){
 				whereAnd.AgregarEn(rta,e.ToSql(db).Replace(" AND ","\n AND "));
+			}
+			var TablasIncluidas=Tablas(QueTablas.AlFrom);
+			if(IncluirJoinEnWhere){
+				ParaCadaJunta(TablasIncluidas, null, tabla => {},
+					par => whereAnd.AgregarEn(rta,par.Key.ToSql(db)+"="+par.Value.ToSql(db))
+				);
 			}
 			foreach(Tabla t in TablasIncluidas.Keys){
 				if(t.CamposContexto!=null 
@@ -51,7 +86,7 @@ namespace ModeladorSql
 			return rta.ToString();
 		}
 		public virtual ConjuntoTablas Tablas(QueTablas queTablas){
-			return new ConjuntoTablas();
+			return ClausulaWhere.Tablas(queTablas);
 		}
 		/*
 		public void AsignarAlias(){
@@ -143,8 +178,9 @@ namespace ModeladorSql
 		}
 		public override ConjuntoTablas Tablas(QueTablas queTablas)
 		{
-			ConjuntoTablas rta=base.Tablas(queTablas);
+			ConjuntoTablas rta=new ConjuntoTablas();
 			rta.AddRange(ClausulaSelect.Tablas(queTablas));
+			rta.AddRange(base.Tablas(queTablas));
 			rta.AddRange(ClausulaHaving.Tablas(queTablas));
 			return rta;
 		}
@@ -219,12 +255,24 @@ namespace ModeladorSql
 			this.Asignaciones.AddRange(Asignaciones);
 		}
 		public override ConjuntoTablas Tablas(QueTablas queTablas){
-			return new ConjuntoTablas(TablaBase);
+			var rta=new ConjuntoTablas();
+			rta.Add(TablaBase);
+			rta.AddRange(Asignaciones.Tablas(queTablas));
+			rta.AddRange(base.Tablas(queTablas));
+			return rta;
 		}
 		public override string ToSql(BaseDatos db){
 			var rta=new StringBuilder();
 			rta.Append("UPDATE "+TablaBase.ToSql(db));
-			var setComa=new Separador(" SET ",", ").AnchoLimitadoConIdentacion();
+			IncluirJoinEnWhere=false;
+			var tablas=Tablas(QueTablas.AlFrom);
+			TablasQueEstanMasArriba=new ConjuntoTablas(TablaBase);
+			var onAnd=new Separador(" ON "," AND ");
+			ParaCadaJunta(tablas,TablaBase
+			    , tabla => {rta.Append(" INNER JOIN "+tabla.ToSql(db)); onAnd.Reiniciar(); }
+				, par => onAnd.AgregarEn(rta,par.Value.ToSql(db)+"="+par.Key.ToSql(db))
+			);
+			var setComa=new Separador("\n SET ",", ").AnchoLimitadoConIdentacion();
 			foreach(var a in Asignaciones){
 				setComa.AgregarEn(rta,a.CampoReceptor.ToSql(db)+"="+a.ExpresionBase.ToSql(db));
 			}
