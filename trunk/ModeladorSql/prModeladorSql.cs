@@ -93,6 +93,13 @@ namespace PrModeladorSql
 			                ,Cadena.Simplificar(pa.SentenciaCreateTable(dba)));
 			Assert.AreEqual("CREATE TABLE partespiezas(empresa INTEGER NOT NULL,pieza VARCHAR(4),parte INTEGER NOT NULL,nombreparte VARCHAR(250),cantidad INTEGER,parteanterior INTEGER,PRIMARY KEY(empresa,pieza,parte),FOREIGN KEY(empresa)REFERENCES empresas(empresa),FOREIGN KEY(empresa,pieza)REFERENCES piezas(empresa,pieza),FOREIGN KEY(empresa,pieza,parteanterior)REFERENCES partespiezas(empresa,pieza,parte));"
 			                ,Cadena.Simplificar(pa.SentenciaCreateTable(dbp)));
+			var np=new NovedadesPiezas();
+			Ejecutador.bitacora.Registrar(
+				p.SentenciaCreateTable(dbp)+
+				pr.SentenciaCreateTable(dbp)+
+				pa.SentenciaCreateTable(dbp)+
+				np.SentenciaCreateTable(dbp)
+			);
 		}
 		[Test]
 		public void SentenciaInsert(){
@@ -146,10 +153,10 @@ namespace PrModeladorSql
 			Piezas p=new Piezas();
 			BaseDatos dba=BdAccess.SinAbrir();
 			dba.TipoStuffActual=BaseDatos.TipoStuff.Siempre;
-			Assert.AreEqual("UPDATE [piezas] p SET p.[pieza]='P1', p.[nombrepieza]='Pieza 1';\n",
+			Assert.AreEqual("UPDATE [piezas] p\n SET p.[pieza]='P1', p.[nombrepieza]='Pieza 1';\n",
 			                new Ejecutador(dba)
 			                .Dump(new SentenciaUpdate(p,p.cPieza.Es("P1"),p.cNombrePieza.Es("Pieza 1"))));
-			string Esperado="UPDATE [piezas] p SET p.[pieza]='P1', p.[nombrepieza]='Pieza 1'\n WHERE p.[pieza]='P3'\n AND (p.[nombrepieza] IS NULL OR p.[nombrepieza]<>p.[pieza])";
+			string Esperado="UPDATE [piezas] p\n SET p.[pieza]='P1', p.[nombrepieza]='Pieza 1'\n WHERE p.[pieza]='P3'\n AND (p.[nombrepieza] IS NULL OR p.[nombrepieza]<>p.[pieza])";
 			Assert.AreEqual(Esperado+";\n",
 			                new Ejecutador(dba)
 			                .Dump(new SentenciaUpdate(p,p.cPieza.Es("P1"),p.cNombrePieza.Es("Pieza 1"))
@@ -200,13 +207,13 @@ namespace PrModeladorSql
 					new SentenciaUpdate(pp,pp.cNombreParte.Es(pi.cNombrePieza.Concatenado(pp.cParte.NumeroACadena()))).Where(pp.cNombreParte.EsNulo());
 				Console.WriteLine(ej.Dump(su));
 				Assert.AreEqual("UPDATE [partespiezas] pp INNER JOIN [piezas] p ON pp.[empresa]=p.[empresa] AND pp.[pieza]=p.[pieza]\n " +
-				                "SET pp.[nombreparte]=p.[nombrepieza] & pp.[parte]\n WHERE pp.[nombreparte] IS NULL\n AND pp.[empresa]=13\n AND p.[empresa]=13;\n",
+				                "SET pp.[nombreparte]=p.[nombrepieza] & STR(pp.[parte])\n WHERE pp.[nombreparte] IS NULL\n AND pp.[empresa]=13\n AND p.[empresa]=13;\n",
 				                ej.Dump(su));
 				Assert.AreEqual("UPDATE [partespiezas] pp INNER JOIN [piezas] p ON pp.[empresa]=p.[empresa] AND pp.[pieza]=p.[pieza]\n " +
-				                "SET pp.[nombreparte]=p.[nombrepieza] & pp.[parte]\n WHERE pp.[nombreparte] IS NULL\n AND pp.[empresa]=13\n AND p.[empresa]=13;\n",
+				                "SET pp.[nombreparte]=p.[nombrepieza] & STR(pp.[parte])\n WHERE pp.[nombreparte] IS NULL\n AND pp.[empresa]=13\n AND p.[empresa]=13;\n",
 				                ej.Dump(su));
 				Assert.AreEqual("UPDATE partespiezas pp " +
-				                "SET nombreparte=(SELECT p.nombrepieza||pp.parte FROM piezas p WHERE p.empresa=pp.empresa AND p.pieza=pp.pieza)\n WHERE p.nombreparte IS NULL\n AND p.empresa=13;\n",
+				                "SET nombreparte=p.nombrepieza||pp.parte FROM piezas p WHERE p.empresa=pp.empresa AND p.pieza=pp.pieza\n AND p.nombreparte IS NULL\n AND pp.empresa=13 AND p.empresa=13;\n",
 				                ejp.Dump(su));
 				dba.TipoStuffActual=BaseDatos.TipoStuff.Inteligente;
 				su=new SentenciaUpdate(pi,pi.cEstado.Es(0)).Where(pi.cEstado.EsNulo());
