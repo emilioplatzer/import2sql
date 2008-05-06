@@ -15,6 +15,7 @@ using BasesDatos;
 namespace ModeladorSql
 {
 	public class Ejecutador:BasesDatos.EjecutadorSql{
+		public static Bitacora bitacora=new Bitacora("pr_query.sql","pr_queries.sql");
 		ListaElementos<Campo> CamposContexto=new ListaElementos<Campo>();
 		public Ejecutador(BaseDatos db,params Tabla[] TablasContexto)
 			:base(db)
@@ -36,7 +37,7 @@ namespace ModeladorSql
 					t.CamposContexto=CamposContexto;
 				}
 			}
-			return laSentencia.ToSql(db)+";\n";
+			return bitacora.RegistrarSql(laSentencia.ToSql(db)+";\n");
 		}
 	}
 }
