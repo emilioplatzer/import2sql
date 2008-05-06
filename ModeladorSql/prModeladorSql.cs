@@ -212,19 +212,24 @@ namespace PrModeladorSql
 				Assert.AreEqual("UPDATE [partespiezas] pp INNER JOIN [piezas] p ON pp.[empresa]=p.[empresa] AND pp.[pieza]=p.[pieza]\n " +
 				                "SET pp.[nombreparte]=p.[nombrepieza] & STR(pp.[parte])\n WHERE pp.[nombreparte] IS NULL\n AND pp.[empresa]=13\n AND p.[empresa]=13;\n",
 				                ej.Dump(su));
-				Assert.AreEqual("UPDATE partespiezas pp " +
-				                "SET nombreparte=p.nombrepieza||pp.parte FROM piezas p WHERE p.empresa=pp.empresa AND p.pieza=pp.pieza\n AND p.nombreparte IS NULL\n AND pp.empresa=13 AND p.empresa=13;\n",
+				Assert.AreEqual("UPDATE partespiezas pp\n " +
+				                "SET nombreparte=p.nombrepieza||pp.parte\n " +
+				                "FROM piezas p\n " +
+				                "WHERE pp.nombreparte IS NULL\n " +
+				                "AND p.empresa=pp.empresa\n AND p.pieza=pp.pieza\n " +
+				                "AND pp.empresa=13\n AND p.empresa=13;\n",
 				                ejp.Dump(su));
 				dba.TipoStuffActual=BaseDatos.TipoStuff.Inteligente;
 				su=new SentenciaUpdate(pi,pi.cEstado.Es(0)).Where(pi.cEstado.EsNulo());
-				Assert.AreEqual("UPDATE piezas p SET p.estado=0\n WHERE p.estado IS NULL\n AND p.empresa=13;\n",
+				Assert.AreEqual("UPDATE piezas p\n SET p.estado=0\n WHERE p.estado IS NULL\n AND p.empresa=13;\n",
 				                ej.Dump(su));
-				Assert.AreEqual("UPDATE piezas p SET estado=0\n WHERE p.estado IS NULL\n AND p.empresa=13;\n",
+				Assert.AreEqual("UPDATE piezas p\n SET estado=0\n WHERE p.estado IS NULL\n AND p.empresa=13;\n",
 				                ejp.Dump(su));
+				pi.Alias="pi";
 				su=new SentenciaUpdate(pp,pp.cCantidad.Es(pp.cCantidad.Mas(1))).Where(pp.cCantidad.EsNulo());
-				Assert.AreEqual("UPDATE partespiezas p SET p.cantidad=p.cantidad+1\n WHERE p.cantidad IS NULL\n AND p.empresa=13;\n",
+				Assert.AreEqual("UPDATE partespiezas pp\n SET pp.cantidad=pp.cantidad+1\n WHERE pp.cantidad IS NULL\n AND pp.empresa=13;\n",
 				                ej.Dump(su));
-				Assert.AreEqual("UPDATE partespiezas p SET cantidad=p.cantidad+1\n WHERE p.cantidad IS NULL\n AND p.empresa=13;\n",
+				Assert.AreEqual("UPDATE partespiezas pp\n SET cantidad=pp.cantidad+1\n WHERE pp.cantidad IS NULL\n AND pp.empresa=13;\n",
 				                ejp.Dump(su));
 				su=new SentenciaSelect(p.cPieza,p.cNombrePieza,pi.cNombrePieza).Where(p.cPieza.Igual(pi.cPieza.Concatenado<string>("2")));
 				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pi.nombrepieza\n" +
@@ -235,26 +240,26 @@ namespace PrModeladorSql
 				CampoDestino<int> d2=new CampoDestino<int>("otro_estado");
 				su=new SentenciaSelect(p.cPieza,p.cNombrePieza,pi.cNombrePieza,d.Es(pi.cNombrePieza.Concatenado(p.cPieza)))
 					.Where(p.cPieza.Igual(pi.cPieza.Concatenado("2")),d.Distinto("A"),d2.Es(pi.cEstado).Distinto(3));
-				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pi.nombrepieza, (pi.nombrepieza & p.pieza) AS [otro_nombre]\n" +
+				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pi.nombrepieza,\n pi.nombrepieza & p.pieza AS [otro_nombre]\n" +
 				                " FROM piezas p, piezas pi\n" +
-				                " WHERE p.pieza=(pi.pieza & '2')\n AND (pi.nombrepieza & p.pieza)<>'A'\n AND pi.estado<>3\n AND p.empresa=13\n AND pi.empresa=13;\n",
+				                " WHERE p.pieza=pi.pieza & '2'\n AND pi.nombrepieza & p.pieza<>'A'\n AND pi.estado<>3\n AND p.empresa=13\n AND pi.empresa=13;\n",
 				                ej.Dump(su));
 				NovedadesPiezas np=new NovedadesPiezas();
 				np.EsFkDe(pi,pi.cPieza);
 				pi.LiberadaDelContextoDelEjecutador=true;
 				Assert.AreEqual(pi,np.TablaRelacionada);
+				pi.Alias="p";
 				su=new SentenciaUpdate(pi,pi.cEstado.Es(np.cNuevoEstado),pi.cNombrePieza.Es(pi.cNombrePieza.Concatenado(np.cNuevoEstado))).Where(pi.cPieza.Distinto("P_este"));
-				Assert.AreEqual("UPDATE piezas p INNER JOIN novedadespiezas n ON p.empresa=n.empresa AND p.pieza=n.piezaauxiliar\n" +
-				                " SET p.estado=n.nuevoestado,\n p.nombrepieza=(p.nombrepieza & n.nuevoestado)\n" +
-				                " WHERE p.pieza<>'P_este'\n AND n.empresa=13;\n",
+				Assert.AreEqual("UPDATE piezas p INNER JOIN novedadespiezas np ON p.empresa=np.empresa AND p.pieza=np.piezaauxiliar\n" +
+				                " SET p.estado=np.nuevoestado,\n p.nombrepieza=p.nombrepieza & np.nuevoestado\n" +
+				                " WHERE p.pieza<>'P_este'\n AND p.empresa=13\n AND np.empresa=13;\n",
 				                ej.Dump(su));
-				Assert.AreEqual("UPDATE piezas p " +
-				                "SET estado=(SELECT n.nuevoestado FROM novedadespiezas n WHERE n.empresa=p.empresa AND n.piezaauxiliar=p.pieza),\n" +
-				                " nombrepieza=(SELECT (p.nombrepieza||n.nuevoestado) FROM novedadespiezas n WHERE n.empresa=p.empresa AND n.piezaauxiliar=p.pieza)\n" +
-				                " WHERE p.pieza<>'P_este';\n",
+				Assert.AreEqual("UPDATE piezas p\n " +
+				                "SET estado=np.nuevoestado, nombrepieza=p.nombrepieza||np.nuevoestado\n FROM novedadespiezas np\n" +
+				                " WHERE p.pieza<>'P_este'\n AND np.empresa=p.empresa\n AND np.piezaauxiliar=p.pieza\n AND p.empresa=13\n AND np.empresa=13;\n",
 				                ejp.Dump(su));
 				su=new SentenciaUpdate(pi,pi.cEstado.Es(np.cNuevoEstado),pi.cCosto.SeaNulo()).Where(pi.cPieza.Distinto("P_este"));
-				Assert.AreEqual("UPDATE piezas p INNER JOIN novedadespiezas n ON p.empresa=n.empresa AND p.pieza=n.piezaauxiliar\n SET p.estado=n.nuevoestado,\n p.costo=null\n WHERE p.pieza<>'P_este'\n AND n.empresa=13;\n",
+				Assert.AreEqual("UPDATE piezas p INNER JOIN novedadespiezas np ON p.empresa=np.empresa AND p.pieza=np.piezaauxiliar\n SET p.estado=np.nuevoestado, p.costo=NULL\n WHERE p.pieza<>'P_este'\n AND p.empresa=13\n AND np.empresa=13;\n",
 				                ej.Dump(su));
 				
 				/* Falta programar

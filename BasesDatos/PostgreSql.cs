@@ -72,7 +72,13 @@ namespace BasesDatos
 		public override string OperadorToSqlPrefijo(OperadorFuncion Operador){
 			switch(Operador){
 				case OperadorFuncion.LogE: return "LN(";
-				case OperadorFuncion.Str: return "STR(";
+				case OperadorFuncion.Str: return "";
+				default: return base.OperadorToSqlPrefijo(Operador);
+			}
+		}
+		public override string OperadorToSqlSufijo(OperadorFuncion Operador){
+			switch(Operador){
+				case OperadorFuncion.Str: return "";
 				default: return base.OperadorToSqlPrefijo(Operador);
 			}
 		}

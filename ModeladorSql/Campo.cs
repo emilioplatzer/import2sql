@@ -299,6 +299,9 @@ namespace ModeladorSql
 		{
 			return CampoContenedor.Tablas(queTablas);
 		}
+		public override IExpresion Expresion {
+			get { return CampoContenedor.Expresion; }
+		}
 	}
 	public class CampoNumericoTipo<T>:CampoTipo<T>,IElementoNumerico<T>{
 		public Campo EsSuma<T2>(IElementoNumerico<T2> expresion){

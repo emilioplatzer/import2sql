@@ -264,17 +264,31 @@ namespace ModeladorSql
 		public override string ToSql(BaseDatos db){
 			var rta=new StringBuilder();
 			rta.Append("UPDATE "+TablaBase.ToSql(db));
-			IncluirJoinEnWhere=false;
-			var tablas=Tablas(QueTablas.AlFrom);
-			TablasQueEstanMasArriba=new ConjuntoTablas(TablaBase);
-			var onAnd=new Separador(" ON "," AND ");
-			ParaCadaJunta(tablas,TablaBase
-			    , tabla => {rta.Append(" INNER JOIN "+tabla.ToSql(db)); onAnd.Reiniciar(); }
-				, par => onAnd.AgregarEn(rta,par.Value.ToSql(db)+"="+par.Key.ToSql(db))
-			);
+			if(db.UpdateConJoin){
+				IncluirJoinEnWhere=false;
+				var tablas=Tablas(QueTablas.AlFrom);
+				TablasQueEstanMasArriba=new ConjuntoTablas(TablaBase);
+				var onAnd=new Separador(" ON "," AND ");
+				ParaCadaJunta(tablas,TablaBase
+				    , tabla => {rta.Append(" INNER JOIN "+tabla.ToSql(db)); onAnd.Reiniciar(); }
+					, par => onAnd.AgregarEn(rta,par.Value.ToSql(db)+"="+par.Key.ToSql(db))
+				);
+			}
 			var setComa=new Separador("\n SET ",", ").AnchoLimitadoConIdentacion();
 			foreach(var a in Asignaciones){
-				setComa.AgregarEn(rta,a.CampoReceptor.ToSql(db)+"="+a.ExpresionBase.ToSql(db));
+				setComa.AgregarEn(rta,
+					(db.UpdateConJoin?a.CampoReceptor.ToSql(db):db.StuffCampo(a.CampoReceptor.NombreCampo))
+		            +"="+a.ExpresionBase.ToSql(db)
+				);
+			}
+			if(!db.UpdateConJoin){
+				IncluirJoinEnWhere=true;
+				Separador fromComa=new Separador("\n FROM ",", ").AnchoLimitadoConIdentacion();
+				ConjuntoTablas TablasIncluidas=Tablas(QueTablas.AlFrom);
+				TablasIncluidas.Remove(TablaBase);
+				foreach(Tabla t in TablasIncluidas.Keys){
+					fromComa.AgregarEn(rta,t.ToSql(db));
+				}
 			}
 			rta.Append(base.ToSql(db));
 			return rta.ToString();
