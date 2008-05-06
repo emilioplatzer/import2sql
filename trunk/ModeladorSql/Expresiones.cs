@@ -97,8 +97,8 @@ namespace ModeladorSql
 		public override bool EsAgrupada {
 			get{ 
 				bool rta=false;
-				if(E1!=null) rta=rta || E1.CandidatoAGroupBy;
-				if(E2!=null) rta=rta || E2.CandidatoAGroupBy;
+				if(E1!=null) rta=rta || E1.EsAgrupada;
+				if(E2!=null) rta=rta || E2.EsAgrupada;
 				return rta;
 			}
 		}
