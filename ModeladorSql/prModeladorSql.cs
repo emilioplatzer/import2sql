@@ -268,5 +268,53 @@ namespace PrModeladorSql
 				*/
 			}
 		}
+		[Test]
+		public void MultiFk(){
+			BaseDatos dba=BdAccess.SinAbrir();
+			BaseDatos dbp=PostgreSql.SinAbrir();
+			Piezas p=new Piezas();
+			Numeros num=new Numeros();
+			{
+				PartesPiezas pp=new PartesPiezas();
+				pp.EsFkDe(p,pp.cParte.Es(num.cNumero));
+				Sentencia s=
+					new SentenciaSelect(p.cPieza,p.cNombrePieza,num.cNumero,pp.cNombreParte).Where(num.cNumero.MayorOIgual(3));
+				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, n.numero, pa.nombreparte\n" +
+				                " FROM piezas p, numeros n, partespiezas pa\n" +
+				                " WHERE n.numero<=3\n AND pa.empresa=p.empresa\n AND pa.pieza=p.pieza\n AND pa.parte=n.numero;\n",
+				                new Ejecutador(dba).Dump(s));
+			}
+			{
+				PartesPiezas pp=new PartesPiezas();
+				pp.EsFkDe(p,pp.cParte.Es(7));
+				Sentencia s=
+					new SentenciaSelect(p.cPieza,p.cNombrePieza,pp.cNombreParte);
+				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pa.nombreparte\n" +
+				                " FROM piezas p, partespiezas pa\n" +
+				                " WHERE pa.empresa=p.empresa\n AND pa.pieza=p.pieza\n AND pa.parte=7;\n",
+				                new Ejecutador(dba).Dump(s));
+			}
+			{
+				PartesPiezas pp=new PartesPiezas();
+				pp.EsFkDe(p,pp.cParte.Es(num.cNumero),pp.cEmpresa.Es(1));
+				Sentencia s=
+					new SentenciaSelect(p.cPieza,p.cNombrePieza,num.cNumero,pp.cNombreParte);
+				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, n.numero, pa.nombreparte\n" +
+				                " FROM piezas p, numeros n, partespiezas pa\n" +
+				                " WHERE pa.empresa=1\n AND pa.pieza=p.pieza\n AND pa.parte=n.numero;\n",
+				                new Ejecutador(dba).Dump(s));
+			}
+			{
+				PartesPiezas pp=new PartesPiezas();
+				pp.EsFkDe(p,pp.cParte.Es(num.cNumero),pp.cEmpresa.Es(1));
+				Sentencia s=
+					new SentenciaSelect(p.cPieza,p.cNombrePieza,pp.cNombreParte);
+				Assert.Ignore("Falta considerar tablas que sirvan para los joins y no estén en los campos del select");
+				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pa.nombreparte\n" +
+				                " FROM piezas p, numeros n, partespiezas pa\n" +
+				                " WHERE pa.empresa=1\n AND pa.pieza=p.pieza\n AND pa.parte=n.numero;\n",
+				                new Ejecutador(dba).Dump(s));
+			}
+		}
 	}
 }
