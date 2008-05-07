@@ -58,6 +58,15 @@ namespace Comunes
 			}
 			return rta.ToString()+">";
 		}
+		public T UnicoElemento(){
+			if(Count!=1){
+				Falla.Detener("Se esperaba que el conjunto tuviera un único elemento");
+			}
+			foreach(var par in this){
+				return par.Key;
+			}
+			return default(T);
+		}
 	}
 	[TestFixture]
 	public class prConjunto{

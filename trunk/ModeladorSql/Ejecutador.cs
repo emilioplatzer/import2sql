@@ -33,6 +33,7 @@ namespace ModeladorSql
 		}
 		public string Dump(Sentencia laSentencia){
 			foreach(Tabla t in laSentencia.Tablas(QueTablas.Aliasables).Keys){
+				t.AliasActual=t.Alias;
 				if(!t.LiberadaDelContextoDelEjecutador){
 					t.CamposContexto=CamposContexto;
 				}

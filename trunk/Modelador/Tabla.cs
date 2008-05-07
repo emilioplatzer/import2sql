@@ -26,7 +26,8 @@ namespace Modelador
 		public string NombreTabla;
 		public BaseDatos db;
 		public int CantidadCamposPk;
-		public string ElAlias;
+		public string AliasNormal; // el que tiene la tabla siempre
+		public string AliasActual; // el que tiene la tabla en la sentencia actual (que quizás es distinto porque la tabla está dos veces)
 		public bool IniciadasFk=false;
 		public Tabla TablaRelacionada;
 		public Diccionario<Campo,ExpresionSql> CamposRelacionadosFk;
@@ -402,9 +403,10 @@ namespace Modelador
 		public override string ToSql(BaseDatos db)
 		{
 			return (SelectInterno==null
-					?db.StuffTabla(this.NombreTabla)
-					:"("+SelectInterno.ToSql(db)+")")
-				+(this.ElAlias==null?"":" "+this.ElAlias);
+						?db.StuffTabla(this.NombreTabla)
+						:"("+SelectInterno.ToSql(db)+")")
+					+this.AliasActual??(this.AliasNormal??"");
+				//+(this.ElAlias==null?"":" "+this.ElAlias);
 		}
 		public override bool CandidatoAGroupBy{ 
 			get{ // No tiene en el sentido de que no es una expresión

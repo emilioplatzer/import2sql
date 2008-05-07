@@ -20,8 +20,9 @@ namespace ModeladorSql
 	public delegate bool Filtro(Campo c);
 	public class Tabla:IConCampos{
 		Lista<Campo> campos;
-		public string Alias;
 		public string NombreTabla;
+		public string Alias; // el que tiene la tabla siempre o el que se asigna a mano cuando hay una tabla que va a aparecer dos veces. El ejecutador no lo toca
+		public string AliasActual; // el que decide el ejecutador si fuera necesario
 		public BaseDatos db;
 		public int CantidadCamposPk;
 		public bool IniciadasFk=false;
@@ -62,7 +63,7 @@ namespace ModeladorSql
 					:"("+SelectInterno.ToSql(db)+")")
 				+(this.Alias==null?"":" "+this.Alias);
 			*/
-			return db.StuffTabla(this.NombreTabla)+(this.Alias==null?"":" "+this.Alias);
+			return db.StuffTabla(this.NombreTabla)+(this.AliasActual==null?"":" "+this.AliasActual);
 		}
 		public ConjuntoTablas Tablas(QueTablas queTablas)
 		{
@@ -115,7 +116,7 @@ namespace ModeladorSql
 		protected void Construir(){
 			foreach(System.Attribute attr in this.GetType().GetCustomAttributes(true)){
 				if(attr is Alias){
-					Alias=(attr as Alias).alias;
+					this.Alias=(attr as Alias).alias;
 				}
 			}
 			ConstruirCampos();
@@ -429,7 +430,7 @@ namespace ModeladorSql
 			return new SubSelectAgrupado<T>(expresion,OperadorAgrupada.Suma,this);
 		}
 		public IElementoTipado<T> SelectPromedioGeometrico<T>(IElementoTipado<T> expresion){
-			return new SubSelectAgrupado<T>(expresion,OperadorAgrupada.PromedioGeometrico,this);
+			return new SubSelectAgrupado<T>(expresion,OperadorAgrupada.PromedioGeometrico,this,expresion.Mayor<T>(Constante<T>.Cero));
 		}
 		public RegistrosEnumerables Todos(BaseDatos db){
 			return new RegistrosEnumerables(this,db);

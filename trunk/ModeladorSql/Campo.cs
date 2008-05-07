@@ -21,6 +21,7 @@ namespace ModeladorSql
 		public bool Obligatorio;
 		public Tabla TablaContenedora;
 		public string DireccionOrderBy;
+		public abstract bool EsNumerico{ get; }
 		public Lista<Campo> Campos(){
 			return new Lista<Campo>(this);
 		}
@@ -40,13 +41,12 @@ namespace ModeladorSql
 			get{ if(Obligatorio){ return " NOT NULL"; }else{ return ""; } }
 		}
 		public abstract string DefinicionPorDefecto(BaseDatos db);
-		public virtual string ToSql(BaseDatos db)
-		{
-			if(this.TablaContenedora==null || this.TablaContenedora.Alias==null){
-				return db.StuffCampo(this.NombreCampo);
-			}else{
-				return this.TablaContenedora.Alias+"."+db.StuffCampo(NombreCampo);
+		public virtual string ToSql(BaseDatos db){
+			string alias="";
+			if(TablaContenedora!=null /* || this.TablaContenedora.Alias==null*/){
+				alias=TablaContenedora.AliasActual??TablaContenedora.NombreTabla;
 			}
+			return alias+(alias==""?"":".")+db.StuffCampo(NombreCampo);
 		}
 		public virtual bool CandidatoAGroupBy{ 
 			get{
@@ -161,6 +161,11 @@ namespace ModeladorSql
 				return tipo.Name; 
 			}
 		}
+		public override bool EsNumerico{ 
+			get{ 
+				return TipoCampo.StartsWith("INTEGER") || TipoCampo.StartsWith("DOUBLE");
+			}
+		}
 		public override bool EsAgrupada{ 
 			get{ return false; }
 		}
@@ -245,9 +250,11 @@ namespace ModeladorSql
 		public ElementoTipado<bool> MenorOIgual(ElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.MenorOIgual,expresion);
 		}
+		/*
 		public ElementoTipado<bool> Mayor(IElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Mayor,expresion);
 		}
+		*/
 		public ElementoTipado<bool> Distinto(ElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Distinto,expresion);
 		}
