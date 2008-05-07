@@ -107,7 +107,7 @@ namespace Modelador
 				}
 			}
 			AliasTablas.Add(Alias,t.NombreTabla);
-			t.ElAlias=Alias;
+			t.AliasActual=Alias;
 		}
 		public void AsignarAlias(){
 			AliasTablas=new System.Collections.Generic.Dictionary<string, string>();
@@ -330,7 +330,7 @@ namespace Modelador
 			ListaSqlizable<Sqlizable> valores=new ListaSqlizable<Sqlizable>();
 			todas.Add(new LiteralSql("INSERT INTO "));
 			todas.Add(TablaBase);
-			TablaBase.ElAlias=null;
+			TablaBase.AliasActual="";
 			ParteSeparadora coma=new ParteSeparadora(" (",", ");
 			ParteSeparadora vcoma=new ParteSeparadora("VALUES (",", ");
 			foreach(Campo c in Campos){
@@ -383,7 +383,7 @@ namespace Modelador
 				SentenciaUpdate su=s as SentenciaUpdate;
 				ConjuntoTablas suTablas=su.Tablas(QueTablas.AlFrom);
 				if((suTablas.Count<=1 || !db.UpdateConJoin) && db.UpdateSoloUnaTabla){
-					su.TablaBase.ElAlias=null;
+					su.TablaBase.AliasActual="";
 				}
 				rta.Append(su.TablaBase.ToSql(db));
 				string prefijoSet="";
@@ -588,7 +588,7 @@ namespace Modelador
 				StringBuilder rta=new StringBuilder();
 				if(db.UpdateSelectSumViaDSum){
 					Tabla TablaSumandis=CampoSumar.TablaContenedora;
-					TablaSumandis.ElAlias=null;
+					TablaSumandis.AliasActual="";
 					/*
 					rta.Append(PreOperador+"D"+Operador+"("+PostOperador+"'"+db.StuffCampo(CampoSumar.NombreCampo)+"','"
 					           +db.StuffTabla(TablaSumandis.NombreTabla));
