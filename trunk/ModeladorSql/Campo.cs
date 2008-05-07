@@ -242,6 +242,9 @@ namespace ModeladorSql
 		public ElementoTipado<bool> MayorOIgual(ElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.MayorOIgual,expresion);
 		}
+		public ElementoTipado<bool> MenorOIgual(ElementoTipado<T> expresion){
+			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.MenorOIgual,expresion);
+		}
 		public ElementoTipado<bool> Mayor(IElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Mayor,expresion);
 		}
