@@ -214,12 +214,20 @@ namespace ModeladorSql
 			rta.Append("INSERT INTO ");
 			rta.Append(db.StuffTabla(TablaBase.NombreTabla));
 			Separador coma=new Separador(" (",", ").AnchoLimitadoConIdentacion();
-			ElementosClausulaSelect nuevaLista=new ElementosClausulaSelect();
+			ElementosClausulaSelect nuevaListaSelect=new ElementosClausulaSelect();
+			ListaElementos<IExpresion> nuevaListaValores=new ListaElementos<IExpresion>();
 			foreach(IConCampos e in ValoresDirectos??SentenciaSelectBase.ClausulaSelect){
 				foreach(Campo c in e.Campos()){
 					if(TablaBase.ContieneMismoNombre(c)){
-						if(!nuevaLista.Exists(delegate(IConCampos campo){ return c.Nombre==campo.Campos()[0].Nombre; })){
-							nuevaLista.Add(c);
+						if(!nuevaListaSelect.Exists(delegate(IConCampos campo){ return c.Nombre==campo.Campos()[0].Nombre; })){
+							nuevaListaSelect.Add(c); // Esto va para el Exists
+							if(SentenciaSelectBase==null){
+								if(!(c is ICampoAlias) && c.ValorSinTipo!=null){
+									nuevaListaValores.Add(new Constante<object>(c.ValorSinTipo));
+								}else{
+									nuevaListaValores.Add(c);
+								}
+							}
 							coma.AgregarEn(rta,db.StuffCampo(c.NombreCampo));
 						}
 					}
@@ -227,12 +235,12 @@ namespace ModeladorSql
 			}
 			if(SentenciaSelectBase==null){
 				Separador valuesComa=new Separador(")\n VALUES (",", ").AnchoLimitadoConIdentacion();
-				foreach(IExpresion e in nuevaLista){
+				foreach(IExpresion e in nuevaListaValores){
 					valuesComa.AgregarEn(rta,e.Expresion.ToSql(db));
 				}
 				rta.Append(")");
 			}else{
-				SentenciaSelectBase.ClausulaSelect=nuevaLista;
+				SentenciaSelectBase.ClausulaSelect=nuevaListaSelect;
 				rta.Append(")\n ");
 				SentenciaSelectBase.TablasQueEstanMasArriba=new ConjuntoTablas(TablaBase);
 				rta.Append(SentenciaSelectBase.ToSql(db));

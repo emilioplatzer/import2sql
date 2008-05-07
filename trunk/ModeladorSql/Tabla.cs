@@ -158,13 +158,11 @@ namespace ModeladorSql
 			rta.AppendLine("\n);");
 			return rta.ToString();
 		}
-		/*
 		public virtual void InsertarValores(BaseDatos db,params IConCampos[] Campos){
 			Sentencia s=new SentenciaInsert(this).Valores(Campos);
 			Ejecutador ej=new Ejecutador(db);
 			ej.Ejecutar(s);
 		}
-		*/
 		public virtual Tabla InsertarDirecto(BaseDatos db,params object[] Valores){
 			int i=0;
 			using(Insertador ins=new Insertador(db,this)){
