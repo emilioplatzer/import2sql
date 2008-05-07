@@ -72,11 +72,12 @@ namespace TodoASql
 			    p.G_Enumerados();
 			    */
 			    // new prTabla().SubselectGroupBy();
-			    new PrModeladorSql.prModelador().SentenciaInsert();
+			    // new PrModeladorSql.prModelador().SentenciaInsert();
 			    // new PrModeladorSql.prModelador().SentenciaUpdate();
 			    // new PrModeladorSql.prModelador().SentenciaCompuesta();
 			    // new PrModeladorSql.prModelador().UpdateSuma();
-			    new PrModeladorSql.prModelador().FkConDatos();
+			    // new PrModeladorSql.prModelador().FkConDatos();
+			    new PrModeladorSql.prModelador().Subselect();
 			    // new Tareas.PruebasExternas().Generar();
 			    /*
 				Console.WriteLine("Listo!");

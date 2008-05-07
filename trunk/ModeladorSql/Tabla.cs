@@ -34,7 +34,7 @@ namespace ModeladorSql
 		public bool LiberadaDelContextoDelEjecutador; // Del contexto del ejecutador
 		public ListaElementos<Campo> CamposContexto; // Para agregar en las clausulas where
 		public bool RegistroConDatos=false;
-		// public SentenciaSelect SentenciaSubSelect;
+		public SentenciaSelect SentenciaSubSelect;
 		// public SelectInterno SelectInterno;
 		public Tabla()
 		{
@@ -63,22 +63,15 @@ namespace ModeladorSql
 					:"("+SelectInterno.ToSql(db)+")")
 				+(this.Alias==null?"":" "+this.Alias);
 			*/
-			return db.StuffTabla(this.NombreTabla)+(this.AliasActual==null?"":" "+this.AliasActual);
+			return (SentenciaSubSelect==null?db.StuffTabla(this.NombreTabla):"("+SentenciaSubSelect.ToSql(db)+")")
+				+(this.AliasActual==null?"":" "+this.AliasActual);
 		}
-		public ConjuntoTablas Tablas(QueTablas queTablas)
-		{
-			return new ConjuntoTablas(this);
-			/*
-			if(SelectInterno==null){
-				return new ConjuntoTablas(this);
-			}else{
-				ConjuntoTablas rta=new ConjuntoTablas();
-				rta.AddRange(SelectInterno.Tablas(queTablas));
-				rta.Add(this);
-				return rta;
+		public ConjuntoTablas Tablas(QueTablas queTablas){
+			var rta=new ConjuntoTablas(this);
+			if(SentenciaSubSelect!=null && queTablas==QueTablas.Aliasables){
+				rta.AddRange(SentenciaSubSelect.Tablas(queTablas));
 			}
-			*/
-			
+			return rta;
 		}
 		public static string NombreFieldANombreCampo(string nombreField){
 			return nombreField.Substring(1);
@@ -436,13 +429,11 @@ namespace ModeladorSql
 		public RegistrosEnumerables Algunos(BaseDatos db,ElementosClausulaWhere ClausulaWhere,params Campo[] CamposOrden){
 			return new RegistrosEnumerables(this,db,ClausulaWhere,CamposOrden);
 		}
-		/*
 		public SentenciaSelect SubSelect(params Campo[] Campos){
 			SentenciaSubSelect=new SentenciaSelect(Campos);
-			SelectInterno=new SelectInterno(SentenciaSubSelect);
+			// SelectInterno=new SelectInterno(SentenciaSubSelect);
 			return SentenciaSubSelect;
 		}
-		*/
 		/*
 		public ExpresionSql NoExistePara(params Campable[] CamposOTablas){
 			ListaSqlizable<Campo> Campos=new ListaSqlizable<Campo>();
@@ -585,88 +576,4 @@ namespace ModeladorSql
 			:base(db,tabla.NombreTabla)
 		{}
 	}
-	/*
-	public abstract class Sqlizable{
-		public abstract string ToSql(BaseDatos db);
-		public abstract ConjuntoTablas Tablas(QueTablas queTablas);
-		public abstract bool CandidatoAGroupBy{ get; }
-	}
-	public class LiteralSql:Sqlizable{
-		public string Literal;
-		public LiteralSql(string Literal){
-			this.Literal=Literal;
-		}
-		public override string ToSql(BaseDatos db){
-			return Literal;
-		}
-		public override bool CandidatoAGroupBy{ get{return false;} }
-		public override ConjuntoTablas Tablas(QueTablas queTablas){
-			return new ConjuntoTablas();
-		}
-	}
-	public abstract class OperadorDependienteDeLaBase:Sqlizable{
-		public override bool CandidatoAGroupBy{ get{return false;} }
-		public override ConjuntoTablas Tablas(QueTablas queTablas){
-			return new ConjuntoTablas();
-		}
-	}
-	public class OperadorConcatenacionIzquierda:OperadorDependienteDeLaBase{
-		public override string ToSql(BaseDatos db){
-			return db.OperadorConcatenacionIzquierda;
-		}
-	}
-	public class OperadorConcatenacionDerecha:OperadorDependienteDeLaBase{
-		public override string ToSql(BaseDatos db){
-			return db.OperadorConcatenacionDerecha;
-		}
-	}
-	public class OperadorConcatenacionMedio:OperadorDependienteDeLaBase{
-		public override string ToSql(BaseDatos db){
-			return db.OperadorConcatenacionMedio;
-		}
-	}
-	public class FuncionLn:OperadorDependienteDeLaBase{
-		public override string ToSql(BaseDatos db){
-			return db.FuncionLn;
-		}
-	}
-	public class ValorSql<T>:Sqlizable{
-		public T Valor;
-		public ValorSql(T Valor){
-			this.Valor=Valor;
-		}
-		public override string ToSql(BaseDatos db){
-			if(Valor is Sqlizable){
-				Sqlizable s=Valor as Sqlizable;
-				return s.ToSql(db);
-			}
-			return db.StuffValor(Valor);
-		}
-		public override bool CandidatoAGroupBy{ 
-			get{
-				if(Valor is Sqlizable){
-					return (Valor as Sqlizable).CandidatoAGroupBy;
-				}
-				return false;
-			}
-		}
-		public override ConjuntoTablas Tablas(QueTablas queTablas){
-			if(Valor is Sqlizable){
-				return (Valor as Sqlizable).Tablas(queTablas);
-			}
-			return new ConjuntoTablas();
-		}
-	}
-	public class ValorSqlNulo:Sqlizable{
-		public ValorSqlNulo(){
-		}
-		public override string ToSql(BaseDatos db){
-			return "null";
-		}
-		public override bool CandidatoAGroupBy{ get{return false;} }
-		public override ConjuntoTablas Tablas(QueTablas queTablas){
-			return new ConjuntoTablas();
-		}
-	}
-	*/
 }

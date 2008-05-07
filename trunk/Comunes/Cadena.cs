@@ -308,7 +308,6 @@ namespace Comunes
 			}
 		}
 		public void AgregarEn<T>(StringBuilder rta,T valor){
-			System.Console.WriteLine("LongAnt {0}+({1}).Len={2} de ({3}).Len={4},",LongitudAnterior,valor,valor.ToString().Length,rta.ToString(),rta.Length);
 			if(anchoMaximo!=null){
 				if(LongitudAnterior==null){
 					int SaltoEnComenzador=CadenaComenzadora.LastIndexOf('\n');

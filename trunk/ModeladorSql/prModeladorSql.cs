@@ -396,7 +396,6 @@ namespace PrModeladorSql
 			Assert.AreEqual(ColoresCompuestos.ColorPrimario.Azul,cp.cColorBase.Valor);
 			db.Close();
 		}
-		/*
 		[Test]
 		public void Subselect(){
 			BaseDatos dba=BdAccess.SinAbrir();
@@ -406,21 +405,22 @@ namespace PrModeladorSql
 			Empresas e=pp.fkEmpresas;
 			pss.SubSelect(pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
 				.Where(pp.cParteAnterior.EsNulo(),e.cNombreEmpresa.Distinto("este"));
+			pss.Alias="x";
 			Piezas p=new Piezas();
 			Assert.AreEqual(
-				"INSERT INTO piezas (empresa, pieza, nombrepieza)"+
-				" SELECT pi.empresa, pi.pieza, pi.nombrepieza\n" +
-				" FROM (SELECT p.empresa, p.pieza, p.nombreparte AS nombrepieza\n" +
-				" FROM partespiezas p, empresas e\n" +
-				" WHERE p.parteanterior IS NULL\n AND e.nombreempresa<>'este'\n AND e.empresa=p.empresa) pi\n" +
-				" WHERE pi.empresa<>0;\n",
+				"INSERT INTO piezas (empresa, pieza, nombrepieza)\n"+
+				" SELECT x.empresa, x.pieza, x.nombrepieza\n" +
+				" FROM (SELECT pp.empresa, pp.pieza, pp.nombreparte AS nombrepieza\n" +
+				" FROM partespiezas pp, empresas e\n" +
+				" WHERE pp.parteanterior IS NULL\n AND e.nombreempresa<>'este'\n AND e.empresa=pp.empresa) x\n" +
+				" WHERE x.empresa<>0;\n",
 				new Ejecutador(dba).Dump(
 					new SentenciaInsert(p)
 					.Select(pss.cEmpresa,pss.cPieza, pss.cNombrePieza)
 					.Where(pss.cEmpresa.Distinto(0))
 				)
 			);
+			Assert.Ignore("Falta ver que funcione bien en un contexto");
 		}
-		*/
 	}
 }
