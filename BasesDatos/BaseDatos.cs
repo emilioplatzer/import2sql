@@ -53,7 +53,7 @@ namespace BasesDatos
 		public int ExecuteNonQuery(SentenciaSql sentencia){
 			Falla.SiEsNulo(cmd);
 			cmd.CommandText=bitacora.RegistrarSql(AdaptarSentecia(sentencia));
-				return cmd.ExecuteNonQuery();
+			return cmd.ExecuteNonQuery();
 		}
 		public void EjecutrarSecuencia(SentenciaSql secuencia){
 			foreach(string sentencia in secuencia.Separar()){

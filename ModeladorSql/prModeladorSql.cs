@@ -345,5 +345,82 @@ namespace PrModeladorSql
 			Assert.AreEqual("UPDATE piezas p\n SET costo=(SELECT EXP(AVG(LN(np.nuevoestado))) FROM novedadespiezas np WHERE np.nuevoestado>0 AND np.empresa=p.empresa AND np.piezaauxiliar=p.pieza);\n"
 			                ,new Ejecutador(dbp).Dump(su));
 		}
+		[Test]
+		public void FkConDatos(){
+			BaseDatos db=ProbarBdAccess.AbrirBase(2);
+			Repositorio.CrearTablas(db,this.GetType().Namespace);
+			Empresas e=new Empresas();
+			Piezas p=new Piezas();
+			PartesPiezas pp=new PartesPiezas();
+			/*
+			db.ExecuteNonQuery(e.SentenciaCreateTable(db));
+			db.ExecuteNonQuery(p.SentenciaCreateTable(db));
+			db.ExecuteNonQuery(pp.SentenciaCreateTable(db));
+			*/
+			Ejecutador ej=new Ejecutador(db);
+			// ej.ExecuteNonQuery(new Empresas().SentenciaCreateTable(db));
+			// ej.ExecuteNonQuery(new Piezas().SentenciaCreateTable(db));
+			// ej.ExecuteNonQuery(new PartesPiezas().SentenciaCreateTable(db));
+			if(!e.Buscar(db,7)){
+				e.InsertarValores(db,e.cEmpresa.Es(7),e.cNombreEmpresa.Es("Siete"));
+			}
+			Empresas e2=new Empresas();
+			e2.Leer(db,7);
+			e.Leer(db,7);
+			Assert.AreEqual("Siete",e2.cNombreEmpresa.Valor);
+			p.InsertarValores(db,e,p.cPieza.Es("P11"),p.cNombrePieza.Es("El once"),p.cEstado.Es(1));
+			p.InsertarValores(db,e,p.cPieza.Es("P12"),p.cNombrePieza.Es("El doce"),p.cEstado.Es(1));
+			p.Leer(db,e,"P11");
+			Assert.AreEqual("P11",p.cPieza.Valor);
+			pp.InsertarValores(db,p,pp.cParte.Es(1),pp.cNombreParte.Es("parte 11, 1"));
+			Assert.AreEqual("P11",p.cPieza.Valor);
+			PartesPiezas pp2=new PartesPiezas();
+			Assert.AreEqual("P11",p.cPieza.Valor);
+			pp2.Leer(db,p,1);
+			Assert.AreEqual("parte 11, 1",pp2.cNombreParte.Valor);
+			PartesPiezas pp3=new PartesPiezas();
+			pp3.Leer(db,7,"P11",1);
+			pp3.UsarFk();
+			Assert.AreEqual("P11",pp3.fkPiezas.cPieza.Valor);
+			db.Close();
+		}
+		[Test]
+		public void G_Enumerados(){
+			BaseDatos db=ProbarBdAccess.AbrirBase(3);
+			Repositorio.CrearTablas(db,this.GetType().Namespace);
+			ColoresCompuestos cp=new ColoresCompuestos();
+			cp.InsertarDirecto(db,1,ColoresCompuestos.ColorPrimario.Azul);
+			cp.InsertarValores(db,cp.cColorCompuesto.Es(2),cp.cColorBase.Es(ColoresCompuestos.ColorPrimario.Verde));
+			cp.InsertarDirecto(db,3,ColoresCompuestos.ColorPrimario.Rojo);
+			cp.Leer(db,1);
+			Assert.AreEqual(ColoresCompuestos.ColorPrimario.Azul,cp.cColorBase.Valor);
+			db.Close();
+		}
+		/*
+		[Test]
+		public void Subselect(){
+			BaseDatos dba=BdAccess.SinAbrir();
+			Piezas pss=new Piezas();
+			PartesPiezas pp=new PartesPiezas();
+			pp.UsarFk();
+			Empresas e=pp.fkEmpresas;
+			pss.SubSelect(pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
+				.Where(pp.cParteAnterior.EsNulo(),e.cNombreEmpresa.Distinto("este"));
+			Piezas p=new Piezas();
+			Assert.AreEqual(
+				"INSERT INTO piezas (empresa, pieza, nombrepieza)"+
+				" SELECT pi.empresa, pi.pieza, pi.nombrepieza\n" +
+				" FROM (SELECT p.empresa, p.pieza, p.nombreparte AS nombrepieza\n" +
+				" FROM partespiezas p, empresas e\n" +
+				" WHERE p.parteanterior IS NULL\n AND e.nombreempresa<>'este'\n AND e.empresa=p.empresa) pi\n" +
+				" WHERE pi.empresa<>0;\n",
+				new Ejecutador(dba).Dump(
+					new SentenciaInsert(p)
+					.Select(pss.cEmpresa,pss.cPieza, pss.cNombrePieza)
+					.Where(pss.cEmpresa.Distinto(0))
+				)
+			);
+		}
+		*/
 	}
 }
