@@ -434,6 +434,13 @@ namespace ModeladorSql
 			// SelectInterno=new SelectInterno(SentenciaSubSelect);
 			return SentenciaSubSelect;
 		}
+		public ElementoTipado<bool> NoExistePara(Tabla TablaContexto){
+			Falla.Si(this.TablaRelacionada!=TablaContexto,"Para usar NoExistePara tiene que estar relacionada "+this.NombreTabla+" y "+TablaContexto.NombreTabla);
+			var select=new SentenciaSelect(campos[0]);
+			select.TablasQueEstanMasArriba.Add(TablaContexto);
+			select.TablaBase=TablaContexto;
+			return new ExpresionNotInSelect{SubSelect=select};
+		}
 		/*
 		public ExpresionSql NoExistePara(params Campable[] CamposOTablas){
 			ListaSqlizable<Campo> Campos=new ListaSqlizable<Campo>();

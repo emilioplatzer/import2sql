@@ -18,6 +18,7 @@ namespace ModeladorSql
 	public delegate void ProcesamientoTabla(Tabla tabla);
 	public delegate void ProcesamientoPar(System.Collections.Generic.KeyValuePair<Campo, IExpresion> par);
 	public class Sentencia:IElemento{
+		public Tabla TablaBase; // Tabla base del Update o del subSelect cuando es un Not Exists
 		public ConjuntoTablas TablasQueEstanMasArriba;
 		public ListaElementos<ElementoTipado<bool>> ClausulaWhere=new ListaElementos<ElementoTipado<bool>>();
 		protected bool IncluirJoinEnWhere=true;
@@ -30,11 +31,11 @@ namespace ModeladorSql
 				TablasARevisar.Remove(TablaBase);
 			}
 			var TablasNoIncluidas=new ConjuntoTablas();
-			int CantidadARevisar=TablasARevisar.Count;
 			while(true){
+				int CantidadARevisar=TablasARevisar.Count;
 				foreach(Tabla t in TablasARevisar.Keys){
-					if(t.TablaRelacionada!=null && tablas.Contiene(t.TablaRelacionada)){
-						if(TablasVistas.Contiene(t.TablaRelacionada)){
+					if(t.TablaRelacionada!=null && (tablas.Contiene(t.TablaRelacionada) || TablasQueEstanMasArriba.Contiene(t.TablaRelacionada))){
+						if(TablasVistas.Contiene(t.TablaRelacionada) || TablasQueEstanMasArriba.Contiene(t.TablaRelacionada)){
 							procesarTabla(t);
 							foreach(System.Collections.Generic.KeyValuePair<Campo, IExpresion> par in t.CamposRelacionFk){
 								procesarPar(par);
@@ -52,6 +53,13 @@ namespace ModeladorSql
 				if(TablasNoIncluidas.Count==0){
 			break;
 				}else if(TablasNoIncluidas.Count==CantidadARevisar){
+					if(TablasNoIncluidas.Count==1 && TablaBase==null){
+			break; // es la única tabla no unida. 
+					}
+					Console.WriteLine("TablasNoIncluidas "+TablasNoIncluidas.ToString());
+					Console.WriteLine("TablasARevisar "+TablasARevisar.ToString());
+					Console.WriteLine("TablasVistas "+TablasVistas.ToString());
+					Console.WriteLine("Tablas "+tablas.ToString());
 					Falla.Detener("FALLA AL ORDENAR EL JOIN "+TablasNoIncluidas.Count+"="+CantidadARevisar+": "+TablasNoIncluidas.ToString());
 				}else{
 					TablasARevisar=TablasNoIncluidas;
@@ -65,13 +73,14 @@ namespace ModeladorSql
 			foreach(var e in ClausulaWhere){
 				whereAnd.AgregarEn(rta,e.ToSql(db).Replace(" AND ","\n AND "));
 			}
-			var TablasIncluidas=Tablas(QueTablas.AlFrom);
+			var TablasAJoinear=Tablas(QueTablas.AlFrom);
 			if(IncluirJoinEnWhere){
-				ParaCadaJunta(TablasIncluidas, null, tabla => {},
+				ParaCadaJunta(TablasAJoinear, TablaBase, tabla => {},
 					par => whereAnd.AgregarEn(rta,par.Key.ToSql(db)+"="+par.Value.ToSql(db))
 				);
 			}
-			foreach(Tabla t in TablasIncluidas.Keys){
+			var TablasAContextualizar=Tablas(QueTablas.AlFrom);
+			foreach(Tabla t in TablasAContextualizar.Keys){
 				if(t.CamposContexto!=null 
 				   /*&& (t.TablaRelacionada==null
 				       || !TablasIncluidas.Contiene(t.TablaRelacionada))*/)
@@ -104,6 +113,11 @@ namespace ModeladorSql
 			s.ClausulaSelect.AddRange(campos);
 			return s;
 		}
+		public static TSentenciaSelect GroupBy<TSentenciaSelect>(this TSentenciaSelect s/*, params IConCampos[] campos*/) where TSentenciaSelect:SentenciaSelect{
+			// s.ClausulaSelect.AddRange(campos);
+			s.ConGroupBy=true;
+			return s;
+		}
 		public static TSentenciaSelect Having<TSentenciaSelect>(this TSentenciaSelect s,params IElementoTipado<bool>[] campos) where TSentenciaSelect:SentenciaSelect{
 			s.ClausulaHaving.AddRange(campos);
 			return s;
@@ -134,6 +148,7 @@ namespace ModeladorSql
 	public class SentenciaSelect:Sentencia{
 		public ElementosClausulaSelect ClausulaSelect;
 		public ElementosClausulaHaving ClausulaHaving;
+		public bool ConGroupBy;
 		public SentenciaSelect(){
 			ClausulaSelect=new ElementosClausulaSelect();
 			ClausulaHaving=new ElementosClausulaHaving();
@@ -149,7 +164,7 @@ namespace ModeladorSql
 			Separador selectComa=new Separador("SELECT ",", ").AnchoLimitadoConIdentacion();
 			StringBuilder groupby=new StringBuilder();
 			Separador groupbyComa=new Separador("\n GROUP BY ",", ").AnchoLimitadoConIdentacion();
-			bool TieneAgrupadas=false;
+			bool TieneAgrupadas=ConGroupBy;
 			foreach(IConCampos campos in ClausulaSelect){
 				foreach(Campo c in campos.Campos()){
 					selectComa.AgregarEn(rta,c.ToSql(db));
@@ -186,11 +201,11 @@ namespace ModeladorSql
 		}
 	}
 	public class SentenciaInsert:SentenciaSelect{
-		Tabla TablaBase;
+		Tabla TablaReceptora;
 		// SentenciaSelect SentenciaSelectBase;
 		ElementosClausulaSelect ValoresDirectos;
-		public SentenciaInsert(Tabla TablaBase){
-			this.TablaBase=TablaBase;
+		public SentenciaInsert(Tabla TablaReceptora){
+			this.TablaReceptora=TablaReceptora;
 		}
 		public SentenciaInsert Valores(params IConCampos[] campos){
 			Falla.Si(ClausulaSelect.Count>0,"En una sentencia insert no se puede poner Valores despues de un Select");
@@ -203,13 +218,13 @@ namespace ModeladorSql
 		public override string ToSql(BaseDatos db){
 			StringBuilder rta=new StringBuilder();
 			rta.Append("INSERT INTO ");
-			rta.Append(db.StuffTabla(TablaBase.NombreTabla));
+			rta.Append(db.StuffTabla(TablaReceptora.NombreTabla));
 			Separador coma=new Separador(" (",", ").AnchoLimitadoConIdentacion();
 			ElementosClausulaSelect nuevaListaSelect=new ElementosClausulaSelect();
 			ListaElementos<IExpresion> nuevaListaValores=new ListaElementos<IExpresion>();
 			foreach(IConCampos e in ValoresDirectos??ClausulaSelect){
 				foreach(Campo c in e.Campos()){
-					if(TablaBase.ContieneMismoNombre(c)){
+					if(TablaReceptora.ContieneMismoNombre(c)){
 						if(!nuevaListaSelect.Exists(delegate(IConCampos campo){ return c.Nombre==campo.Campos()[0].Nombre; })){
 							nuevaListaSelect.Add(c); // Esto va para el Exists
 							if(ValoresDirectos!=null){
@@ -225,7 +240,7 @@ namespace ModeladorSql
 				}
 			}
 			if(ValoresDirectos!=null){
-				Falla.Si(ClausulaSelect.Count>0,"No se pueden poner Valores directos y Select en un insert (contra tabla "+TablaBase.NombreTabla+")");
+				Falla.Si(ClausulaSelect.Count>0,"No se pueden poner Valores directos y Select en un insert (contra tabla "+TablaReceptora.NombreTabla+")");
 				Separador valuesComa=new Separador(")\n VALUES (",", ").AnchoLimitadoConIdentacion();
 				foreach(IExpresion e in nuevaListaValores){
 					valuesComa.AgregarEn(rta,e.Expresion.ToSql(db));
@@ -234,7 +249,7 @@ namespace ModeladorSql
 			}else{
 				ClausulaSelect=nuevaListaSelect;
 				rta.Append(")\n ");
-				TablasQueEstanMasArriba=new ConjuntoTablas(TablaBase);
+				// TablasQueEstanMasArriba=new ConjuntoTablas(TablaReceptora);
 				rta.Append(base.ToSql(db));
 			}
 			return rta.ToString();
@@ -248,7 +263,6 @@ namespace ModeladorSql
 		}
 	}
 	public class SentenciaUpdate:Sentencia{
-		Tabla TablaBase;
 		ListaElementos<ICampoAlias> Asignaciones=new ListaElementos<ICampoAlias>();
 		public SentenciaUpdate(Tabla TablaBase,params ICampoAlias[] Asignaciones){
 			this.TablaBase=TablaBase;

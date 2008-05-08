@@ -365,6 +365,29 @@ namespace ModeladorSql
 			get{ return this; }
 		}
 	}
+	public class ExpresionNotInSelect:ElementoTipado<bool>{
+		public SentenciaSelect SubSelect;
+		public override bool CandidatoAGroupBy { get { return false; } }
+		public override bool EsAgrupada { get { return false; } }
+		/*
+		public IExpresion Expresion { get { return this; } } 
+		public int Precedencia { get { return 9; } }
+		*/
+		public override string ToSql(BaseDatos db){
+			var rta=new StringBuilder();
+			rta.Append("NOT EXISTS (");
+			rta.Append(SubSelect.ToSql(db));
+			rta.Append(")");
+			return rta.ToString();
+		}
+		public override ConjuntoTablas Tablas(QueTablas queTablas){
+			if(queTablas==QueTablas.Aliasables){
+				return SubSelect.Tablas(queTablas);
+			}else{
+				return new ConjuntoTablas();
+			}
+		}
+	}
 	public static class ExtensionesExpresiones{
 		public static ElementoTipado<bool> And(this IElementoTipado<bool> E1, IElementoTipado<bool> E2){
 			return new Binomio<bool>{E1=E1, Operador=OperadorBinario.And, E2=E2};
