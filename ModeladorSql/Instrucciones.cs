@@ -100,6 +100,14 @@ namespace ModeladorSql
 			s.ClausulaWhere.AddRange(ExpresionesWhere);
 			return s;
 		}
+		public static TSentenciaSelect Select<TSentenciaSelect>(this TSentenciaSelect s, params IConCampos[] campos) where TSentenciaSelect:SentenciaSelect{
+			s.ClausulaSelect.AddRange(campos);
+			return s;
+		}
+		public static TSentenciaSelect Having<TSentenciaSelect>(this TSentenciaSelect s,params IElementoTipado<bool>[] campos) where TSentenciaSelect:SentenciaSelect{
+			s.ClausulaHaving.AddRange(campos);
+			return s;
+		}
 	}
 	public class ElementosClausulaSelect:ListaElementos<IConCampos>{}
 	public class ElementosClausula:ListaElementos<IElementoTipado<bool>>,IElemento{
@@ -135,14 +143,6 @@ namespace ModeladorSql
 			:this()
 		{
 			ClausulaSelect.AddRange(campos);
-		}
-		public SentenciaSelect Select(params IConCampos[] campos){
-			ClausulaSelect.AddRange(campos);
-			return this;
-		}
-		public SentenciaSelect Having(params IElementoTipado<bool>[] campos){
-			ClausulaHaving.AddRange(campos);
-			return this;
 		}
 		public override string ToSql(BaseDatos db){
 			StringBuilder rta=new StringBuilder();
@@ -185,27 +185,18 @@ namespace ModeladorSql
 			return rta;
 		}
 	}
-	public class SentenciaInsert:Sentencia{
+	public class SentenciaInsert:SentenciaSelect{
 		Tabla TablaBase;
-		SentenciaSelect SentenciaSelectBase;
+		// SentenciaSelect SentenciaSelectBase;
 		ElementosClausulaSelect ValoresDirectos;
 		public SentenciaInsert(Tabla TablaBase){
 			this.TablaBase=TablaBase;
 		}
-		public SentenciaInsert Select(params IConCampos[] campos){
-			Falla.SiNoEsNulo(ValoresDirectos,"En una sentencia insert no se puede poner un Select despues de Valores");
-			SentenciaSelectBase=new SentenciaSelect();
-			SentenciaSelectBase.Select(campos);
-			return this;
-		}
-		public SentenciaInsert Having(params IElementoTipado<bool>[] campos){
-			Falla.SiEsNulo(SentenciaSelectBase);
-			SentenciaSelectBase.Having(campos);
-			return this;
-		}
 		public SentenciaInsert Valores(params IConCampos[] campos){
-			Falla.SiNoEsNulo(SentenciaSelectBase,"En una sentencia insert no se puede poner Valores despues de un Select");
-			ValoresDirectos=new ElementosClausulaSelect();
+			Falla.Si(ClausulaSelect.Count>0,"En una sentencia insert no se puede poner Valores despues de un Select");
+			if(ValoresDirectos==null){
+				ValoresDirectos=new ElementosClausulaSelect();
+			}
 			ValoresDirectos.AddRange(campos);
 			return this;
 		}
@@ -216,12 +207,12 @@ namespace ModeladorSql
 			Separador coma=new Separador(" (",", ").AnchoLimitadoConIdentacion();
 			ElementosClausulaSelect nuevaListaSelect=new ElementosClausulaSelect();
 			ListaElementos<IExpresion> nuevaListaValores=new ListaElementos<IExpresion>();
-			foreach(IConCampos e in ValoresDirectos??SentenciaSelectBase.ClausulaSelect){
+			foreach(IConCampos e in ValoresDirectos??ClausulaSelect){
 				foreach(Campo c in e.Campos()){
 					if(TablaBase.ContieneMismoNombre(c)){
 						if(!nuevaListaSelect.Exists(delegate(IConCampos campo){ return c.Nombre==campo.Campos()[0].Nombre; })){
 							nuevaListaSelect.Add(c); // Esto va para el Exists
-							if(SentenciaSelectBase==null){
+							if(ValoresDirectos!=null){
 								if(!(c is ICampoAlias) && c.ValorSinTipo!=null){
 									nuevaListaValores.Add(new Constante<object>(c.ValorSinTipo));
 								}else{
@@ -233,23 +224,24 @@ namespace ModeladorSql
 					}
 				}
 			}
-			if(SentenciaSelectBase==null){
+			if(ValoresDirectos!=null){
+				Falla.Si(ClausulaSelect.Count>0,"No se pueden poner Valores directos y Select en un insert (contra tabla "+TablaBase.NombreTabla+")");
 				Separador valuesComa=new Separador(")\n VALUES (",", ").AnchoLimitadoConIdentacion();
 				foreach(IExpresion e in nuevaListaValores){
 					valuesComa.AgregarEn(rta,e.Expresion.ToSql(db));
 				}
 				rta.Append(")");
 			}else{
-				SentenciaSelectBase.ClausulaSelect=nuevaListaSelect;
+				ClausulaSelect=nuevaListaSelect;
 				rta.Append(")\n ");
-				SentenciaSelectBase.TablasQueEstanMasArriba=new ConjuntoTablas(TablaBase);
-				rta.Append(SentenciaSelectBase.ToSql(db));
+				TablasQueEstanMasArriba=new ConjuntoTablas(TablaBase);
+				rta.Append(base.ToSql(db));
 			}
 			return rta.ToString();
 		}
 		public override ConjuntoTablas Tablas(QueTablas queTablas){
-			if(SentenciaSelectBase!=null){
-				return SentenciaSelectBase.Tablas(queTablas);
+			if(ValoresDirectos==null){
+				return base.Tablas(queTablas);
 			}else{
 				return new ConjuntoTablas();
 			}

@@ -17,6 +17,9 @@ namespace Comunes
 		public static void Detener(string Mensaje){
 			Assert.Fail(Mensaje);
 		}
+		public static void Si(bool valorBool,string Mensaje){
+			Assert.IsFalse(valorBool,Mensaje);
+		}
 		public static void SiEsNulo(object objeto){
 			Assert.IsNotNull(objeto);
 		}
