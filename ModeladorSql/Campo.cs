@@ -41,12 +41,15 @@ namespace ModeladorSql
 			get{ if(Obligatorio){ return " NOT NULL"; }else{ return ""; } }
 		}
 		public abstract string DefinicionPorDefecto(BaseDatos db);
-		public virtual string ToSql(BaseDatos db){
+		public virtual string ToSql(BaseDatos db,bool ForzarAs){
 			string alias="";
 			if(TablaContenedora!=null /* || this.TablaContenedora.Alias==null*/){
 				alias=TablaContenedora.AliasActual??TablaContenedora.NombreTabla;
 			}
-			return alias+(alias==""?"":".")+db.StuffCampo(NombreCampo);
+			return alias+(alias==""?"":".")+db.StuffCampo(NombreCampo)+(ForzarAs?" AS "+db.StuffCampo(NombreCampo):"");
+		}
+		public virtual string ToSql(BaseDatos db){
+			return ToSql(db,false);
 		}
 		public virtual bool CandidatoAGroupBy{ 
 			get{
@@ -113,6 +116,9 @@ namespace ModeladorSql
 		}
 		public override void AsignarValor(object valor){
 			Falla.Detener("Un campo base no tiene Valor propio (no se le puede asignar)");
+		}
+		public override string ToSql(BaseDatos db,bool ForzarAs){
+			return ToSql(db);
 		}
 		public override string ToSql(BaseDatos db){
 			return ExpresionBase.ToSql(db)+" AS "+db.StuffCampo(CampoReceptor.NombreCampo);
