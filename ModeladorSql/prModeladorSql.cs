@@ -422,5 +422,51 @@ namespace PrModeladorSql
 			);
 			Assert.Ignore("Falta ver que funcione bien en un contexto");
 		}
+		[Test]
+		public void SubselectGroupBy(){
+			BaseDatos dba=BdAccess.SinAbrir();
+			Piezas pss=new Piezas();
+			PartesPiezas pp=new PartesPiezas();
+			pss.SubSelect(pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
+				.Where(pp.cParteAnterior.EsNulo())
+				.GroupBy();
+			System.Console.WriteLine("******** que tablas aliasables *********");
+			System.Console.WriteLine(Objeto.ExpandirMiembros(pss.Tablas(QueTablas.Aliasables).ToString()));
+			System.Console.WriteLine("******** que tablas al from *********");
+			System.Console.WriteLine(Objeto.ExpandirMiembros(pss.Tablas(QueTablas.AlFrom).ToString()));
+			Piezas p=new Piezas();
+			Sentencia s=
+				new SentenciaInsert(p)
+				.Select(pss.cEmpresa,pss.cPieza, pss.cNombrePieza)
+				.Where(pss.cEmpresa.Distinto(0));
+			System.Console.WriteLine("******** que tablas aliasables *********");
+			System.Console.WriteLine(Objeto.ExpandirMiembros(s.Tablas(QueTablas.Aliasables).ToString()));
+			System.Console.WriteLine("******** que tablas al from *********");
+			System.Console.WriteLine(Objeto.ExpandirMiembros(s.Tablas(QueTablas.AlFrom).ToString()));
+			Assert.AreEqual(
+				"INSERT INTO piezas (empresa, pieza, nombrepieza)\n"+
+				" SELECT p.empresa, p.pieza, p.nombrepieza\n" +
+				" FROM (SELECT pp.empresa, pp.pieza, pp.nombreparte AS nombrepieza\n" +
+				" FROM partespiezas pp\n" +
+				" WHERE pp.parteanterior IS NULL\n" +
+				" GROUP BY pp.empresa, pp.pieza, pp.nombreparte) p\n" +
+				" WHERE p.empresa<>0;\n",
+				new Ejecutador(dba).Dump(s)
+			);
+			pp.UsarFk();
+			Empresas e=pp.fkEmpresas;
+			Assert.AreEqual(
+				"INSERT INTO piezas (empresa, pieza, nombrepieza)\n"+
+				" SELECT pp.empresa, pp.pieza, pp.nombreparte AS nombrepieza\n" +
+				" FROM partespiezas pp\n" +
+				" WHERE NOT EXISTS (SELECT e.empresa\n FROM empresas e\n WHERE e.empresa=pp.empresa)\n" +
+				" AND pp.empresa<>0;\n",
+				new Ejecutador(dba).Dump(
+					new SentenciaInsert(p)
+					.Select(pp.cEmpresa,pp.cPieza, p.cNombrePieza.Es(pp.cNombreParte))
+					.Where(e.NoExistePara(pp),pp.cEmpresa.Distinto(0))
+				)
+			);
+		}
 	}
 }
