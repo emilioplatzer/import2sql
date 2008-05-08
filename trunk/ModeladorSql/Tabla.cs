@@ -431,6 +431,7 @@ namespace ModeladorSql
 		}
 		public SentenciaSelect SubSelect(params Campo[] Campos){
 			SentenciaSubSelect=new SentenciaSelect(Campos);
+			SentenciaSubSelect.EsInterno=true;
 			// SelectInterno=new SelectInterno(SentenciaSubSelect);
 			return SentenciaSubSelect;
 		}

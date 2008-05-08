@@ -149,6 +149,7 @@ namespace ModeladorSql
 		public ElementosClausulaSelect ClausulaSelect;
 		public ElementosClausulaHaving ClausulaHaving;
 		public bool ConGroupBy;
+		public bool EsInterno;
 		public SentenciaSelect(){
 			ClausulaSelect=new ElementosClausulaSelect();
 			ClausulaHaving=new ElementosClausulaHaving();
@@ -167,7 +168,7 @@ namespace ModeladorSql
 			bool TieneAgrupadas=ConGroupBy;
 			foreach(IConCampos campos in ClausulaSelect){
 				foreach(Campo c in campos.Campos()){
-					selectComa.AgregarEn(rta,c.ToSql(db));
+					selectComa.AgregarEn(rta,c.ToSql(db,EsInterno && db.InternosForzarAs));
 					// IExpresion e=(c is ICampoAlias)?(c as ICampoAlias).ExpresionBase:c;
 					IExpresion e=c.Expresion;
 					TieneAgrupadas=TieneAgrupadas || e.EsAgrupada;

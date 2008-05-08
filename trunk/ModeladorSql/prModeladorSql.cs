@@ -468,5 +468,29 @@ namespace PrModeladorSql
 				)
 			);
 		}
+		[Test]
+		public void SubselectGroupBySqlite(){
+			BaseDatos db=SqLite.SinAbrir();
+			Piezas pss=new Piezas();
+			PartesPiezas pp=new PartesPiezas();
+			pss.SubSelect(pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
+				.Where(pp.cParteAnterior.EsNulo())
+				.GroupBy();
+			Piezas p=new Piezas();
+			Assert.AreEqual(
+				"INSERT INTO piezas (empresa, pieza, nombrepieza)\n"+
+				" SELECT p.empresa, p.pieza, p.nombrepieza\n" +
+				" FROM (SELECT pp.empresa AS empresa, pp.pieza AS pieza,\n pp.nombreparte AS nombrepieza\n" +
+				" FROM partespiezas pp\n" +
+				" WHERE pp.parteanterior IS NULL\n" +
+				" GROUP BY pp.empresa, pp.pieza, pp.nombreparte) p\n" +
+				" WHERE p.empresa<>0;\n",
+				new Ejecutador(db).Dump(
+					new SentenciaInsert(p)
+					.Select(pss.cEmpresa,pss.cPieza, pss.cNombrePieza)
+					.Where(pss.cEmpresa.Distinto(0))
+				)
+			);
+		}
 	}
 }
