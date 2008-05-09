@@ -14,7 +14,7 @@ using NUnit.Framework;
 
 using Comunes;
 using BasesDatos;
-using Modelador;
+using ModeladorSql;
 
 namespace Indices
 {
@@ -90,17 +90,17 @@ namespace Indices
 				hijos.UsarFk();
 				Grupos padre=hijos.fkGrupoPadre;
 				ej.Ejecutar(
-					new SentenciaUpdate(grupos,grupos.cNivel.Set(0),grupos.cPonderador.Set(1.0))
+					new SentenciaUpdate(grupos,grupos.cNivel.Es(0),grupos.cPonderador.Es(1.0))
 					.Where(grupos.cGrupoPadre.EsNulo())); 
 				for(int i=0;i<10;i++){
 					ej.Ejecutar(
-						new SentenciaUpdate(grupos,grupos.cNivel.Set(i+1))
+						new SentenciaUpdate(grupos,grupos.cNivel.Es(i+1))
 						.Where(grupos.InPadresWhere(i))
 					);
 				}
 				for(int i=9;i>=0;i--){ // Subir ponderadores nulos
 					ej.Ejecutar(
-						new SentenciaUpdate(padre,padre.cPonderador.Set(padre.SelectSuma(hijos.cPonderador)))
+						new SentenciaUpdate(padre,padre.cPonderador.Es(padre.SelectSuma(hijos.cPonderador)))
 						.Where(padre.cNivel.Igual(i).And(padre.cPonderador.EsNulo()))
 					);
 				}
@@ -114,7 +114,7 @@ namespace Indices
 					AuxGrupos aux=new AuxGrupos();
 					aux.EsFkDe(hijos,hijos.cGrupoPadre);
 					ej.Ejecutar(
-						new SentenciaUpdate(hijos,hijos.cPonderador.Set(hijos.cPonderador.Por(aux.cPonderadorOriginal.Dividido(aux.cSumaPonderadorHijos))))
+						new SentenciaUpdate(hijos,hijos.cPonderador.Es(hijos.cPonderador.Por(aux.cPonderadorOriginal.Dividido(aux.cSumaPonderadorHijos))))
 						.Where(hijos.cNivel.Igual(i))
 					);
 				}
@@ -162,8 +162,8 @@ namespace Indices
 					ej.Ejecutar(
 						new SentenciaInsert(cgp)
 						.Select(c,gp.cAgrupacion,gp.cGrupo,
-						        cgp.cIndice.Es(ExpresionSql.Sum(cg.cIndice.Por(gh.cPonderador)).Dividido(ExpresionSql.Sum(gh.cPonderador))),
-						        cgp.cFactor.Es(ExpresionSql.Sum(cg.cFactor.Por(gh.cPonderador)).Dividido(ExpresionSql.Sum(gh.cPonderador))))
+						        cgp.cIndice.Es(Fun.Sum(cg.cIndice.Por(gh.cPonderador)).Dividido(Fun.Sum(gh.cPonderador))),
+						        cgp.cFactor.Es(Fun.Sum(cg.cFactor.Por(gh.cPonderador)).Dividido(Fun.Sum(gh.cPonderador))))
 						.Where(gh.cNivel.Igual(i))
 					);
 				}
@@ -197,7 +197,7 @@ namespace Indices
 					);
 					CalEspInf ceiss=new CalEspInf();
 					ceiss.SubSelect(rv.cPeriodo,ceiss.cCalculo.Es(cal.cCalculo.Valor),ceiss.cPromedioEspInf.EsPromedioGeometrico(rv.cPrecio),rv.cInformante)
-						.Where(rv.cPrecio.Mayor(0));
+						.Where(rv.cPrecio.Mayor(Constante<double?>.Cero));
 					cei.EsFkDe(ceiss);
 					if(db is BdAccess){
 						/*
@@ -232,7 +232,7 @@ AND c.calculo="+cal.cCalculo.Valor;
 					RelVar rv2=new RelVar();
 					cei.EsFkDe(rv2,cei.cCalculo.Es(cal.cCalculo.Valor));
 					ej.Ejecutar( // Calcular el promedio si hay
-						new SentenciaUpdate(cei,cei.cPromedioEspInf.Set(cei.SelectPromedioGeometrico(rv2.cPrecio)))
+						new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei.SelectPromedioGeometrico(rv2.cPrecio)))
 						/*
 						new SentenciaUpdate(cei,cei.cPromedioEspInf.Set(cei.SelectSuma(ceiss.cPromedioEspInf)))
 						*/
@@ -246,7 +246,7 @@ AND c.calculo="+cal.cCalculo.Valor;
 					    new SentenciaInsert(ce)
 					    .Select(c,cei1,i.cTipoInformante,ce.cPromedioEspMatchingActual.EsPromedioGeometrico(cei1.cPromedioEspInf),
 					            ce.cPromedioEspMatchingAnterior.EsPromedioGeometrico(cei0.cPromedioEspInf))
-					    .Where(cei1.cPromedioEspInf.Mayor(0),cei0.cPromedioEspInf.Mayor(0),c.SiguienteDe(cei0))
+					    .Where(c.SiguienteDe(cei0))
 					);
 				}
 				{ // Imputación 
@@ -289,7 +289,7 @@ AND c.calculo="+cal.cCalculo.Valor
 						);
 					}else{
 					ej.Ejecutar(
-						new SentenciaUpdate(cei,cei.cPromedioEspInf.Set(ce.cPromedioEspMatchingActual.Dividido(ce.cPromedioEspMatchingAnterior.Dividido(cei0.cPromedioEspInf))))
+						new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(ce.cPromedioEspMatchingActual.Dividido(ce.cPromedioEspMatchingAnterior.Dividido(cei0.cPromedioEspInf))))
 						.Where(cei.cPromedioEspInf.EsNulo())
 					);
 					}
@@ -332,7 +332,7 @@ AND c.calculo="+cal.cCalculo.Valor
 						);
 					}else{
 					ej.Ejecutar(
-						new SentenciaUpdate(ce,ce.cPromedioEsp.Set(ce.SelectPromedioGeometrico(cei.cPromedioEspInf)))
+						new SentenciaUpdate(ce,ce.cPromedioEsp.Es(ce.SelectPromedioGeometrico(cei.cPromedioEspInf)))
 					);
 					}
 				}
@@ -747,15 +747,15 @@ AND c.calculo="+cal.cCalculo.Valor
 			repo.RegistrarPromedio(Per1,P101,10.0);
 			repo.RegistrarPromedio(Per1,P102,22.0);
 			repo.CalcularCalGru(Per1,A);
-			Assert.AreEqual(110.0,new CalGru(repo.db,Per1,A2).cIndice.Valor,Controlar.DeltaDouble);
-			Assert.AreEqual(104.0,new CalGru(repo.db,Per1,A).cIndice.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(110.0,new CalGru(repo.db,Per1,A2).cIndice.Valor.Value,Controlar.DeltaDouble);
+			Assert.AreEqual(104.0,new CalGru(repo.db,Per1,A).cIndice.Valor.Value,Controlar.DeltaDouble);
 			Calculos Per2=repo.CrearProximo(Per1);
 			repo.RegistrarPromedio(Per2,P100,2.2);
 			repo.RegistrarPromedio(Per2,P101,11.0);
 			repo.RegistrarPromedio(Per2,P102,22.0);
 			repo.CalcularCalGru(Per2,A);
-			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A2).cIndice.Valor,Controlar.DeltaDouble);
-			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A).cIndice.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A2).cIndice.Valor.Value,Controlar.DeltaDouble);
+			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A).cIndice.Valor.Value,Controlar.DeltaDouble);
 			repo.ExpandirEspecificacionesYVariedades();
 		}
 		public void CargarPrecio(string periodo, string producto, int informante, double precio){
@@ -857,10 +857,10 @@ AND c.calculo="+cal.cCalculo.Valor
 			Grupos A=repo.AbrirGrupo("A","A");
 			Grupos A1=repo.AbrirGrupo("A","A1");
 			Productos P100=repo.AbrirProducto("P100");
-			Assert.AreEqual(1.0,A.cPonderador.Valor,Controlar.DeltaDouble);
-			Assert.AreEqual(0.6,A1.cPonderador.Valor,Controlar.DeltaDouble);
-			Assert.AreEqual(0.36,P100.Ponderador(A),Controlar.DeltaDouble);
-			Assert.AreEqual(0.6,P100.Ponderador(A1),Controlar.DeltaDouble);
+			Assert.AreEqual(1.0,A.cPonderador.Valor.Value,Controlar.DeltaDouble);
+			Assert.AreEqual(0.6,A1.cPonderador.Valor.Value,Controlar.DeltaDouble);
+			Assert.AreEqual(0.36,P100.Ponderador(A).Value,Controlar.DeltaDouble);
+			Assert.AreEqual(0.6,P100.Ponderador(A1).Value,Controlar.DeltaDouble);
 		}
 		[Test]
 		public void zReglasDeIntegridad(){

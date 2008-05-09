@@ -12,8 +12,7 @@ using System.Reflection;
 
 using Comunes;
 using Indices;
-using Modelador;
-using PrModelador;
+using ModeladorSql;
 using BasesDatos;
 using Tareas;
 using DelOffice;

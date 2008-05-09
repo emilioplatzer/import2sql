@@ -273,6 +273,12 @@ namespace ModeladorSql
 		public CampoTipo<T> EsMax(IElementoTipado<T> expresion){
 			return Es(new FuncionAgrupacion<T,T>(expresion,OperadorAgrupada.Maximo));
 		}
+		public CampoAlias<int> EsCount(){
+			return Es(new FuncionCount());
+		}
+		public CampoAlias<int> EsCount(IExpresion expresion){
+			return Es(new FuncionCount(expresion));
+		}
 		#if NuncaAccess
 		// habilitar esto si nunca se va a trabajar en Access
 		public Campo EsCountDistinct(ExpresionSql expresion){
@@ -329,26 +335,17 @@ namespace ModeladorSql
 		public Campo EsPromedioGeometrico(IElementoTipado<T> expresion){
 			return Es(new FuncionAgrupacion<T,T>(expresion,OperadorAgrupada.PromedioGeometrico));
 		}
-		public IExpresion Mas(ElementoTipado<T> Valor){
+		public IElementoTipado<T> Mas(ElementoTipado<T> Valor){
 			return new Binomio<T>{E1=this,Operador=OperadorBinario.Mas,E2=Valor};
 		}
-		public IExpresion Por(IElementoTipado<T> Valor){
+		public IElementoTipado<T> Por(IElementoTipado<T> Valor){
 			return new Binomio<T>{E1=this,Operador=OperadorBinario.Por,E2=Valor};
-		}
-		public IExpresion Dividido(IElementoTipado<T> Valor){
-			return new Binomio<T>{E1=this,Operador=OperadorBinario.Dividido,E2=Valor};
 		}
 		public ElementoTipado<string> NumeroACadena(){
 			return new OperacionFuncion<T,string>(this, OperadorFuncion.Str);
 		}
 		public CampoAlias<int> Es(ElementoTipado<int> expresion){
 			return new CampoAlias<int>(this,expresion);
-		}
-		public CampoAlias<int> EsCount(){
-			return Es(new FuncionCount());
-		}
-		public CampoAlias<int> EsCount(IExpresion expresion){
-			return Es(new FuncionCount(expresion));
 		}
 	}
 	public class CampoEntero:CampoNumericoTipo<int>{
