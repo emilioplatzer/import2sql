@@ -73,13 +73,14 @@ namespace BasesDatos
 			switch(Operador){
 				case OperadorFuncion.LogE: return "LN(";
 				case OperadorFuncion.Str: return "";
+				case OperadorFuncion.Nvl: return "COALESCE(";
 				default: return base.OperadorToSqlPrefijo(Operador);
 			}
 		}
 		public override string OperadorToSqlSufijo(OperadorFuncion Operador){
 			switch(Operador){
 				case OperadorFuncion.Str: return "";
-				default: return base.OperadorToSqlPrefijo(Operador);
+				default: return base.OperadorToSqlSufijo(Operador);
 			}
 		}
 	}

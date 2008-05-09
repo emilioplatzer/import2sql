@@ -151,9 +151,17 @@ namespace ModeladorSql
 	}
 	public class CampoTipo<T>:Campo,IElementoTipado<T>{
 		protected T valor;
+		protected bool contieneNull;
 		public object ValorPorDefecto;
 		public virtual T Valor{ get{ return valor;} set{ valor=value; } }
-		public override object ValorSinTipo{ get{ return valor;} }
+		public override object ValorSinTipo{ 
+			get{ 
+				if(contieneNull){
+					return null;
+				}
+				return valor;
+			}
+		}
 		string TipoCampoS(Type tipo){
 			if(tipo==typeof(int)){
 				return "INTEGER";
@@ -184,10 +192,10 @@ namespace ModeladorSql
 		public CampoAlias<T> Es(ElementoTipado<T> expresion){
 			return new CampoAlias<T>(this,expresion);
 		}
-		public virtual ElementoTipado<bool> EsNulo(){
+		public virtual ElementoLogico EsNulo(){
 			return new OperacionSufijaLogica<T>(this,OperadorSufijoLogico.EsNulo);
 		}
-		public virtual ElementoTipado<bool> NoEsNulo(){
+		public virtual ElementoLogico NoEsNulo(){
 			return new OperacionSufijaLogica<T>(this,OperadorSufijoLogico.NoEsNulo);
 		}
 		public override string TipoCampo{ 
@@ -200,18 +208,27 @@ namespace ModeladorSql
 		}
 		public override void AsignarValor(object valor){
 			if(valor is DBNull){
-				if(ValorPorDefecto!=null){
-					valor=(T)ValorPorDefecto;
-				}else{
-					valor=null;
-				}
+				valor=null;
 			}else if(typeof(T)==typeof(bool) && valor is string){
 				bool valorBool=((string)valor=="S");
 				valor=valorBool;
 			}else if(typeof(T).IsEnum && valor is string){
 				valor=Enum.Parse(typeof(T),(string)valor);
 			}
-			this.valor=(T)valor;
+			if(valor==null){
+				if(ValorPorDefecto!=null){
+					valor=(T)ValorPorDefecto;
+				}else{
+					valor=null;
+				}
+			}
+			if(valor==null){
+				contieneNull=true;
+				this.valor=default(T);
+			}else{
+				contieneNull=false;
+				this.valor=(T)valor;
+			}
 		}
 		public override string DefinicionPorDefecto(BaseDatos db){
 			if(ValorPorDefecto!=null){
@@ -247,10 +264,10 @@ namespace ModeladorSql
 			return EsExpresionAgrupada(operador,expresion,"","");
 		}
 		*/
-		public ElementoTipado<bool> Igual(ElementoTipado<T> expresion){
+		public ElementoLogico Igual(ElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Igual,expresion);
 		}
-		public ElementoTipado<bool> Igual(IElementoTipado<T> expresion){
+		public ElementoLogico Igual(IElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Igual,expresion);
 		}
 		/*
@@ -258,10 +275,10 @@ namespace ModeladorSql
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Mayor,expresion);
 		}
 		*/
-		public ElementoTipado<bool> Distinto(ElementoTipado<T> expresion){
+		public ElementoLogico Distinto(ElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Distinto,expresion);
 		}
-		public ElementoTipado<bool> Distinto(IElementoTipado<T> expresion){
+		public ElementoLogico Distinto(IElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Distinto,expresion);
 		}
 		public CampoTipo<T> EsMax(IElementoTipado<T> expresion){
@@ -332,7 +349,7 @@ namespace ModeladorSql
 		public ElementoTipado<string> NumeroACadena(){
 			return new OperacionFuncion<T,string>(this, OperadorFuncion.Str);
 		}
-		public CampoAlias<int> Es(ElementoTipado<int> expresion){
+		public CampoAlias<int> Es(IElementoTipado<int> expresion){
 			return new CampoAlias<int>(this,expresion);
 		}
 	}
@@ -341,7 +358,7 @@ namespace ModeladorSql
 			Obligatorio=true;
 		}
 	}
-	public class CampoEnteroOpcional:CampoNumericoTipo<int?>{
+	public class CampoEnteroOpcional:CampoNumericoTipo<int>,IContenidoOpcional{
 	}
 	public class CampoChar:CampoTipo<string>{
 		public int Largo;
@@ -364,17 +381,16 @@ namespace ModeladorSql
 	public class CampoReal:CampoNumericoTipo<double>{
 		public CampoReal(){ Obligatorio=true; }
 	}
-	public class CampoRealOpcional:CampoNumericoTipo<double?>{};
-	public class CampoLogicoTriestado:CampoTipo<bool>{
+	public class CampoRealOpcional:CampoNumericoTipo<double>,IContenidoOpcional{};
+	public class CampoLogico:CampoTipo<bool>{
+		public CampoLogico(){
+			ValorPorDefecto=false;
+		}
 		public override string TipoCampo {
 			get { return "varchar(1)"; }
 		}
 	}
-	public class CampoLogico:CampoLogicoTriestado{
-		public CampoLogico(){
-			Obligatorio=true;
-			ValorPorDefecto=false;
-		}
+	public class CampoLogicoTriestado:CampoLogico,IContenidoOpcional{
 	}
 	public abstract class AplicadorCampo:System.Attribute{
 	   	public abstract void Aplicar(ref Campo campo);

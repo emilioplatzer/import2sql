@@ -394,7 +394,7 @@ namespace ModeladorSql
 	  									if(p.Value is Campo){
 	  										Campos.Add(p.Value);
 	  									}else{
-	  										Campos.Add(p.Key.Es(p.Value));
+	  										Campos.Add(p.Key.EsObject(p.Value));
 	  									}
 	  								}
 	  								fkTabla.BuscarYLeerNoPk(db,false,Campos.ToArray());

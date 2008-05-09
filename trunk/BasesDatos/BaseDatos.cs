@@ -110,8 +110,8 @@ namespace BasesDatos
 			}
 		}
 	}
-	public enum OperadorBinario{Mas,Menos,Por,Dividido,Concatenado,Or,And}
-	public enum OperadorBinarioRelacional{Igual,Distinto,Mayor,Menor,MayorOIgual,MenorOIgual}
+	public enum OperadorBinario{Mas,Menos,Por,Dividido,Concatenado}
+	public enum OperadorBinarioRelacional{Igual,Distinto,Mayor,Menor,MayorOIgual,MenorOIgual,Or,And}
 	public enum OperadorSufijoLogico{EsNulo,NoEsNulo}
 	public enum OperadorAgrupada{Suma,Maximo,Minimo,Promedio,PromedioGeometrico}
 	public enum OperadorFuncion{Exp,LogE,Str,Nvl}
@@ -204,8 +204,6 @@ namespace BasesDatos
 				case OperadorBinario.Menos: return "-"; 
 				case OperadorBinario.Por: return "*"; 
 				case OperadorBinario.Dividido: return "/"; 
-				case OperadorBinario.And:return " AND ";
-				case OperadorBinario.Or:return " OR ";
 				default:return FaltaOperador(Operador);
 			}
 		}
@@ -215,14 +213,16 @@ namespace BasesDatos
 				case OperadorBinario.Menos: return 6; 
 				case OperadorBinario.Por: return 7; 
 				case OperadorBinario.Dividido: return 7; 
-				case OperadorBinario.And:return 3;
-				case OperadorBinario.Or:return 2;
 				case OperadorBinario.Concatenado:return 5;
 				default:return FaltaPrecedenciaOperador(Operador);
 			}
 		}
 		public static int Precedencia(OperadorBinarioRelacional Operador){
-			return 4;
+			switch(Operador){
+				case OperadorBinarioRelacional.And:return 3;
+				case OperadorBinarioRelacional.Or:return 2;
+				default: return 4;
+			}
 		}
 		public string OperadorToSql(OperadorBinarioRelacional Operador){
 			switch(Operador){
@@ -232,6 +232,8 @@ namespace BasesDatos
 				case OperadorBinarioRelacional.Mayor: return ">"; 
 				case OperadorBinarioRelacional.MenorOIgual: return "<="; 
 				case OperadorBinarioRelacional.MayorOIgual: return ">="; 
+				case OperadorBinarioRelacional.And:return " AND ";
+				case OperadorBinarioRelacional.Or:return " OR ";
 				default: return FaltaOperador(Operador);
 			}
 		}

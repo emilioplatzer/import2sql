@@ -251,11 +251,11 @@ namespace PrModeladorSql
 				pi.Alias="p";
 				su=new SentenciaUpdate(pi,pi.cEstado.Es(np.cNuevoEstado.PeroSiEsNulo(pi.cEstado)),pi.cNombrePieza.Es(pi.cNombrePieza.Concatenado(np.cNuevoEstado))).Where(pi.cPieza.Distinto("P_este"));
 				Assert.AreEqual("UPDATE piezas p INNER JOIN novedadespiezas np ON p.empresa=np.empresa AND p.pieza=np.piezaauxiliar\n" +
-				                " SET p.estado=np.nuevoestado,\n p.nombrepieza=p.nombrepieza & np.nuevoestado\n" +
+				                " SET p.estado=NZ(np.nuevoestado, p.estado),\n p.nombrepieza=p.nombrepieza & np.nuevoestado\n" +
 				                " WHERE p.pieza<>'P_este'\n AND p.empresa=13\n AND np.empresa=13;\n",
 				                ej.Dump(su));
 				Assert.AreEqual("UPDATE piezas p\n " +
-				                "SET estado=np.nuevoestado, nombrepieza=p.nombrepieza||np.nuevoestado\n FROM novedadespiezas np\n" +
+				                "SET estado=COALESCE(np.nuevoestado, p.estado),\n nombrepieza=p.nombrepieza||np.nuevoestado\n FROM novedadespiezas np\n" +
 				                " WHERE p.pieza<>'P_este'\n AND np.empresa=p.empresa\n AND np.piezaauxiliar=p.pieza\n AND p.empresa=13\n AND np.empresa=13;\n",
 				                ejp.Dump(su));
 				su=new SentenciaUpdate(pi,pi.cEstado.Es(np.cNuevoEstado),pi.cCosto.SeaNulo()).Where(pi.cPieza.Distinto("P_este"));

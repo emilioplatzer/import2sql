@@ -69,6 +69,7 @@ namespace BasesDatos
 			switch(Operador){
 				case OperadorFuncion.LogE: return "LOG(";
 				case OperadorFuncion.Str: return "STR(";
+				case OperadorFuncion.Nvl: return "NZ(";
 				default: return base.OperadorToSqlPrefijo(Operador);
 			}
 		}
