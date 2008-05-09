@@ -396,7 +396,7 @@ AND c.calculo="+cal.cCalculo.Valor
 				new Ejecutador(db).Ejecutar(
 					new SentenciaInsert(n)
 					.Select(n.cPeriodo.EsMax(nss.cPeriodo),n.cEstado.Es(NovEspInf.Estados.Alta),nss) // decía nss.cCalculo,nss.cInformante,nss.cEspecificacion
-					.Having(n.cPeriodo.EsCount(nss.cPeriodo).MayorOIgual(CantidadPeriodosMinima))
+					.Having(Fun.Count(nss.cPeriodo).MayorOIgual<int>(CantidadPeriodosMinima))
 				);
 			}
 			Calculos cals=new Calculos();

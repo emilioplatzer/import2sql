@@ -222,6 +222,17 @@ namespace ModeladorSql
 			return db.OperadorToSqlPrefijo(Operador)+E1.ToSql(db)+db.OperadorToSqlSufijo(Operador);
 		}
 	}
+	public class OperacionFuncion2<T1,T2,TR>:ExpresionTipada<T1,T2,TR>{
+		OperadorFuncion Operador;
+		public OperacionFuncion2(IElementoTipado<T1> E1, OperadorFuncion Operador, IElementoTipado<T2> E2){
+			this.E1=E1;
+			this.E2=E2;
+			this.Operador=Operador;
+		}
+		public override string ToSql(BaseDatos db){
+			return db.OperadorToSqlPrefijo(Operador)+E1.ToSql(db)+", "+E2.ToSql(db)+db.OperadorToSqlSufijo(Operador);
+		}
+	}
 	public class FuncionAgrupacion<T,TR>:ExpresionTipada<T,T,TR>{
 		OperadorAgrupada Operador;
 		public FuncionAgrupacion(IElementoTipado<T> E, OperadorAgrupada Operador){
@@ -238,7 +249,7 @@ namespace ModeladorSql
 			get { return true; }
 		}
 	}
-	public class FuncionCount:ElementoTipado<int>{
+	public class FuncionCount:ElementoTipado<int>,IElementoTipado<int>{
 		IExpresion E;
 		public FuncionCount(){
 			
@@ -419,11 +430,34 @@ namespace ModeladorSql
 		public static ElementoTipado<bool> Mayor<T>(this IElementoTipado<T> E1, ElementoTipado<T> E2){
 			return new BinomioRelacional<T>(E1,OperadorBinarioRelacional.Mayor,E2);
 		}
+		public static ElementoTipado<bool> MayorOIgual<T>(this IElementoTipado<T> E1, T expresion){
+			return new BinomioRelacional<T>(E1,OperadorBinarioRelacional.MayorOIgual,new Constante<T>(expresion));
+		}
+		public static ElementoTipado<bool> MayorOIgual<T>(this IElementoTipado<T> E1, IElementoTipado<T> expresion){
+			return new BinomioRelacional<T>(E1,OperadorBinarioRelacional.MayorOIgual,expresion);
+		}
+		public static ElementoTipado<bool> MenorOIgual<T>(this IElementoTipado<T> E1, ElementoTipado<T> expresion){
+			return new BinomioRelacional<T>(E1,OperadorBinarioRelacional.MenorOIgual,expresion);
+		}
 		public static ElementoTipado<T> Sum<T>(IElementoTipado<T> expresion){
 			return new FuncionAgrupacion<T, T>(expresion, OperadorAgrupada.Suma);
 		}
 		public static IElementoTipado<T> Dividido<T>(this IElementoTipado<T> Dividendo, IElementoTipado<T> Divisor){
 			return new Binomio<T>{E1=Dividendo,Operador=OperadorBinario.Dividido,E2=Divisor};
+		}
+		public static ElementoTipado<T> PeroSiEsNulo<TNuleable,T>
+			(this IElementoTipado<TNuleable> esto, IElementoTipado<T> ExpresionSiNull)
+		{
+			return new OperacionFuncion2<TNuleable,T,T>(esto,OperadorFuncion.Nvl,ExpresionSiNull);
+		}
+		public static ElementoTipado<int> Count(IExpresion expresion){
+			return new FuncionCount(expresion);
+		}
+		public static CampoAlias<int> EsCount(this CampoTipo<int> este){
+			return este.Es(new FuncionCount());
+		}
+		public static CampoAlias<int> EsCount(this CampoTipo<int> este,IExpresion expresion){
+			return este.Es(new FuncionCount(expresion));
 		}
 	}
 }
