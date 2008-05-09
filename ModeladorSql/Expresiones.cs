@@ -365,7 +365,9 @@ namespace ModeladorSql
 			get{ return this; }
 		}
 	}
-	public class ExpresionNotInSelect:ElementoTipado<bool>{
+	public class ExpresionSubSelect:ElementoTipado<bool>{
+		public ListaElementos<Campo> CamposRelacionados;
+		public string Relacion="NOT EXISTS";
 		public SentenciaSelect SubSelect;
 		public override bool CandidatoAGroupBy { get { return false; } }
 		public override bool EsAgrupada { get { return false; } }
@@ -375,7 +377,21 @@ namespace ModeladorSql
 		*/
 		public override string ToSql(BaseDatos db){
 			var rta=new StringBuilder();
-			rta.Append("NOT EXISTS (");
+			if(CamposRelacionados!=null){
+				Separador coma=new Separador(", ");
+				if(CamposRelacionados.Count>1){
+					rta.Append("(");
+				}
+				foreach(Campo c in CamposRelacionados){
+					rta.Append(coma+c.ToSql(db));
+				}
+				if(CamposRelacionados.Count>1){
+					rta.Append(")");
+				}
+				rta.Append(" ");
+			}
+			rta.Append(Relacion);
+			rta.Append(" (");
 			rta.Append(SubSelect.ToSql(db));
 			rta.Append(")");
 			return rta.ToString();
@@ -388,8 +404,13 @@ namespace ModeladorSql
 			}
 		}
 	}
-	public static class ExtensionesExpresiones{
+	public static class Fun{
+		/*
 		public static ElementoTipado<bool> And(this IElementoTipado<bool> E1, IElementoTipado<bool> E2){
+			return new Binomio<bool>{E1=E1, Operador=OperadorBinario.And, E2=E2};
+		}
+		*/
+		public static ElementoTipado<bool> And(this ElementoTipado<bool> E1, ElementoTipado<bool> E2){
 			return new Binomio<bool>{E1=E1, Operador=OperadorBinario.And, E2=E2};
 		}
 		public static ElementoTipado<bool> Or(this IElementoTipado<bool> E1, IElementoTipado<bool> E2){
@@ -397,6 +418,12 @@ namespace ModeladorSql
 		}
 		public static ElementoTipado<bool> Mayor<T>(this IElementoTipado<T> E1, ElementoTipado<T> E2){
 			return new BinomioRelacional<T>(E1,OperadorBinarioRelacional.Mayor,E2);
+		}
+		public static ElementoTipado<T> Sum<T>(IElementoTipado<T> expresion){
+			return new FuncionAgrupacion<T, T>(expresion, OperadorAgrupada.Suma);
+		}
+		public static IElementoTipado<T> Dividido<T>(this IElementoTipado<T> Dividendo, IElementoTipado<T> Divisor){
+			return new Binomio<T>{E1=Dividendo,Operador=OperadorBinario.Dividido,E2=Divisor};
 		}
 	}
 }

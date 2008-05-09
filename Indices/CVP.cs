@@ -11,7 +11,7 @@ using System;
 
 using Comunes;
 using BasesDatos;
-using Modelador;
+using ModeladorSql;
 using DelOffice;
 
 namespace Indices

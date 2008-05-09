@@ -9,7 +9,7 @@
 
 using System;
 
-using Modelador;
+using ModeladorSql;
 using BasesDatos;
 
 namespace Indices
@@ -23,11 +23,11 @@ namespace Indices
 	public class CampoAgrupacion:CampoChar{ public CampoAgrupacion():base(9){} };
 	public class CampoGrupo:CampoChar{ public CampoGrupo():base(9){} };
 	public class CampoImputacion:CampoChar{ public CampoImputacion():base(9){ this.Obligatorio=true; } };
-	public class CampoPonderador:CampoReal{};
+	public class CampoPonderador:CampoRealOpcional{};
 	public class CampoNivel:CampoEnteroOpcional{}
 	public class CampoPrecio:CampoRealOpcional{};
-	public class CampoIndice:CampoReal{};
-	public class CampoFactor:CampoReal{};
+	public class CampoIndice:CampoRealOpcional{};
+	public class CampoFactor:CampoRealOpcional{};
 	public class CampoPeriodo:CampoChar{ 
 		public CampoPeriodo():base(5+3
 		                           #if Semanal
@@ -56,7 +56,7 @@ namespace Indices
 	public class Productos:Tabla{
 		[Pk] public CampoProducto cProducto;
 		public CampoNombre	cNombreProducto;
-		public double Ponderador(Grupos grupo){
+		public double? Ponderador(Grupos grupo){
 			Grupos hoja=new Grupos();
 			hoja.Leer(grupo.db,grupo.cAgrupacion,cProducto);
 			return hoja.cPonderador.Valor/grupo.cPonderador.Valor;
@@ -76,11 +76,18 @@ namespace Indices
 		public CampoLogico cEsProducto;
 		[Fk] public Agrupaciones fkAgrupaciones;
 		[FkMixta("padre")] public Grupos fkGrupoPadre;
-		public ExpresionSql InPadresWhere(int nivel){
-			return new ExpresionSql(
-				this.cGrupoPadre,
-				new LiteralSql(" IN (SELECT grupo FROM grupos WHERE nivel="+nivel.ToString()+")")
-				);
+		public ElementoTipado<bool> InPadresWhere(int nivel){
+			ExpresionSubSelect ee;
+			Grupos gp=new Grupos();
+			gp.Alias="g_p";
+			var campos=new ListaElementos<Campo>();
+			campos.Add(this.cAgrupacion);
+			campos.Add(this.cGrupoPadre);
+			return new ExpresionSubSelect{
+				CamposRelacionados=campos,
+				Relacion=" IN ", 
+				SubSelect=new SentenciaSelect(gp.cAgrupacion,gp.cGrupo).Where(gp.cNivel.Igual(nivel))
+			};
 		}
 	}
 	public class Numeros:Tabla{
@@ -111,12 +118,12 @@ namespace Indices
 		[FkMixta("ant")] public CampoPeriodo cPeriodoAnterior;
 		[Fk] public Periodos fkPeriodos;
 		[FkMixta("ant")] public Periodos fkCalculoAnterior;
-		public ExpresionSql SiguienteDe(Tabla t){
-			if(t.TieneElCampo(this.cCalculo)){
-				return this.cPeriodoAnterior.Igual(t.CampoIndirecto(this.cPeriodo))
-					.And(this.cCalculo.Igual(t.CampoIndirecto(this.cCalculo)));
+		public ElementoTipado<bool> SiguienteDe(Tabla t){
+			if(t.ContieneMismoNombre(this.cCalculo)){
+				return this.cPeriodoAnterior.Igual(t.CampoIndirecto(this.cPeriodo) as CampoPeriodo)
+					.And(this.cCalculo.Igual(t.CampoIndirecto(this.cCalculo) as CampoVersion));
 			}else{
-				return this.cPeriodoAnterior.Igual(t.CampoIndirecto(this.cPeriodo));
+				return this.cPeriodoAnterior.Igual(t.CampoIndirecto(this.cPeriodo) as CampoPeriodo);
 			}
 		}
 	}

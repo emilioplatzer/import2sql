@@ -78,11 +78,6 @@
     <Compile Include="ModeladorSql\prModeladorSql.cs" />
     <Compile Include="ModeladorSql\Repositorio.cs" />
     <Compile Include="ModeladorSql\Tabla.cs" />
-    <Compile Include="Modelador\Campo.cs" />
-    <Compile Include="Modelador\PrModelador.cs" />
-    <Compile Include="Modelador\Repositorio.cs" />
-    <Compile Include="Modelador\Sentencia.cs" />
-    <Compile Include="Modelador\Tabla.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Pruebas\PruebasReflexion.cs" />
     <Compile Include="Tareas\ComparacionPadrones.cs" />
@@ -106,7 +101,6 @@
       <WrapperTool>tlbimp</WrapperTool>
       <Isolated>False</Isolated>
     </COMReference>
-    <Folder Include="Modelador" />
     <Folder Include="Indices" />
     <Folder Include="DelOffice" />
     <Folder Include="Comunes" />

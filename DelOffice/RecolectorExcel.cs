@@ -14,7 +14,7 @@ using NUnit.Framework;
 using Comunes;
 using BasesDatos;
 using DelOffice;
-using Modelador;
+using ModeladorSql;
 
 namespace DelOffice
 {

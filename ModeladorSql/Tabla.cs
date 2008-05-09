@@ -426,8 +426,10 @@ namespace ModeladorSql
 		public RegistrosEnumerables Todos(BaseDatos db){
 			return new RegistrosEnumerables(this,db);
 		}
-		public RegistrosEnumerables Algunos(BaseDatos db,ElementosClausulaWhere ClausulaWhere,params Campo[] CamposOrden){
-			return new RegistrosEnumerables(this,db,ClausulaWhere,CamposOrden);
+		public RegistrosEnumerables Algunos(BaseDatos db,ElementoTipado<bool> ClausulaWhere,params Campo[] CamposOrden){
+			var clausula=new ElementosClausulaWhere();
+			clausula.Add(ClausulaWhere);
+			return new RegistrosEnumerables(this,db,clausula,CamposOrden);
 		}
 		public SentenciaSelect SubSelect(params Campo[] Campos){
 			SentenciaSubSelect=new SentenciaSelect(Campos);
@@ -440,7 +442,7 @@ namespace ModeladorSql
 			var select=new SentenciaSelect(campos[0]);
 			select.TablasQueEstanMasArriba.Add(TablaContexto);
 			select.TablaBase=TablaContexto;
-			return new ExpresionNotInSelect{SubSelect=select};
+			return new ExpresionSubSelect{SubSelect=select};
 		}
 		/*
 		public ExpresionSql NoExistePara(params Campable[] CamposOTablas){
