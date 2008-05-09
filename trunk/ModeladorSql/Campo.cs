@@ -69,7 +69,7 @@ namespace ModeladorSql
 			return this;
 		}
 		public abstract bool EsAgrupada{ get; }
-		public CampoAlias<object> Es(IExpresion expresion){
+		public CampoAlias<object> EsObject(IExpresion expresion){
 			return new CampoAlias<object>(this,expresion);
 		}
 		public virtual IExpresion Expresion{
@@ -253,12 +253,6 @@ namespace ModeladorSql
 		public ElementoTipado<bool> Igual(IElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Igual,expresion);
 		}
-		public ElementoTipado<bool> MayorOIgual(ElementoTipado<T> expresion){
-			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.MayorOIgual,expresion);
-		}
-		public ElementoTipado<bool> MenorOIgual(ElementoTipado<T> expresion){
-			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.MenorOIgual,expresion);
-		}
 		/*
 		public ElementoTipado<bool> Mayor(IElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Mayor,expresion);
@@ -272,12 +266,6 @@ namespace ModeladorSql
 		}
 		public CampoTipo<T> EsMax(IElementoTipado<T> expresion){
 			return Es(new FuncionAgrupacion<T,T>(expresion,OperadorAgrupada.Maximo));
-		}
-		public CampoAlias<int> EsCount(){
-			return Es(new FuncionCount());
-		}
-		public CampoAlias<int> EsCount(IExpresion expresion){
-			return Es(new FuncionCount(expresion));
 		}
 		#if NuncaAccess
 		// habilitar esto si nunca se va a trabajar en Access

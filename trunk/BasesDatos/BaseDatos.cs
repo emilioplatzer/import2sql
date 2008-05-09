@@ -114,7 +114,7 @@ namespace BasesDatos
 	public enum OperadorBinarioRelacional{Igual,Distinto,Mayor,Menor,MayorOIgual,MenorOIgual}
 	public enum OperadorSufijoLogico{EsNulo,NoEsNulo}
 	public enum OperadorAgrupada{Suma,Maximo,Minimo,Promedio,PromedioGeometrico}
-	public enum OperadorFuncion{Exp,LogE,Str}
+	public enum OperadorFuncion{Exp,LogE,Str,Nvl}
 	public abstract class BaseDatos:EjecutadorBaseDatos,IDisposable{
 		public enum TipoStuff { Siempre, Inteligente, Nunca };
 		public TipoStuff TipoStuffActual=TipoStuff.Inteligente;
