@@ -12,7 +12,7 @@ using NUnit.Framework;
 
 using Comunes;
 using BasesDatos;
-using Modelador;
+using ModeladorSql;
 
 namespace Tareas
 {
@@ -59,7 +59,9 @@ namespace Tareas
 		public void AsignacionExacta(){
 			Asignacion a=new Asignacion();
 			Nombres n=new Nombres();
+			n.Alias="n";
 			Nombres v=new Nombres();
+			v.Alias="v";
 			using(Ejecutador ej=new Ejecutador(db)){
 				ej.Ejecutar(
 					new SentenciaInsert(a)
