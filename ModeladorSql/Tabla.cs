@@ -288,12 +288,8 @@ namespace ModeladorSql
 		}
 		public void LevantarCampos(IDataReader SelectAbierto){
 			RegistroConDatos=true;
-  			System.Reflection.FieldInfo[] ms=this.GetType().GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-			foreach(FieldInfo m in ms){
-				if(m.FieldType.IsSubclassOf(typeof(Campo))){
-					Campo c=(Campo)m.GetValue(this);
-					c.AsignarValor(SelectAbierto[c.NombreCampo]);
-				}
+			foreach(Campo c in Campos()){
+				c.AsignarValor(SelectAbierto[c.NombreCampo]);
   			}
 		}
 		public virtual ListaElementos<Campo> Campos(Filtro filtro){
@@ -390,12 +386,13 @@ namespace ModeladorSql
 	  							if(RegistroConDatos){
 	  								Tabla fkTabla=(Tabla) this.GetType().GetField(m.Name).GetValue(this);
 	  								Lista<object> Campos=new Lista<object>();
-	  								foreach(System.Collections.Generic.KeyValuePair<Campo,IExpresion> p in CamposRelacionFk){
+	  								foreach(System.Collections.Generic.KeyValuePair<Campo,IExpresion> p in fkTabla.CamposRelacionFk){
 	  									if(p.Value is Campo){
 	  										Campos.Add(p.Value);
 	  									}else{
 	  										Campos.Add(p.Key.EsObject(p.Value));
 	  									}
+  										// Campos.Add(p.Key.EsObject(p.Value));
 	  								}
 	  								fkTabla.BuscarYLeerNoPk(db,false,Campos.ToArray());
 	  							}

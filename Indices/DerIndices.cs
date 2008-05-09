@@ -81,12 +81,11 @@ namespace Indices
 			Grupos gp=new Grupos();
 			gp.Alias="g_p";
 			var campos=new ListaElementos<Campo>();
-			campos.Add(this.cAgrupacion);
-			campos.Add(this.cGrupoPadre);
+			campos.Add(this.cGrupoPadre); // no se necesita poner la agrupación porque está en el contexto
 			return new ExpresionSubSelect{
 				CamposRelacionados=campos,
 				Relacion=" IN ", 
-				SubSelect=new SentenciaSelect(gp.cAgrupacion,gp.cGrupo).Where(gp.cNivel.Igual(nivel))
+				SubSelect=new SentenciaSelect(gp.cGrupo).Where(gp.cNivel.Igual(nivel))
 			};
 		}
 	}
@@ -117,7 +116,7 @@ namespace Indices
 		public CampoLogico cEsPeriodoBase;
 		[FkMixta("ant")] public CampoPeriodo cPeriodoAnterior;
 		[Fk] public Periodos fkPeriodos;
-		[FkMixta("ant")] public Periodos fkCalculoAnterior;
+		[FkMixta("ant")] public Calculos fkCalculoAnterior;
 		public ElementoTipado<bool> SiguienteDe(Tabla t){
 			if(t.ContieneMismoNombre(this.cCalculo)){
 				return this.cPeriodoAnterior.Igual(t.CampoIndirecto(this.cPeriodo) as CampoPeriodo)

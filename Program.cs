@@ -75,7 +75,7 @@ namespace TodoASql
 			    // new PrModeladorSql.prModelador().SentenciaUpdate();
 			    // new PrModeladorSql.prModelador().SentenciaCompuesta();
 			    // new PrModeladorSql.prModelador().UpdateSuma();
-			    new PrModeladorSql.prModelador().FkConDatos();
+			    // new PrModeladorSql.prModelador().FkConDatos();
 			    // new PrModeladorSql.prModelador().Subselect();
 			    // new Tareas.PruebasExternas().Generar();
 			    /*
@@ -83,7 +83,7 @@ namespace TodoASql
 				Console.Write("presione cualquier tecla . . . ");
 				System.Windows.Forms.MessageBox.Show("Listo");
 				*/
-			    /*
+			    // /*
 			    ProbarIndiceD3 p=new ProbarIndiceD3();
 			    p.A01CalculosBase();
 			    p.A02CalculosTipoInf();
