@@ -18,10 +18,40 @@ using NUnit.Framework;
 
 namespace Comunes
 {
+	/*
+	public interface IBastanteComparable{
+		
+	}
+	*/
 	public class Otras
 	{
 		public static int Min(int uno,int dos){
 			return uno<dos?uno:dos;
+		}
+		public static Nullable<T> MAX<T>(Nullable<T> uno,Nullable<T> dos) where T:struct,IComparable{
+			if(uno.HasValue){
+				if(dos.HasValue){
+					return uno.Value.CompareTo(dos.Value)>0?uno:dos;
+				}else{
+					return uno;
+				}
+			}else{
+				return dos;
+			}
+		}
+		public static Nullable<T> MIN<T>(Nullable<T> uno,Nullable<T> dos) where T:struct,IComparable{
+			if(uno.HasValue){
+				if(dos.HasValue){
+					return uno.Value.CompareTo(dos.Value)<0?uno:dos;
+				}else{
+					return uno;
+				}
+			}else{
+				return dos;
+			}
+		}
+		public static T Max<T>(T uno,T dos) where T:IComparable{
+			return uno.CompareTo(dos)>0?uno:dos;
 		}
 		public static void ShowArray(Array theArray) {
 	        foreach (Object o in theArray) {

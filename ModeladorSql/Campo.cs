@@ -250,6 +250,9 @@ namespace ModeladorSql
 		public ElementoTipado<bool> Igual(ElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Igual,expresion);
 		}
+		public ElementoTipado<bool> Igual(IElementoTipado<T> expresion){
+			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.Igual,expresion);
+		}
 		public ElementoTipado<bool> MayorOIgual(ElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(this,OperadorBinarioRelacional.MayorOIgual,expresion);
 		}
