@@ -197,7 +197,7 @@ namespace Indices
 					);
 					CalEspInf ceiss=new CalEspInf();
 					ceiss.SubSelect(rv.cPeriodo,ceiss.cCalculo.Es(cal.cCalculo.Valor),ceiss.cPromedioEspInf.EsPromedioGeometrico(rv.cPrecio),rv.cInformante)
-						.Where(rv.cPrecio.Mayor(Constante<double?>.Cero));
+						.Where(rv.cPrecio.Mayor(Constante<double>.Cero));
 					cei.EsFkDe(ceiss);
 					if(db is BdAccess){
 						/*
@@ -747,15 +747,15 @@ AND c.calculo="+cal.cCalculo.Valor
 			repo.RegistrarPromedio(Per1,P101,10.0);
 			repo.RegistrarPromedio(Per1,P102,22.0);
 			repo.CalcularCalGru(Per1,A);
-			Assert.AreEqual(110.0,new CalGru(repo.db,Per1,A2).cIndice.Valor.Value,Controlar.DeltaDouble);
-			Assert.AreEqual(104.0,new CalGru(repo.db,Per1,A).cIndice.Valor.Value,Controlar.DeltaDouble);
+			Assert.AreEqual(110.0,new CalGru(repo.db,Per1,A2).cIndice.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(104.0,new CalGru(repo.db,Per1,A).cIndice.Valor,Controlar.DeltaDouble);
 			Calculos Per2=repo.CrearProximo(Per1);
 			repo.RegistrarPromedio(Per2,P100,2.2);
 			repo.RegistrarPromedio(Per2,P101,11.0);
 			repo.RegistrarPromedio(Per2,P102,22.0);
 			repo.CalcularCalGru(Per2,A);
-			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A2).cIndice.Valor.Value,Controlar.DeltaDouble);
-			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A).cIndice.Valor.Value,Controlar.DeltaDouble);
+			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A2).cIndice.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A).cIndice.Valor,Controlar.DeltaDouble);
 			repo.ExpandirEspecificacionesYVariedades();
 		}
 		public void CargarPrecio(string periodo, string producto, int informante, double precio){
@@ -857,8 +857,8 @@ AND c.calculo="+cal.cCalculo.Valor
 			Grupos A=repo.AbrirGrupo("A","A");
 			Grupos A1=repo.AbrirGrupo("A","A1");
 			Productos P100=repo.AbrirProducto("P100");
-			Assert.AreEqual(1.0,A.cPonderador.Valor.Value,Controlar.DeltaDouble);
-			Assert.AreEqual(0.6,A1.cPonderador.Valor.Value,Controlar.DeltaDouble);
+			Assert.AreEqual(1.0,A.cPonderador.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(0.6,A1.cPonderador.Valor,Controlar.DeltaDouble);
 			Assert.AreEqual(0.36,P100.Ponderador(A).Value,Controlar.DeltaDouble);
 			Assert.AreEqual(0.6,P100.Ponderador(A1).Value,Controlar.DeltaDouble);
 		}

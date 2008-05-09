@@ -35,6 +35,10 @@ namespace ModeladorSql
 		string ToSql(BaseDatos db);
 		ConjuntoTablas Tablas(QueTablas queTablas);
 	}
+	public interface IContenidoObligatorio{
+	}
+	public interface IContenidoOpcional{
+	}
 	public interface IElementoTipado<T>:IElemento,IExpresion{
 	}
 	public interface IElementoNumerico<T>:IElementoTipado<T>{		
@@ -72,6 +76,54 @@ namespace ModeladorSql
 		}
 	}
 	public interface IElementoLogico:IElementoTipado<bool>{
+	}
+	public abstract class ElementoLogico:ElementoTipado<bool>,IElementoLogico{
+		public ElementoLogico And(ElementoLogico E2){
+			return new BinomioRelacional<bool>(this,OperadorBinarioRelacional.And,E2);
+		}
+	}
+	public abstract class ExpresionTipadaLogica<T1,T2>:ElementoLogico{
+		IExpresion e1;
+		public IExpresion E1{ get{ return e1; } set{ e1=value.Expresion;}}
+		IExpresion e2;
+		public IExpresion E2{ get{ return e2; } set{ e2=value.Expresion;}}
+		public override ConjuntoTablas Tablas(QueTablas queTabla){
+			ConjuntoTablas rta=new ConjuntoTablas();
+			if(E1!=null){ rta.AddRange(E1.Tablas(queTabla)); }
+			if(E2!=null){ rta.AddRange(E2.Tablas(queTabla)); }
+			return rta;
+		}
+		public override bool CandidatoAGroupBy{ 
+			get{ 
+				bool rta=true;
+				if(E1!=null) rta=rta && E1.CandidatoAGroupBy;
+				if(E2!=null) rta=rta && E2.CandidatoAGroupBy;
+				return rta;
+			}
+		}
+		public override bool EsAgrupada {
+			get{ 
+				bool rta=false;
+				if(E1!=null) rta=rta || E1.EsAgrupada;
+				if(E2!=null) rta=rta || E2.EsAgrupada;
+				return rta;
+			}
+		}
+		public string ToSqlInfijoConParentesisQueHaganFalta(BaseDatos db,string operador,int precedencia){
+			var rta=new StringBuilder();
+			if(E1.Precedencia<precedencia){
+				rta.Append("("+E1.ToSql(db)+")");
+			}else{
+				rta.Append(E1.ToSql(db));
+			}
+			rta.Append(operador);
+			if(E2.Precedencia<precedencia){
+				rta.Append("("+E2.ToSql(db)+")");
+			}else{
+				rta.Append(E2.ToSql(db));
+			}
+			return rta.ToString();
+		}
 	}
 	public abstract class ExpresionTipada<T1,T2,TR>:ElementoTipado<TR>{
 		//protected IElementoTipado<T1> E1;
@@ -188,7 +240,7 @@ namespace ModeladorSql
 			get{ return BaseDatos.Precedencia(Operador);}
 		}
 	}
-	public class BinomioRelacional<T>:ExpresionTipada<T,T,bool>{
+	public class BinomioRelacional<T>:ExpresionTipadaLogica<T,T>{
 		public OperadorBinarioRelacional Operador;
 		public BinomioRelacional(IElementoTipado<T> E1,OperadorBinarioRelacional Operador,IElementoTipado<T> E2){	
 			this.E1=E1;
@@ -202,7 +254,7 @@ namespace ModeladorSql
 			get{ return BaseDatos.Precedencia(Operador);}
 		}
 	}
-	public class OperacionSufijaLogica<T>:ExpresionTipada<T,T,bool>{
+	public class OperacionSufijaLogica<T>:ExpresionTipadaLogica<T,T>{
 		OperadorSufijoLogico Operador;
 		public OperacionSufijaLogica(IElementoTipado<T> E, OperadorSufijoLogico Operador){
 			this.E1=E;
@@ -421,22 +473,27 @@ namespace ModeladorSql
 			return new Binomio<bool>{E1=E1, Operador=OperadorBinario.And, E2=E2};
 		}
 		*/
-		public static ElementoTipado<bool> And(this ElementoTipado<bool> E1, ElementoTipado<bool> E2){
-			return new Binomio<bool>{E1=E1, Operador=OperadorBinario.And, E2=E2};
+		/*
+		public static ElementoLogico And(this ElementoLogico E1, ElementoLogico E2){
+			return new BinomioRelacional<bool>(E1,OperadorBinarioRelacional.And,E2);
 		}
-		public static ElementoTipado<bool> Or(this IElementoTipado<bool> E1, IElementoTipado<bool> E2){
-			return new Binomio<bool>{E1=E1, Operador=OperadorBinario.Or, E2=E2};
+		*/
+		public static ElementoLogico Or(this IElementoLogico E1, IElementoLogico E2){
+			return new BinomioRelacional<bool>(E1,OperadorBinarioRelacional.Or,E2);
 		}
-		public static ElementoTipado<bool> Mayor<T>(this IElementoTipado<T> E1, ElementoTipado<T> E2){
+		public static ElementoLogico Mayor<T>(this IElementoTipado<T> E1, ElementoTipado<T> E2){
 			return new BinomioRelacional<T>(E1,OperadorBinarioRelacional.Mayor,E2);
 		}
-		public static ElementoTipado<bool> MayorOIgual<T>(this IElementoTipado<T> E1, T expresion){
+		public static ElementoLogico MayorOIgual<T>(this IElementoTipado<T> E1, T expresion){
 			return new BinomioRelacional<T>(E1,OperadorBinarioRelacional.MayorOIgual,new Constante<T>(expresion));
 		}
-		public static ElementoTipado<bool> MayorOIgual<T>(this IElementoTipado<T> E1, IElementoTipado<T> expresion){
+		public static ElementoLogico MayorOIgual<T>(this IElementoTipado<T> E1, IElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(E1,OperadorBinarioRelacional.MayorOIgual,expresion);
 		}
-		public static ElementoTipado<bool> MenorOIgual<T>(this IElementoTipado<T> E1, ElementoTipado<T> expresion){
+		public static ElementoLogico MenorOIgual<T>(this IElementoTipado<T> E1, T expresion){
+			return new BinomioRelacional<T>(E1,OperadorBinarioRelacional.MenorOIgual,new Constante<T>(expresion));
+		}
+		public static ElementoLogico MenorOIgual<T>(this IElementoTipado<T> E1, ElementoTipado<T> expresion){
 			return new BinomioRelacional<T>(E1,OperadorBinarioRelacional.MenorOIgual,expresion);
 		}
 		public static ElementoTipado<T> Sum<T>(IElementoTipado<T> expresion){
