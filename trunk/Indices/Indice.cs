@@ -88,6 +88,7 @@ namespace Indices
 				Grupos grupos=new Grupos();
 				Grupos hijos=new Grupos();
 				hijos.UsarFk();
+				hijos.Alias="hijos";
 				Grupos padre=hijos.fkGrupoPadre;
 				ej.Ejecutar(
 					new SentenciaUpdate(grupos,grupos.cNivel.Es(0),grupos.cPonderador.Es(1.0))
@@ -144,20 +145,25 @@ namespace Indices
 				cp.UsarFk();
 				Calculos c=cp.fkCalculos;
 				CalProd cp0=new CalProd();
+				cp0.Alias="cp0";
 				cp0.EsFkDe(cp,cp0.cPeriodo.Es(c.cPeriodoAnterior));
 				cp0.LiberadaDelContextoDelEjecutador=true;
 				CalGru cg0=new CalGru();
+				cg0.Alias="cg0";
 				cg0.EsFkDe(cp0,cg0.cGrupo.Es(cp0.cProducto),cg0.cAgrupacion.Es(agrupacion.cAgrupacion.Valor));
 				cg0.LiberadaDelContextoDelEjecutador=true;
+				cg0.UsarFk();
+				Grupos g=cg0.fkGrupos;
 				ej.Ejecutar(
 					new SentenciaInsert(cg)
-					.Select(c,cg0.cAgrupacion,cg0.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedioProd.Dividido(cp0.cPromedioProd))),cg0.cFactor)
+					.Select(c,cg0.cAgrupacion,g.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedioProd.Dividido(cp0.cPromedioProd))),cg0.cFactor)
 				);
 				Grupos gh=new Grupos();
 				cg.EsFkDe(gh,cg.cPeriodo.Es(cal.cPeriodo.Valor),cg.cCalculo.Es(cal.cCalculo.Valor));
 				Grupos gp=new Grupos();
 				gp.EsFkDe(gh,gp.cGrupo.Es(gh.cGrupoPadre));
 				CalGru cgp=new CalGru();
+				cgp.Alias="cgp";
 				for(int i=9;i>=0;i--){
 					ej.Ejecutar(
 						new SentenciaInsert(cgp)
