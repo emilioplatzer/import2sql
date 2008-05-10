@@ -232,7 +232,7 @@ namespace BasesDatos
 				case OperadorBinarioRelacional.Mayor: return ">"; 
 				case OperadorBinarioRelacional.MenorOIgual: return "<="; 
 				case OperadorBinarioRelacional.MayorOIgual: return ">="; 
-				case OperadorBinarioRelacional.And:return " AND ";
+				case OperadorBinarioRelacional.And:return "\n AND ";
 				case OperadorBinarioRelacional.Or:return " OR ";
 				default: return FaltaOperador(Operador);
 			}

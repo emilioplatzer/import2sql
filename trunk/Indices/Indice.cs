@@ -159,9 +159,11 @@ namespace Indices
 					.Select(c,cg0.cAgrupacion,g.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedioProd.Dividido(cp0.cPromedioProd))),cg0.cFactor)
 				);
 				Grupos gh=new Grupos();
+				gh.Alias="gh";
 				cg.EsFkDe(gh,cg.cPeriodo.Es(cal.cPeriodo.Valor),cg.cCalculo.Es(cal.cCalculo.Valor));
 				Grupos gp=new Grupos();
 				gp.EsFkDe(gh,gp.cGrupo.Es(gh.cGrupoPadre));
+				gp.Alias="gp";
 				CalGru cgp=new CalGru();
 				cgp.Alias="cgp";
 				for(int i=9;i>=0;i--){
@@ -183,12 +185,13 @@ namespace Indices
 					CalEspInf cei=new CalEspInf();
 					CalEspInf cei0=new CalEspInf();
 					cei0.LiberadaDelContextoDelEjecutador=true;
+					cei0.Alias="cei0";
 					Calculos c=new Calculos();
 					RelVar rv=new RelVar();
 					ej.Ejecutar(
 						new SentenciaInsert(cei)
 						.Select(c.cPeriodo,
-						        cei.cPromedioEspInf.Es(null),
+						        cei.cPromedioEspInf.SeaNulo(),
 								cei.cAntiguedadConPrecio.Es(cei0.cAntiguedadConPrecio.Mas(1)),
 						        cei.cAntiguedadSinPrecio.Es(cei0.cAntiguedadSinPrecio.Mas(1)),
 						        cei0)
@@ -196,13 +199,14 @@ namespace Indices
 					);
 					nei.UsarFk();
 					Informantes i=nei.fkInformantes;
+					cei.EsFkDe(nei);
 					ej.Ejecutar(
 						new SentenciaInsert(cei)
 						.Select(nei,cei.cImputacionEspInf.Es("V"),i)
 						.Where(cei.NoExistePara(nei),nei.cEstado.Igual(NovEspInf.Estados.Alta).Or(nei.cEstado.Igual(NovEspInf.Estados.Reemplazo)))
 					);
 					CalEspInf ceiss=new CalEspInf();
-					ceiss.SubSelect(rv.cPeriodo,ceiss.cCalculo.Es(cal.cCalculo.Valor),ceiss.cPromedioEspInf.EsPromedioGeometrico(rv.cPrecio),rv.cInformante)
+					ceiss.SubSelect("ceiss",rv.cPeriodo,ceiss.cCalculo.Es(cal.cCalculo.Valor),ceiss.cPromedioEspInf.EsPromedioGeometrico(rv.cPrecio),rv.cInformante)
 						.Where(rv.cPrecio.Mayor(Constante<double>.Cero));
 					cei.EsFkDe(ceiss);
 					if(db is BdAccess){
@@ -236,6 +240,7 @@ AND c.calculo="+cal.cCalculo.Valor;
 						#pragma warning restore 162
 					}else{
 					RelVar rv2=new RelVar();
+					rv2.Alias="rv2";
 					cei.EsFkDe(rv2,cei.cCalculo.Es(cal.cCalculo.Valor));
 					ej.Ejecutar( // Calcular el promedio si hay
 						new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei.SelectPromedioGeometrico(rv2.cPrecio)))
@@ -396,7 +401,7 @@ AND c.calculo="+cal.cCalculo.Valor
 				RelVar rv=new RelVar();
 				c.EsFkDe(rv,c.cCalculo.Es(-1));
 				NovEspInf nss=new NovEspInf();
-				nss.SubSelect(rv.cPeriodo,c.cCalculo,rv.cInformante,rv.cProducto,rv.cEspecificacion)
+				nss.SubSelect("nss",rv.cPeriodo,c.cCalculo,rv.cInformante,rv.cProducto,rv.cEspecificacion)
 				.Where(c.cEsPeriodoBase.Igual(true),rv.cPrecio.NoEsNulo())
 				.GroupBy();
 				new Ejecutador(db).Ejecutar(
@@ -600,7 +605,7 @@ AND c.calculo="+cal.cCalculo.Valor
 		public static Periodos CrearPeriodo(BaseDatos db,int ano, int mes){
 			Periodos p=new Periodos();
 			using(Insertador ins=p.Insertar(db)){
-				p.cPeriodo[ins]=ano.ToString()+mes.ToString("00");
+				p.cPeriodo[ins]="a"+ano.ToString()+"m"+mes.ToString("00");
 				p.cAno[ins]=ano;
 				p.cMes[ins]=mes;
 			}
@@ -617,7 +622,7 @@ AND c.calculo="+cal.cCalculo.Valor
 				ano++;
 			}
 			Periodos p=new Periodos();
-			string codigoNuevo=ano.ToString()+((int)mes).ToString("00");
+			string codigoNuevo="a"+ano.ToString()+"m"+((int)mes).ToString("00");
 			if(!p.Buscar(db,codigoNuevo)){
 				using(Insertador ins=p.Insertar(db)){
 					p.cPeriodo[ins]=codigoNuevo;
@@ -744,7 +749,7 @@ AND c.calculo="+cal.cCalculo.Valor
 			Assert.AreEqual(100.0,new CalGru(repo.db,pAnt,A).cIndice.Valor);
 			Calculos Per1=repo.CrearProximo(pAnt);
 			Per1.UsarFk();
-			Assert.AreEqual("200201",Per1.cPeriodo.Valor);
+			Assert.AreEqual("a2002m01",Per1.cPeriodo.Valor);
 			Assert.AreEqual(2002,Per1.fkPeriodos.cAno.Valor);
 			Assert.AreEqual(1,Per1.fkPeriodos.cMes.Valor);
 			Grupos A1=repo.AbrirGrupo("A","A1");
@@ -771,6 +776,9 @@ AND c.calculo="+cal.cCalculo.Valor
 		}
 		[Test]
 		public void A02CalculosTipoInf(){
+			TipoInf ti=new TipoInf();
+			ti.InsertarDirecto(repo.db,"T","S");
+			ti.InsertarDirecto(repo.db,"S","T");
 			Informantes inf=new Informantes();
 			inf.InsertarDirecto(repo.db,1,"","T");
 			inf.InsertarDirecto(repo.db,2,"","T");

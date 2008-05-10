@@ -60,11 +60,15 @@ namespace ModeladorSql
 		bool CandidatoAGroupBy{ get; }
 		bool EsAgrupada{ get; }
 		IExpresion Expresion{ get; }
-		int Precedencia{ get; }
+		int Precedencia{ get; } // de la expresion, es distinto si la expresión se genera ya con paréntesis como en el caso del OR
+		int PrecedenciaOperador{ get; } // del operador que forma la expresión, es distinto si la expresión se genera ya con paréntesis como en el caso del OR
 	}
 	public abstract class ElementoTipado<T>:IElementoTipado<T>,IExpresion{
 		public abstract string ToSql(BaseDatos db);
 		public virtual int Precedencia{ get{ return 9;} }
+		public virtual int PrecedenciaOperador{
+			get{ return Precedencia; }
+		}
 		public abstract ConjuntoTablas Tablas(QueTablas queTabla);
 		public abstract bool CandidatoAGroupBy{ get; }
 		public abstract bool EsAgrupada{ get; }
@@ -111,13 +115,13 @@ namespace ModeladorSql
 		}
 		public string ToSqlInfijoConParentesisQueHaganFalta(BaseDatos db,string operador,int precedencia){
 			var rta=new StringBuilder();
-			if(E1.Precedencia<precedencia){
+			if(E1.Precedencia<PrecedenciaOperador){
 				rta.Append("("+E1.ToSql(db)+")");
 			}else{
 				rta.Append(E1.ToSql(db));
 			}
 			rta.Append(operador);
-			if(E2.Precedencia<precedencia){
+			if(E2.Precedencia<PrecedenciaOperador){
 				rta.Append("("+E2.ToSql(db)+")");
 			}else{
 				rta.Append(E2.ToSql(db));
@@ -156,13 +160,13 @@ namespace ModeladorSql
 		}
 		public string ToSqlInfijoConParentesisQueHaganFalta(BaseDatos db,string operador,int precedencia){
 			var rta=new StringBuilder();
-			if(E1.Precedencia<precedencia){
+			if(E1.Precedencia<PrecedenciaOperador){
 				rta.Append("("+E1.ToSql(db)+")");
 			}else{
 				rta.Append(E1.ToSql(db));
 			}
 			rta.Append(operador);
-			if(E2.Precedencia<precedencia){
+			if(E2.Precedencia<PrecedenciaOperador){
 				rta.Append("("+E2.ToSql(db)+")");
 			}else{
 				rta.Append(E2.ToSql(db));
@@ -248,10 +252,24 @@ namespace ModeladorSql
 			this.Operador=Operador;
 		}
 		public override string ToSql(BaseDatos db){
-			return ToSqlInfijoConParentesisQueHaganFalta(db,db.OperadorToSql(Operador),Precedencia);
+			string expresionToSql=ToSqlInfijoConParentesisQueHaganFalta(db,db.OperadorToSql(Operador),Precedencia);
+			if(Operador==OperadorBinarioRelacional.Or){
+				return "("+expresionToSql+")";
+			}
+			return expresionToSql;
 		}
 		public override int Precedencia{ 
-			get{ return BaseDatos.Precedencia(Operador);}
+			get{ 
+				if(Operador==OperadorBinarioRelacional.Or){
+					return 9; // le ponemos acá el paréntesis para poder concatenar bien los AND que son coma
+				}
+				return BaseDatos.Precedencia(Operador);
+			}
+		}
+		public override int PrecedenciaOperador{ 
+			get{ 
+				return BaseDatos.Precedencia(Operador);
+			}
 		}
 	}
 	public class OperacionSufijaLogica<T>:ExpresionTipadaLogica<T,T>{
@@ -347,7 +365,10 @@ namespace ModeladorSql
 			this.CondicionesWhere=CondicionesWhere;
 		}
 		public int Precedencia{
-			get{ return 0; }
+			get{ return 10; }
+		}
+		public int PrecedenciaOperador{
+			get{ return 10; }
 		}
 		public bool CandidatoAGroupBy{
 			get{ return false; }

@@ -51,8 +51,8 @@ namespace Comunes
 			return ContainsKey(t);
 		}
 		public override string ToString(){
-			StringBuilder rta=new StringBuilder();
-			Separador coma=new Separador("<","; ");
+			StringBuilder rta=new StringBuilder("<");
+			Separador coma=new Separador("; ");
 			foreach(System.Collections.Generic.KeyValuePair<T, int> t in this){
 				rta.Append(coma+t.Key.ToString());
 			}

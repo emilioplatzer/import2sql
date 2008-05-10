@@ -53,6 +53,7 @@ namespace Indices
 	public class CampoTipo:CampoChar{ public CampoTipo():base(1){this.Obligatorio=true;} };
 	public class CampoNovedad<T>:CampoEnumerado<T>{};
 	/********************* TABLAS ***************************/
+	[Alias("pr")]
 	public class Productos:Tabla{
 		[Pk] public CampoProducto cProducto;
 		public CampoNombre	cNombreProducto;
@@ -62,10 +63,12 @@ namespace Indices
 			return hoja.cPonderador.Valor/grupo.cPonderador.Valor;
 		}
 	}
+	[Alias("ag")]
 	public class Agrupaciones:Tabla{
 		[Pk] public CampoAgrupacion cAgrupacion;
 		public CampoNombre cNombreAgrupacion;
 	}
+	[Alias("gr")]
 	public class Grupos:Tabla{
 		[Pk] public CampoAgrupacion cAgrupacion;
 		[Pk] public CampoGrupo cGrupo;
@@ -89,6 +92,7 @@ namespace Indices
 			};
 		}
 	}
+	[Alias("num")]
 	public class Numeros:Tabla{
 		[Pk] public CampoEntero cNumero;
 	}
@@ -98,6 +102,7 @@ namespace Indices
 		public CampoPonderador cPonderadorOriginal;
 		public CampoPonderador cSumaPonderadorHijos;	
 	}
+	[Alias("per")]
 	public class Periodos:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
 		public CampoEntero cAno;
@@ -110,6 +115,7 @@ namespace Indices
 		}
 		public Periodos(){}
 	}
+	[Alias("cal")]
 	public class Calculos:Tabla{
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
@@ -153,7 +159,12 @@ namespace Indices
 			Leer(db,p.cPeriodo,p.cCalculo,a.cAgrupacion,a.cAgrupacion);
 		}
 	}
-	// [Alias("i")]
+	[Alias("ti")]
+	public class TipoInf:Tabla{
+		[Pk] public CampoTipo cTipoInformante;
+		CampoTipo cOtroTipoInformante;
+	}
+	[Alias("i")]
 	public class Informantes:Tabla{
 		[Pk] public CampoInformante cInformante;
 		public CampoNombre cNombreInformante;
@@ -161,10 +172,7 @@ namespace Indices
 		public CampoNombre cRubro;
 		public CampoNombre cCadena;
 		public CampoNombre cDireccion;
-	}
-	public class TipoInf:Tabla{
-		[Pk] public CampoTipo cTipoInformante;
-		CampoTipo cOtroTipoInformante;
+		[Fk] public TipoInf fkTipoInf;
 	}
 	public class ProdTipoInf:Tabla{
 		[Pk] public CampoProducto cProducto;
@@ -184,6 +192,7 @@ namespace Indices
 		[Fk] public Productos fkProductos;
 		[Fk] public ProdTipoInf fkProdTipoInf;
 	}
+	[Alias("esp")]
 	public class Especificaciones:Tabla{
 		[Pk] public CampoProducto cProducto;
 		[Pk] public CampoEspecificacion cEspecificacion;
@@ -233,6 +242,7 @@ namespace Indices
 		[Fk] public Especificaciones fkEspecificaciones;
 		[Fk] public Informantes fkInformantes;
 	}
+	[Alias("var")]
 	public class Variedades:Tabla{
 		[Pk] public CampoProducto cProducto;
 		[Pk] public CampoEspecificacion cEspecificacion;

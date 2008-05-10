@@ -428,7 +428,8 @@ namespace ModeladorSql
 			clausula.Add(ClausulaWhere);
 			return new RegistrosEnumerables(this,db,clausula,CamposOrden);
 		}
-		public SentenciaSelect SubSelect(params Campo[] Campos){
+		public SentenciaSelect SubSelect(string AliasSubSelect,params Campo[] Campos){
+			Alias=AliasSubSelect;
 			SentenciaSubSelect=new SentenciaSelect(Campos);
 			SentenciaSubSelect.EsInterno=true;
 			// SelectInterno=new SelectInterno(SentenciaSubSelect);
@@ -484,6 +485,18 @@ namespace ModeladorSql
 			return new ExpresionSql(Partes1);
 		}
 		*/
+		public override string ToString()
+		{
+			return this.NombreTabla
+				+"("+this.AliasActual
+				+(this.IniciadasFk?" iFk":"")
+				+(this.LiberadaDelContextoDelEjecutador?" LC":"")
+				+(this.RegistroConDatos?" c/d":"")
+				+(this.TablaRelacionada==null?""
+				  :" tr:"+this.TablaRelacionada.NombreTabla
+				    +(this.TablaRelacionada.AliasActual!=""?".":"")
+				    +this.TablaRelacionada.AliasActual)+")";
+		}
 	}
 	public class RegistrosEnumerables{
 		BaseDatos db;
