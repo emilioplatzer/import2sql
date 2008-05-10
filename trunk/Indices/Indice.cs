@@ -804,8 +804,8 @@ AND c.calculo="+cal.cCalculo.Valor
 			c.cCalculo.AsignarValor(-1);
 			c.cEsPeriodoBase.AsignarValor(true);
 			c.InsertarValores(repo.db,c.cPeriodo.Es("a2002m02"),c.cEsPeriodoBase,c);
-			c.InsertarValores(repo.db,c.cPeriodo.Es("a2002m01"),c.cEsPeriodoBase,c.cPeriodoAnterior.Es("200202"),c);
-			c.InsertarValores(repo.db,c.cPeriodo.Es("a2001m12"),c.cEsPeriodoBase,c.cPeriodoAnterior.Es("200201"),c);
+			c.InsertarValores(repo.db,c.cPeriodo.Es("a2002m01"),c.cEsPeriodoBase,c.cPeriodoAnterior.Es("a2002m02"),c);
+			c.InsertarValores(repo.db,c.cPeriodo.Es("a2001m12"),c.cEsPeriodoBase,c.cPeriodoAnterior.Es("a2002m01"),c);
 			Assert.IsTrue(c.Buscar(repo.db,"a2001m12",-1),"está el primer período");
 			Assert.IsTrue(c.Buscar(repo.db,"a2002m02",-1),"está el último período");
 			repo.CalcularMatrizBase(2);
