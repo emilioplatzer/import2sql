@@ -78,6 +78,9 @@ namespace ModeladorSql
 		public int Precedencia{
 			get{ return 9; }
 		}
+		public int PrecedenciaOperador{
+			get{ return 9; }
+		}
 	}
 	public interface ICampoAlias:IElemento{
 		IExpresion ExpresionBase{ get; }

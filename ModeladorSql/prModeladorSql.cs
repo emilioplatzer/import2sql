@@ -163,6 +163,11 @@ namespace PrModeladorSql
 			                      .Where(p.cPieza.Igual("P3")
 			                             .And(p.cNombrePieza.EsNulo()
 			                                  .Or(p.cNombrePieza.Distinto(p.cPieza))))));
+			Assert.AreEqual(Esperado+";\n",
+			                new Ejecutador(dba)
+			                .Dump(new SentenciaUpdate(p,p.cPieza.Es("P1"),p.cNombrePieza.Es("Pieza 1"))
+			                      .Where(p.cPieza.Igual("P3"),
+			                             p.cNombrePieza.EsNulo().Or(p.cNombrePieza.Distinto(p.cPieza)))));
 			SentenciaUpdate sentencia=new SentenciaUpdate(p,p.cPieza.Es("P1"),p.cNombrePieza.Es("Pieza 1"));
 			sentencia.Where(p.cPieza.Igual("P3")
 			                .And(p.cNombrePieza.EsNulo()
@@ -403,7 +408,7 @@ namespace PrModeladorSql
 			PartesPiezas pp=new PartesPiezas();
 			pp.UsarFk();
 			Empresas e=pp.fkEmpresas;
-			pss.SubSelect(pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
+			pss.SubSelect("pss",pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
 				.Where(pp.cParteAnterior.EsNulo(),e.cNombreEmpresa.Distinto("este"));
 			pss.Alias="x";
 			Piezas p=new Piezas();
@@ -427,7 +432,7 @@ namespace PrModeladorSql
 			BaseDatos dba=BdAccess.SinAbrir();
 			Piezas pss=new Piezas();
 			PartesPiezas pp=new PartesPiezas();
-			pss.SubSelect(pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
+			pss.SubSelect("p",pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
 				.Where(pp.cParteAnterior.EsNulo())
 				.GroupBy();
 			System.Console.WriteLine("******** que tablas aliasables *********");
@@ -473,7 +478,7 @@ namespace PrModeladorSql
 			BaseDatos db=SqLite.SinAbrir();
 			Piezas pss=new Piezas();
 			PartesPiezas pp=new PartesPiezas();
-			pss.SubSelect(pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
+			pss.SubSelect("p",pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
 				.Where(pp.cParteAnterior.EsNulo())
 				.GroupBy();
 			Piezas p=new Piezas();

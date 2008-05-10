@@ -23,6 +23,7 @@ namespace ModeladorSql
 		public ListaElementos<ElementoTipado<bool>> ClausulaWhere=new ListaElementos<ElementoTipado<bool>>();
 		protected bool IncluirJoinEnWhere=true;
 		public void ParaCadaJunta(ConjuntoTablas tablas,Tabla TablaBase,ProcesamientoTabla procesarTabla,ProcesamientoPar procesarPar){
+			Console.WriteLine("----- ParaCadaJunta ------");
 			var TablasVistas=new ConjuntoTablas();
 			var TablasARevisar=new ConjuntoTablas();
 			TablasARevisar.AddRange(tablas);
@@ -34,12 +35,18 @@ namespace ModeladorSql
 			while(true){
 				int CantidadARevisar=TablasARevisar.Count;
 				foreach(Tabla t in TablasARevisar.Keys){
+					Console.WriteLine("***** t "+t.ToString());
+					Console.WriteLine("TablasNoIncluidas "+TablasNoIncluidas.ToString());
+					Console.WriteLine("TablasARevisar "+TablasARevisar.ToString());
+					Console.WriteLine("TablasVistas "+TablasVistas.ToString());
+					Console.WriteLine("Tablas "+tablas.ToString());
 					if(t.TablaRelacionada!=null && (tablas.Contiene(t.TablaRelacionada) || TablasQueEstanMasArriba.Contiene(t.TablaRelacionada))){
 						if(TablasVistas.Contiene(t.TablaRelacionada) || TablasQueEstanMasArriba.Contiene(t.TablaRelacionada)){
 							procesarTabla(t);
 							foreach(System.Collections.Generic.KeyValuePair<Campo, IExpresion> par in t.CamposRelacionFk){
 								procesarPar(par);
 							}
+							TablasVistas.Add(t);
 						}else{
 							TablasNoIncluidas.Add(t);
 							if((TablasQueEstanMasArriba==null || !TablasQueEstanMasArriba.Contiene(t.TablaRelacionada)) && !tablas.Contiene(t.TablaRelacionada)){
@@ -56,6 +63,7 @@ namespace ModeladorSql
 					if(TablasNoIncluidas.Count==1 && TablaBase==null){
 			break; // es la única tabla no unida. 
 					}
+					Console.WriteLine(" ********* Detener ******** ");
 					Console.WriteLine("TablasNoIncluidas "+TablasNoIncluidas.ToString());
 					Console.WriteLine("TablasARevisar "+TablasARevisar.ToString());
 					Console.WriteLine("TablasVistas "+TablasVistas.ToString());
@@ -71,7 +79,7 @@ namespace ModeladorSql
 			var rta=new StringBuilder();
 			var whereAnd=new Separador("\n WHERE ","\n AND ");
 			foreach(var e in ClausulaWhere){
-				whereAnd.AgregarEn(rta,e.ToSql(db).Replace(" AND ","\n AND "));
+				whereAnd.AgregarEn(rta,e.ToSql(db)/*.Replace(" AND ","\n AND ")*/);
 			}
 			var TablasAJoinear=Tablas(QueTablas.AlFrom);
 			if(IncluirJoinEnWhere){
@@ -231,11 +239,14 @@ namespace ModeladorSql
 							if(ValoresDirectos!=null){
 								if(!(c is ICampoAlias) && c.ValorSinTipo!=null){
 									nuevaListaValores.Add(new Constante<object>(c.ValorSinTipo));
-								}else{
+									coma.AgregarEn(rta,db.StuffCampo(c.NombreCampo));
+								}else if(c is ICampoAlias){
 									nuevaListaValores.Add(c);
+									coma.AgregarEn(rta,db.StuffCampo(c.NombreCampo));
 								}
+							}else{
+								coma.AgregarEn(rta,db.StuffCampo(c.NombreCampo));
 							}
-							coma.AgregarEn(rta,db.StuffCampo(c.NombreCampo));
 						}
 					}
 				}
