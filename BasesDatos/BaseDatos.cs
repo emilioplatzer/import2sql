@@ -135,7 +135,6 @@ namespace BasesDatos
 				if(ex.Message.StartsWith(ErrorCode_NoExisteTabla)){
 					return false; // ok, no existía la tabla por eso salto la excepción
 				}
-				System.Console.WriteLine("EliminarTablaSiExiste. Ex:"+ex.Message);
 				throw;
 			}
 		}
