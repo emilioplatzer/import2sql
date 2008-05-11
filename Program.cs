@@ -57,7 +57,7 @@ namespace TodoASql
 				// new ProcesoLevantarPlanillasCVP().TraerPlanillasRecepcion();
 				// new CVP().CreacionTablas();
 				// new prTabla().Periodos();
-				// new prTabla().SentenciaInsert();
+				// new PrModeladorSql.prModelador().SentenciaInsert();
 				// new prTabla().UpdateSuma();
 				// new prTabla().SentenciaCompuesta();
 				// new PruebasReflexion().NombresMiembros();

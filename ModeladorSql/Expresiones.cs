@@ -423,14 +423,17 @@ namespace ModeladorSql
 				}
 				foreach(var par in TablaContexto.CamposRelacionFk){
 					if(!(par.Value is Campo) && !(par.Value is IConstante)){
-						Falla.Detener("No es un campo");
-					}
-					Campo c=par.Value as Campo;
-					if(db.UpdateSelectSumViaDSum){
-						string delimitador=c.EsNumerico?"":"''";
-						rta.Append(and+db.StuffCampo(c.NombreCampo)+"='"+delimitador+" & "+par.Key.ToSql(db)+" & "+delimitador+"'");
+						Falla.Detener("No es un campo ni una constante");
+					}else if(par.Value is IConstante){
+						// si es una constante está bien, no hay que ponerla
 					}else{
-						rta.Append(and+c.ToSql(db)+"="+par.Key.ToSql(db));
+						Campo c=par.Value as Campo;
+						if(db.UpdateSelectSumViaDSum){
+							string delimitador=c.EsNumerico?"":"''";
+							rta.Append(and+db.StuffCampo(c.NombreCampo)+"='"+delimitador+" & "+par.Key.ToSql(db)+" & "+delimitador+"'");
+						}else{
+							rta.Append(and+c.ToSql(db)+"="+par.Key.ToSql(db));
+						}
 					}
 				}
 			}
