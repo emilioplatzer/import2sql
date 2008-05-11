@@ -345,7 +345,9 @@ namespace PrModeladorSql
 			                ,new Ejecutador(dbp).Dump(su));
 			// Assert.Ignore("Error en el promedio geom'etrico" );
 			su=new SentenciaUpdate(pr,pr.cCosto.Es(pr.SelectPromedioGeometrico(np.cNuevoEstado)));
-			Assert.AreEqual("UPDATE piezas p\n SET p.costo=EXP(DAVG('LOG(nuevoestado)','novedadespiezas','nuevoestado>0 AND empresa=' & p.empresa & ' AND piezaauxiliar=''' & p.pieza & ''''));\n"
+			Assert.AreEqual("UPDATE piezas p\n " +
+			                "SET p.costo=IIF(DAVG('LOG(nuevoestado)','novedadespiezas','nuevoestado>0 AND empresa=' & p.empresa & ' AND piezaauxiliar=''' & p.pieza & '''') IS NULL,NULL," +
+			                "EXP(DAVG('LOG(nuevoestado)','novedadespiezas','nuevoestado>0 AND empresa=' & p.empresa & ' AND piezaauxiliar=''' & p.pieza & '''')));\n"
 			                ,new Ejecutador(dba).Dump(su));
 			Assert.AreEqual("UPDATE piezas p\n SET costo=(SELECT EXP(AVG(LN(np.nuevoestado))) FROM novedadespiezas np WHERE np.nuevoestado>0 AND np.empresa=p.empresa AND np.piezaauxiliar=p.pieza);\n"
 			                ,new Ejecutador(dbp).Dump(su));

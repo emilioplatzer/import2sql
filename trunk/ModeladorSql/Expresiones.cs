@@ -174,7 +174,9 @@ namespace ModeladorSql
 			return rta.ToString();
 		}
 	}
-	public class Constante<T>:ElementoTipado<T>{
+	public interface IConstante{
+	}
+	public class Constante<T>:ElementoTipado<T>,IConstante{
 		T Valor;
 		public Constante(T Valor){
 			this.Valor=Valor;
@@ -390,8 +392,8 @@ namespace ModeladorSql
 			if(db.UpdateSelectSumViaDSum){
 				TablaBase.AliasActual="";
 				if(Operador==OperadorAgrupada.PromedioGeometrico){
-					rta.Append("EXP(DAVG('LOG(");
-					UltimoParentesis="'))";
+					rta.Append("DAVG('LOG(");
+					UltimoParentesis="')";
 				}else{
 					rta.Append("D"+db.OperadorToSqlPrefijo(Operador)+"'");
 					UltimoParentesis="'"+db.OperadorToSqlSufijo(Operador);
@@ -420,7 +422,7 @@ namespace ModeladorSql
 					rta.Append(and+condicion.ToSql(db));
 				}
 				foreach(var par in TablaContexto.CamposRelacionFk){
-					if(!(par.Value is Campo)){
+					if(!(par.Value is Campo) && !(par.Value is IConstante)){
 						Falla.Detener("No es un campo");
 					}
 					Campo c=par.Value as Campo;
@@ -433,6 +435,10 @@ namespace ModeladorSql
 				}
 			}
 			rta.Append(UltimoParentesis);
+			if(db.UpdateSelectSumViaDSum && Operador==OperadorAgrupada.PromedioGeometrico){
+				string interna=rta.ToString();
+				return "IIF("+interna+" IS NULL,NULL,EXP("+interna+"))";
+			}
 			return rta.ToString();
 		}
 		public ConjuntoTablas Tablas(QueTablas queTablas){
