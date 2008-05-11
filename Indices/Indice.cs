@@ -894,6 +894,42 @@ AND c.calculo="+cal.cCalculo.Valor
 				Console.WriteLine("Calculo 0, periodo "+cal.cPeriodo.Valor);
 				repo.CalcularPreciosPeriodo(cal,true);
 			}
+			var cp=new CalProd();
+			cp.Leer(repo.db,"a2001m12",0,"P100");
+			Assert.AreEqual(
+				Math.Pow(2.0*2.0*3.0,1.0/3.0)
+				,cp.cPromedioProd.Valor,
+				Controlar.DeltaDouble
+			);
+			double razonImp12a1_P100=
+				Math.Sqrt(2.0*Math.Sqrt(3.0*3.60))/Math.Sqrt(2.0*3.0);
+			var cei=new CalEspInf();
+			cei.Leer(repo.db,"a2002m01",0,"P100",1,2);
+			Assert.AreEqual(
+				2.0*razonImp12a1_P100
+				,cei.cPromedioEspInf.Valor,
+				Controlar.DeltaDouble
+			);
+			cp.Leer(repo.db,"a2002m01",0,"P100");
+			Assert.AreEqual(
+				Math.Pow(2.0*2.0*razonImp12a1_P100*Math.Sqrt(3.0*3.60),1.0/3.0)
+				,cp.cPromedioProd.Valor,
+				Controlar.DeltaDouble
+			);
+			double razonImp1a2_P100=
+				Math.Sqrt(Math.Sqrt(2.0*2.60)*2.2)/Math.Sqrt(2.0*2.0*razonImp12a1_P100);
+			cei.Leer(repo.db,"a2002m02",0,"P100",1,4);
+			Assert.AreEqual(
+				Math.Sqrt(3.0*3.60)*razonImp1a2_P100
+				,cei.cPromedioEspInf.Valor,
+				Controlar.DeltaDouble
+			);
+			cp.Leer(repo.db,"a2002m02",0,"P100");
+			Assert.AreEqual(
+				Math.Pow(Math.Sqrt(2.0*2.60)*2.2*Math.Sqrt(3.0*3.60)*razonImp1a2_P100,1.0/3.0)
+				,cp.cPromedioProd.Valor,
+				Controlar.DeltaDouble
+			);
 		}
 		[Test]
 		public void VerCanasta(){
