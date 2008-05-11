@@ -257,7 +257,7 @@ AND c.calculo="+cal.cCalculo.Valor;
 					    new SentenciaInsert(ce)
 					    .Select(c,cei1,i.cTipoInformante,ce.cPromedioEspMatchingActual.EsPromedioGeometrico(cei1.cPromedioEspInf),
 					            ce.cPromedioEspMatchingAnterior.EsPromedioGeometrico(cei0.cPromedioEspInf))
-					    .Where(c.SiguienteDe(cei0))
+					    .Where(c.SiguienteDe(cei0),cei1.cPromedioEspInf.Mayor(Constante<double>.Cero),cei0.cPromedioEspInf.Mayor(Constante<double>.Cero))
 					);
 				}
 				{ // Imputación 
@@ -806,6 +806,8 @@ AND c.calculo="+cal.cCalculo.Valor
 			c.InsertarValores(repo.db,c.cPeriodo.Es("a2002m02"),c.cEsPeriodoBase,c);
 			c.InsertarValores(repo.db,c.cPeriodo.Es("a2002m01"),c.cEsPeriodoBase,c.cPeriodoAnterior.Es("a2002m02"),c);
 			c.InsertarValores(repo.db,c.cPeriodo.Es("a2001m12"),c.cEsPeriodoBase,c.cPeriodoAnterior.Es("a2002m01"),c);
+			p.InsertarValores(repo.db,p.cPeriodo.Es("a0000m00"),p.cAno.Es(0),p.cMes.Es(0));
+			c.InsertarValores(repo.db,c.cPeriodo.Es("a0000m00"),c.cCalculo.Es(0));
 			Assert.IsTrue(c.Buscar(repo.db,"a2001m12",-1),"está el primer período");
 			Assert.IsTrue(c.Buscar(repo.db,"a2002m02",-1),"está el último período");
 			repo.CalcularMatrizBase(2);

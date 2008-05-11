@@ -32,9 +32,7 @@ namespace ModeladorSql
 			base.ExecuteNonQuery(Dump(laSentencia));
 		}
 		public string Dump(Sentencia laSentencia){
-			Console.WriteLine("Por hacer un Dump:");
 			foreach(Tabla t in laSentencia.Tablas(QueTablas.Aliasables).Keys){
-				Console.WriteLine("Tabla {0} alias {1},{2}",t.NombreTabla,t.Alias,t.AliasActual);
 				bitacora.Registrar("Tabla alias "+t.NombreTabla+","+t.Alias+","+t.AliasActual);
 				t.AliasActual=t.Alias;
 				if(!t.LiberadaDelContextoDelEjecutador){

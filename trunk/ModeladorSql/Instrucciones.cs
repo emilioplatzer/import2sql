@@ -23,7 +23,6 @@ namespace ModeladorSql
 		public ListaElementos<ElementoTipado<bool>> ClausulaWhere=new ListaElementos<ElementoTipado<bool>>();
 		protected bool IncluirJoinEnWhere=true;
 		public void ParaCadaJunta(ConjuntoTablas tablas,Tabla TablaBase,ProcesamientoTabla procesarTabla,ProcesamientoPar procesarPar){
-			Console.WriteLine("----- ParaCadaJunta ------");
 			var TablasVistas=new ConjuntoTablas();
 			var TablasARevisar=new ConjuntoTablas();
 			TablasARevisar.AddRange(tablas);
@@ -35,11 +34,6 @@ namespace ModeladorSql
 			while(true){
 				int CantidadARevisar=TablasARevisar.Count;
 				foreach(Tabla t in TablasARevisar.Keys){
-					Console.WriteLine("***** t "+t.ToString());
-					Console.WriteLine("TablasNoIncluidas "+TablasNoIncluidas.ToString());
-					Console.WriteLine("TablasARevisar "+TablasARevisar.ToString());
-					Console.WriteLine("TablasVistas "+TablasVistas.ToString());
-					Console.WriteLine("Tablas "+tablas.ToString());
 					if(t.TablaRelacionada!=null && (tablas.Contiene(t.TablaRelacionada) || TablasQueEstanMasArriba.Contiene(t.TablaRelacionada))){
 						if(TablasVistas.Contiene(t.TablaRelacionada) || TablasQueEstanMasArriba.Contiene(t.TablaRelacionada)){
 							procesarTabla(t);
@@ -63,11 +57,6 @@ namespace ModeladorSql
 					if(TablasNoIncluidas.Count==1 && TablaBase==null){
 			break; // es la única tabla no unida. 
 					}
-					Console.WriteLine(" ********* Detener ******** ");
-					Console.WriteLine("TablasNoIncluidas "+TablasNoIncluidas.ToString());
-					Console.WriteLine("TablasARevisar "+TablasARevisar.ToString());
-					Console.WriteLine("TablasVistas "+TablasVistas.ToString());
-					Console.WriteLine("Tablas "+tablas.ToString());
 					Falla.Detener("FALLA AL ORDENAR EL JOIN "+TablasNoIncluidas.Count+"="+CantidadARevisar+": "+TablasNoIncluidas.ToString());
 				}else{
 					TablasARevisar=TablasNoIncluidas;

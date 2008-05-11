@@ -435,19 +435,11 @@ namespace PrModeladorSql
 			pss.SubSelect("p",pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
 				.Where(pp.cParteAnterior.EsNulo())
 				.GroupBy();
-			System.Console.WriteLine("******** que tablas aliasables *********");
-			System.Console.WriteLine(Objeto.ExpandirMiembros(pss.Tablas(QueTablas.Aliasables).ToString()));
-			System.Console.WriteLine("******** que tablas al from *********");
-			System.Console.WriteLine(Objeto.ExpandirMiembros(pss.Tablas(QueTablas.AlFrom).ToString()));
 			Piezas p=new Piezas();
 			Sentencia s=
 				new SentenciaInsert(p)
 				.Select(pss.cEmpresa,pss.cPieza, pss.cNombrePieza)
 				.Where(pss.cEmpresa.Distinto(0));
-			System.Console.WriteLine("******** que tablas aliasables *********");
-			System.Console.WriteLine(Objeto.ExpandirMiembros(s.Tablas(QueTablas.Aliasables).ToString()));
-			System.Console.WriteLine("******** que tablas al from *********");
-			System.Console.WriteLine(Objeto.ExpandirMiembros(s.Tablas(QueTablas.AlFrom).ToString()));
 			Assert.AreEqual(
 				"INSERT INTO piezas (empresa, pieza, nombrepieza)\n"+
 				" SELECT p.empresa, p.pieza, p.nombrepieza\n" +
