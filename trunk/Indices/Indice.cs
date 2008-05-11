@@ -177,16 +177,22 @@ namespace Indices
 				}
 			}
 		}
-		public void CalcularPreciosPeriodo(Calculos cal){
+		public void CalcularPreciosPeriodo(Calculos cal,bool ControlarPeriodoAnterior){
 			System.Console.WriteLine("Calculando promedios de precios e imputaciones del periodo "+cal.cPeriodo.Valor);
 			using(Ejecutador ej=new Ejecutador(db,cal)){
 				{
+					Calculos c=new Calculos();
+					if(ControlarPeriodoAnterior){
+						ej.AssertSinRegistros(
+							"El periodo tiene que tener un periodo anterior"
+							,new SentenciaSelect(c.cCalculo,c.cPeriodo,c.cPeriodoAnterior).Where(c.cPeriodoAnterior.EsNulo())
+						);
+					}
 					NovEspInf nei=new NovEspInf();
 					CalEspInf cei=new CalEspInf();
 					CalEspInf cei0=new CalEspInf();
 					cei0.LiberadaDelContextoDelEjecutador=true;
 					cei0.Alias="cei0";
-					Calculos c=new Calculos();
 					RelVar rv=new RelVar();
 					ej.Ejecutar(
 						new SentenciaInsert(cei)
@@ -413,7 +419,7 @@ AND c.calculo="+cal.cCalculo.Valor
 			Calculos cals=new Calculos();
 			string ultimoCodigoPeriodo="";
 			foreach(Calculos cal in new Calculos().Algunos(db,cals.cEsPeriodoBase.Igual(true),cals.cPeriodo.Desc())){
-				CalcularPreciosPeriodo(cal);
+				CalcularPreciosPeriodo(cal,!cal.cPeriodoAnterior.ContieneNull);
 				ultimoCodigoPeriodo=cal.cPeriodo.Valor;
 			}
 			System.Console.WriteLine("Copia del último periodo");
@@ -736,8 +742,18 @@ AND c.calculo="+cal.cCalculo.Valor
 			repo.CalcularPonderadores(T);
 		}
 		[Test]
-		public void A01CalculosBase(){
+		public void A01CalculosEstructuraBase(){
 			Calculos pAnt=repo.CrearCalculo(2001,12,0);
+			using(var ej=new Ejecutador(repo.db,pAnt)){
+				var p0=new Periodos();
+				p0.InsertarDirecto(repo.db,"a0000m00",0,0);
+				var c0=new Calculos();
+				c0.InsertarDirecto(repo.db,"a0000m00",0);
+				ej.Ejecutar(
+					new SentenciaUpdate(c0,c0.cPeriodoAnterior.Es("a0000m00"))
+				);
+			}
+			// Calculos pAnt=repo.CrearCalculo(2001,12,0);
 			Productos P100=repo.AbrirProducto("P100");
 			Productos P101=repo.AbrirProducto("P101");
 			Productos P102=repo.AbrirProducto("P102");
@@ -768,6 +784,13 @@ AND c.calculo="+cal.cCalculo.Valor
 			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A2).cIndice.Valor,Controlar.DeltaDouble);
 			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A).cIndice.Valor,Controlar.DeltaDouble);
 			repo.ExpandirEspecificacionesYVariedades();
+			using(var ej=new Ejecutador(repo.db)){
+				ej.Ejecutar(new SentenciaDelete(new CalEspInf()));
+				ej.Ejecutar(new SentenciaDelete(new CalEspTI()));
+				ej.Ejecutar(new SentenciaDelete(new CalGru()));
+				ej.Ejecutar(new SentenciaDelete(new CalProd()));
+				ej.Ejecutar(new SentenciaDelete(new CalProdTI()));
+			}
 		}
 		public void CargarPrecio(string periodo, string producto, int informante, double precio){
 			RelVar r=new RelVar();
@@ -775,7 +798,8 @@ AND c.calculo="+cal.cCalculo.Valor
 			r.InsertarValores(repo.db,r.cPeriodo.Es(periodo),r.cInformante.Es(informante),r.cProducto.Es(codvar.Producto),r.cEspecificacion.Es(codvar.Especificacion),r.cVariedad.Es(codvar.Variedad),r.cPrecio.Es(precio));
 		}
 		[Test]
-		public void A02CalculosTipoInf(){
+		public void A02CalculosMatrizBase(){
+			
 			TipoInf ti=new TipoInf();
 			ti.InsertarDirecto(repo.db,"T","S");
 			ti.InsertarDirecto(repo.db,"S","T");
@@ -806,8 +830,6 @@ AND c.calculo="+cal.cCalculo.Valor
 			c.InsertarValores(repo.db,c.cPeriodo.Es("a2002m02"),c.cEsPeriodoBase,c);
 			c.InsertarValores(repo.db,c.cPeriodo.Es("a2002m01"),c.cEsPeriodoBase,c.cPeriodoAnterior.Es("a2002m02"),c);
 			c.InsertarValores(repo.db,c.cPeriodo.Es("a2001m12"),c.cEsPeriodoBase,c.cPeriodoAnterior.Es("a2002m01"),c);
-			p.InsertarValores(repo.db,p.cPeriodo.Es("a0000m00"),p.cAno.Es(0),p.cMes.Es(0));
-			c.InsertarValores(repo.db,c.cPeriodo.Es("a0000m00"),c.cCalculo.Es(0));
 			Assert.IsTrue(c.Buscar(repo.db,"a2001m12",-1),"está el primer período");
 			Assert.IsTrue(c.Buscar(repo.db,"a2002m02",-1),"está el último período");
 			repo.CalcularMatrizBase(2);
@@ -862,11 +884,16 @@ AND c.calculo="+cal.cCalculo.Valor
 			Assert.AreEqual(2.2*(2.0/Math.Sqrt(2.0*2.60)),(double)cei1.cPromedioEspInf.Valor,Controlar.DeltaDouble);
 			ce.Leer(repo.db,"a2002m01",-1,"P100",1,"T");
 			Assert.AreEqual(Math.Pow(2.0*Math.Sqrt(3.0*3.60)*2.2*(2.0/Math.Sqrt(2.0*2.60)),1.0/3.0),(double)ce.cPromedioEsp.Valor,Controlar.DeltaDouble);
-			/*
-			ce.Leer(repo.db,"200201",-1,"P100");
-			Assert.AreEqual(Math.Sqrt(2.0*3.0),(double)ce.cPromedioEspMatchingAnterior.Valor,Controlar.DeltaDouble);
-			Assert.AreEqual(Math.Sqrt(2.0*Math.Sqrt(3.0*3.60)),(double)ce.cPromedioEspMatchingActual.Valor,Controlar.DeltaDouble);
-			*/
+		}
+		[Test]
+		public void A03CalculosMensuales(){
+			var A=new Agrupaciones();
+			A.Leer(repo.db,"A");
+			var calculos=new Calculos();
+			foreach(Calculos cal in calculos.Algunos(repo.db,calculos.cCalculo.Igual(0).And(calculos.cPeriodo.Mayor("a2")))){
+				Console.WriteLine("Calculo 0, periodo "+cal.cPeriodo.Valor);
+				repo.CalcularPreciosPeriodo(cal,true);
+			}
 		}
 		[Test]
 		public void VerCanasta(){

@@ -226,7 +226,7 @@ namespace Tareas
 			Agrupaciones agrupacion=new Agrupaciones();
 			agrupacion.Leer(repo.db,"C");
 			foreach(Calculos cal in new Calculos().Algunos(db,cals.cEsPeriodoBase.Igual(false).And(cals.cPeriodo.Distinto("a0000m00")))){
-				repo.CalcularPreciosPeriodo(cal);
+				repo.CalcularPreciosPeriodo(cal,true);
 				repo.CalcularCalGru(cal,agrupacion);
 				ultimoCodigoPeriodo=cal.cPeriodo.Valor;
 			}

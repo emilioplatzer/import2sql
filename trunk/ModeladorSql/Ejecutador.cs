@@ -41,5 +41,8 @@ namespace ModeladorSql
 			}
 			return bitacora.RegistrarSql(laSentencia.ToSql(db)+";\n");
 		}
+		public void AssertSinRegistros(string explicacion,Sentencia laSentencia){
+			db.AssertSinRegistros(explicacion,Dump(laSentencia));
+		}
 	}
 }

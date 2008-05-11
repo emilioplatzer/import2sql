@@ -85,8 +85,9 @@ namespace TodoASql
 				*/
 			    // /*
 			    ProbarIndiceD3 p=new ProbarIndiceD3();
-			    p.A01CalculosBase();
-			    p.A02CalculosTipoInf();
+			    p.A01CalculosEstructuraBase();
+			    p.A02CalculosMatrizBase();
+			    p.A03CalculosMensuales();
 			    p.VerCanasta();
 			    p.zReglasDeIntegridad();
 			    // */ 
