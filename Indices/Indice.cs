@@ -209,7 +209,7 @@ namespace Indices
 					ceiss.SubSelect("ceiss",rv.cPeriodo,ceiss.cCalculo.Es(cal.cCalculo.Valor),ceiss.cPromedioEspInf.EsPromedioGeometrico(rv.cPrecio),rv.cInformante)
 						.Where(rv.cPrecio.Mayor(Constante<double>.Cero));
 					cei.EsFkDe(ceiss);
-					if(db is BdAccess){
+					if(db is BdAccess && false){
 						/*
 						db.EliminarVistaSiExiste("RelEsp");
 						ej.ExecuteNonQuery(
@@ -241,7 +241,7 @@ AND c.calculo="+cal.cCalculo.Valor;
 					}else{
 					RelVar rv2=new RelVar();
 					rv2.Alias="rv2";
-					cei.EsFkDe(rv2,cei.cCalculo.Es(cal.cCalculo.Valor));
+					// cei.EsFkDe(rv2,cei.cCalculo.Es(cal.cCalculo.Valor),cal);
 					ej.Ejecutar( // Calcular el promedio si hay
 						new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei.SelectPromedioGeometrico(rv2.cPrecio)))
 						/*

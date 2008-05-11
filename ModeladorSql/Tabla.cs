@@ -330,23 +330,25 @@ namespace ModeladorSql
 			}
 			return rta.ToString();
 		}
-		public void EsFkDe(Tabla maestra,Fk.Tipo TipoFk,params Campo[] CamposReemplazo){
+		public void EsFkDe(Tabla maestra,Fk.Tipo TipoFk,params IConCampos[] CamposReemplazo){
 			this.TablaRelacionada=maestra;
 			int cantidadCamposFk=CamposPk().Count;
 			ListaElementos<Campo> CampoAReemplazar=new ListaElementos<Campo>();
 			ListaElementos<IExpresion> ExpresionDeReemplazo=new ListaElementos<IExpresion>();
 			ListaElementos<Campo> CampoASaltear=new ListaElementos<Campo>();
 			CamposRelacionFk=new Diccionario<Campo,IExpresion>();
-			foreach(Campo CampoReemplazo in CamposReemplazo){
-				if(CampoReemplazo!=null){
-					if(CampoReemplazo.TablaContenedora==maestra){
-						CampoAReemplazar.Add(CamposPk()[cantidadCamposFk-1]);
-						ExpresionDeReemplazo.Add(CampoReemplazo);
-					}else if(CampoReemplazo is ICampoAlias){
-						CampoAReemplazar.Add((CampoReemplazo as ICampoAlias).CampoReceptor);
-						ExpresionDeReemplazo.Add((CampoReemplazo as ICampoAlias).ExpresionBase);
-					}else if(CampoReemplazo.TablaContenedora==this){ // No es un alisa, quitar
-						CampoASaltear.Add(CampoReemplazo);
+			foreach(var t in CamposReemplazo){
+				foreach(Campo CampoReemplazo in t.Campos()){
+					if(CampoReemplazo!=null){
+						if(CampoReemplazo.TablaContenedora==maestra){
+							CampoAReemplazar.Add(CamposPk()[cantidadCamposFk-1]);
+							ExpresionDeReemplazo.Add(CampoReemplazo);
+						}else if(CampoReemplazo is ICampoAlias){
+							CampoAReemplazar.Add((CampoReemplazo as ICampoAlias).CampoReceptor);
+							ExpresionDeReemplazo.Add((CampoReemplazo as ICampoAlias).ExpresionBase);
+						}else if(CampoReemplazo.TablaContenedora==this){ // No es un alias, quitar
+							CampoASaltear.Add(CampoReemplazo);
+						}
 					}
 				}
 			}
@@ -364,7 +366,7 @@ namespace ModeladorSql
 		public void EsFkDe(Tabla maestra){
 			EsFkDe(maestra,Fk.Tipo.Sugerida,new Campo[]{});
 		}
-		public void EsFkDe(Tabla maestra,params Campo[] CampoReemplazo){
+		public void EsFkDe(Tabla maestra,params IConCampos[] CampoReemplazo){
 			EsFkDe(maestra,Fk.Tipo.Sugerida,CampoReemplazo);
 		}
 		public void UsarFk(){
