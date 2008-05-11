@@ -241,7 +241,7 @@ AND c.calculo="+cal.cCalculo.Valor;
 					}else{
 					RelVar rv2=new RelVar();
 					rv2.Alias="rv2";
-					// cei.EsFkDe(rv2,cei.cCalculo.Es(cal.cCalculo.Valor),cal);
+					cei.EsFkDe(rv2,cei.cCalculo.Es(cal.cCalculo.Valor),cal);
 					ej.Ejecutar( // Calcular el promedio si hay
 						new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei.SelectPromedioGeometrico(rv2.cPrecio)))
 						/*

@@ -351,6 +351,13 @@ namespace PrModeladorSql
 			                ,new Ejecutador(dba).Dump(su));
 			Assert.AreEqual("UPDATE piezas p\n SET costo=(SELECT EXP(AVG(LN(np.nuevoestado))) FROM novedadespiezas np WHERE np.nuevoestado>0 AND np.empresa=p.empresa AND np.piezaauxiliar=p.pieza);\n"
 			                ,new Ejecutador(dbp).Dump(su));
+			pr=new Piezas();
+			pp=new PartesPiezas();
+			pp.EsFkDe(pr,pp.cParte.Es(1));
+			su=new SentenciaUpdate(pp,pp.cCantidad.Es(pp.SelectSuma(pr.cEstado)));
+			Assert.AreEqual("UPDATE partespiezas pp\n "+
+			                "SET pp.cantidad=DSUM('estado','piezas','empresa=' & pp.empresa & ' AND pieza=''' & pp.pieza & '''');\n"
+			                ,new Ejecutador(dba).Dump(su));
 		}
 		[Test]
 		public void FkConDatos(){

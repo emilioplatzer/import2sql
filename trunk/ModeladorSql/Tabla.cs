@@ -338,8 +338,8 @@ namespace ModeladorSql
 			ListaElementos<Campo> CampoASaltear=new ListaElementos<Campo>();
 			CamposRelacionFk=new Diccionario<Campo,IExpresion>();
 			foreach(var t in CamposReemplazo){
-				foreach(Campo CampoReemplazo in t.Campos()){
-					if(CampoReemplazo!=null){
+				if(t!=null){
+					foreach(Campo CampoReemplazo in t.Campos()){
 						if(CampoReemplazo.TablaContenedora==maestra){
 							CampoAReemplazar.Add(CamposPk()[cantidadCamposFk-1]);
 							ExpresionDeReemplazo.Add(CampoReemplazo);
