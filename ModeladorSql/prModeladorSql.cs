@@ -498,5 +498,21 @@ namespace PrModeladorSql
 				)
 			);
 		}
+		[Test]
+		public void SentenciaDelete(){
+			BaseDatos db=SqLite.SinAbrir();
+			var ej=new Ejecutador(db);
+			Piezas p=new Piezas();
+			SentenciaDelete sd=new SentenciaDelete(p);
+			Assert.AreEqual(
+				"DELETE FROM piezas;\n"
+				,ej.Dump(sd)
+			);
+			sd.Where(p.cEstado.Igual(1));
+			Assert.AreEqual(
+				"DELETE FROM piezas p\n WHERE p.estado=1;\n"
+				,ej.Dump(sd)
+			);
+		}
 	}
 }

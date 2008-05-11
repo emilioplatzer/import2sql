@@ -514,6 +514,9 @@ namespace ModeladorSql
 		public static ElementoLogico Mayor<T>(this IElementoTipado<T> E1, ElementoTipado<T> E2){
 			return new BinomioRelacional<T>(E1,OperadorBinarioRelacional.Mayor,E2);
 		}
+		public static ElementoLogico Mayor<T>(this IElementoTipado<T> E1, T E2){
+			return new BinomioRelacional<T>(E1,OperadorBinarioRelacional.Mayor,new Constante<T>(E2));
+		}
 		public static ElementoLogico MayorOIgual<T>(this IElementoTipado<T> E1, T expresion){
 			return new BinomioRelacional<T>(E1,OperadorBinarioRelacional.MayorOIgual,new Constante<T>(expresion));
 		}

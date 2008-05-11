@@ -165,6 +165,7 @@ namespace ModeladorSql
 				return valor;
 			}
 		}
+		public virtual bool ContieneNull{ get{ return contieneNull; }}
 		string TipoCampoS(Type tipo){
 			if(tipo==typeof(int)){
 				return "INTEGER";

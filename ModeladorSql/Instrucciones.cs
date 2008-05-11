@@ -309,4 +309,15 @@ namespace ModeladorSql
 			return rta.ToString();
 		}
 	}
+	public class SentenciaDelete:Sentencia{
+		public SentenciaDelete(Tabla TablaBase){
+			this.TablaBase=TablaBase;
+		}
+		public override string ToSql(BaseDatos db){
+			var rta=new StringBuilder();
+			rta.Append("DELETE FROM "+TablaBase.ToSql(db));
+			rta.Append(base.ToSql(db));
+			return rta.ToString();
+		}
+	}
 }

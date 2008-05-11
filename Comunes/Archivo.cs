@@ -18,7 +18,9 @@ using NUnit.Framework;
 
 namespace Comunes
 {
+	public delegate void Accion();
 	public class Archivo{
+		public const string Eol="\r\n";
 		public static string Leer(string nombreArchivo){
 			StreamReader re = File.OpenText(nombreArchivo);
 			string rta=re.ReadToEnd();
@@ -26,17 +28,61 @@ namespace Comunes
 			return rta;
 		}
 		public static void Escribir(string nombreArchivo, string contenido){
-			StreamWriter re = File.CreateText(nombreArchivo);
+			StreamWriter re=null;
+			tratarDe("escribir en el archivo "+nombreArchivo
+			         ,"quizás el archivo "+nombreArchivo+" esté abierto y por eso el programa no lo puede pisar"
+			         ,delegate(){
+				re = File.CreateText(nombreArchivo);
+			});
 			re.Write(contenido);
 			re.Close();
 		}
 		public static void Agregar(string nombreArchivo, string contenido){
-			StreamWriter re = File.AppendText(nombreArchivo);
+			StreamWriter re=null;
+			tratarDe("agregar datos en el archivo "+nombreArchivo
+			         ,"quizás el archivo "+nombreArchivo+" esté abierto y por eso el programa no le puede agregar datos"
+			         ,delegate(){
+				re = File.AppendText(nombreArchivo);
+			});
 			re.Write(contenido);
 			re.Close();
 		}
+		public static void tratarDe(string descripcionAccion,string quizasSeExpiquePor,Accion accion){
+		reintentar:
+			string titulo="Atención";
+			var icono=System.Windows.Forms.MessageBoxIcon.Exclamation;
+			try{
+				accion();
+			}catch(System.IO.IOException ex){
+			volverMostrarCartel:
+				System.Windows.Forms.DialogResult rta=
+					System.Windows.Forms.MessageBox.Show(
+						"No se pudo "+descripcionAccion
+							+" ("+ex.Message+")"+Eol+quizasSeExpiquePor
+						,titulo
+						,System.Windows.Forms.MessageBoxButtons.AbortRetryIgnore
+						,icono
+						,System.Windows.Forms.MessageBoxDefaultButton.Button3
+					);
+				if(rta==System.Windows.Forms.DialogResult.Retry){
+					goto reintentar;
+				}
+				if(rta==System.Windows.Forms.DialogResult.Abort){
+					throw;
+				}
+				if(rta==System.Windows.Forms.DialogResult.Ignore){
+					titulo="Atención: NO SE PUEDE IGNORAR NI OMITIR ESTE MENSAJE";
+					icono=System.Windows.Forms.MessageBoxIcon.Hand;
+					goto volverMostrarCartel;
+				}
+			}
+		}
 		public static void Borrar(string nombreArchivo){
-			File.Delete(nombreArchivo);
+			tratarDe("borrar "+nombreArchivo
+			         ,"quizás el archivo esté abierto por otro programa"
+			         ,delegate(){
+				File.Delete(nombreArchivo);
+			});
 		}
 		public static bool Existe(string nombreArchivo){
 			return File.Exists(nombreArchivo);
@@ -45,10 +91,20 @@ namespace Comunes
 			return Directory.GetCurrentDirectory();
 		}
 		public static void Copiar(string ArchivoViejo,string ArchivoNuevo){
-			File.Copy(ArchivoViejo,ArchivoNuevo,false);
+			tratarDe("copiar el archivo "+ArchivoViejo+" en "+ArchivoViejo
+			         ,"quizás el archivo "+ArchivoViejo+" exista, en ese caso hay que borrarlo manualmente porque el programa no lo hace"
+			         ,delegate()
+			{
+				File.Copy(ArchivoViejo,ArchivoNuevo,false);
+			});
 		}
 		public static void CopiarPisando(string ArchivoViejo,string ArchivoNuevo){
-			File.Copy(ArchivoViejo,ArchivoNuevo,true);
+			tratarDe("copiar el archivo "+ArchivoViejo+" en "+ArchivoViejo+" (pisando éste si existe)"
+			         ,"quizás el archivo "+ArchivoViejo+" esté abierto y por eso el programa no lo puede pisar"
+			         ,delegate()
+			{
+				File.Copy(ArchivoViejo,ArchivoNuevo,true);
+			});
 		}
 	}
 }
