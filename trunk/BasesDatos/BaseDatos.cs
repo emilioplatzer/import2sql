@@ -114,7 +114,7 @@ namespace BasesDatos
 	public enum OperadorBinarioRelacional{Igual,Distinto,Mayor,Menor,MayorOIgual,MenorOIgual,Or,And}
 	public enum OperadorSufijoLogico{EsNulo,NoEsNulo}
 	public enum OperadorAgrupada{Suma,Maximo,Minimo,Promedio,PromedioGeometrico}
-	public enum OperadorFuncion{Exp,LogE,Str,Nvl}
+	public enum OperadorFuncion{Exp,LogE,Str,Nvl,PrimeraPalabra,SinPrimeraPalabra}
 	public abstract class BaseDatos:EjecutadorBaseDatos,IDisposable{
 		public enum TipoStuff { Siempre, Inteligente, Nunca };
 		public TipoStuff TipoStuffActual=TipoStuff.Inteligente;
@@ -284,7 +284,7 @@ namespace BasesDatos
 		public abstract string StuffTabla(string nombreTabla);
 		public abstract string StuffFecha(DateTime fecha);
 		public virtual string StuffCampo(string nombreCampo){ return StuffTabla(nombreCampo); }
-		public virtual bool SoportaFkMixta{ get{ return false;}} // ! OJO hay que restaurar el true
+		public virtual bool SoportaFkMixta{ get{ return true;}} 
 		public abstract bool UpdateConJoin{ get; }
 		public virtual bool UpdateSelectSumViaDSum{ get{ return false; } }
 		public virtual bool UpdateSoloUnaTabla{ get{ return false; } }

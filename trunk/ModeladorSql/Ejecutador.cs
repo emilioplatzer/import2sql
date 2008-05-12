@@ -8,6 +8,7 @@
  */
 
 using System;
+using System.Data;
 
 using Comunes;
 using BasesDatos;
@@ -30,6 +31,9 @@ namespace ModeladorSql
 		}
 		public void Ejecutar(Sentencia laSentencia){
 			base.ExecuteNonQuery(Dump(laSentencia));
+		}
+		public IDataReader EjecutarReader(Sentencia laSentencia){
+			return base.ExecuteReader(Dump(laSentencia));
 		}
 		public string Dump(Sentencia laSentencia){
 			foreach(Tabla t in laSentencia.Tablas(QueTablas.Aliasables).Keys){

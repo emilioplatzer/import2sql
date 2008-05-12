@@ -20,7 +20,7 @@ namespace ModeladorSql
 		public bool EsPk;
 		public bool Obligatorio;
 		public Tabla TablaContenedora;
-		public string DireccionOrderBy;
+		public string DireccionOrderBy="";
 		public abstract bool EsNumerico{ get; }
 		public Lista<Campo> Campos(){
 			return new Lista<Campo>(this);

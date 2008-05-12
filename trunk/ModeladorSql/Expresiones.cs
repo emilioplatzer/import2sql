@@ -549,5 +549,11 @@ namespace ModeladorSql
 		public static CampoAlias<int> EsCount(this CampoTipo<int> este,IExpresion expresion){
 			return este.Es(new FuncionCount(expresion));
 		}
+		public static IElementoTipado<string> PrimeraPalabra(this IElementoTipado<string> E1){
+			return new OperacionFuncion<string, string>(E1,OperadorFuncion.PrimeraPalabra);
+		}
+		public static IElementoTipado<string> SinPrimeraPalabra(this IElementoTipado<string> E1){
+			return new OperacionFuncion<string, string>(E1,OperadorFuncion.SinPrimeraPalabra);
+		}
 	}
 }

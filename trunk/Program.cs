@@ -83,7 +83,8 @@ namespace TodoASql
 				Console.Write("presione cualquier tecla . . . ");
 				System.Windows.Forms.MessageBox.Show("Listo");
 				*/
-			    // /*
+				// new Tareas.PrComparacionPadrones().PrExacta();
+			    /*
 			    ProbarIndiceD3 p=new ProbarIndiceD3();
 			    p.A01CalculosEstructuraBase();
 			    p.A02CalculosMatrizBase();
