@@ -263,7 +263,7 @@ INNER JOIN calespti ca ON c.periodo=ca.periodo AND c.calculo=ca.calculo AND c.pr
 INNER JOIN calculos calc ON c.periodo=calc.periodo AND c.calculo=calc.calculo)
 INNER JOIN calespinf cal ON calc.periodoanterior=cal.periodo AND c.calculo=cal.calculo AND c.producto=cal.producto AND c.especificacion=cal.especificacion AND c.informante=cal.informante
 SET c.promedioespinf=ca.promedioespmatchingactual/(ca.promedioespmatchinganterior/(cal.promedioespinf)),
-c.imputacionespinf='IO'
+c.imputacionespinf='IOTI'
 WHERE c.promedioespinf IS NULL
 AND calc.periodoanterior=cal.periodo
 AND calc.calculo=cal.calculo
@@ -362,15 +362,6 @@ AND c.calculo="+cal.cCalculo.Valor
 				ultimoCodigoPeriodo=cal.cPeriodo.Valor;
 			}
 			System.Console.WriteLine("Copia del último periodo");
-			if(false){	// Copia del 'ultimo periodo
-				new Ejecutador(db).ExecuteNonQuery(
-					@"INSERT INTO CalEspInf
-					   SELECT 'a0000m00' as periodo,0 as calculo,producto,especificacion,informante,tipoinformante,promedioespinf,imputacionespinf
-					     FROM CalEspInf
-					     WHERE periodo='"+ultimoCodigoPeriodo+@"' AND calculo=-1
-					"
-				);
-			}
 			var calu=new Calculos();
 			calu.Leer(db,ultimoCodigoPeriodo,-1);
 			using(var ej=new Ejecutador(db,calu)){
@@ -395,12 +386,6 @@ AND c.calculo="+cal.cCalculo.Valor
 					.Select(cp0.cPeriodo.Es(cal0.cPeriodo.Valor),cp0.cCalculo.Es(cal0.cCalculo.Valor),cp0)
 				);
 			}
-			/*
-			db.EjecutrarSecuencia(
-				@"INSERT INTO calgru SELECT 'a0000m00' as periodo, 0 as calculo, agrupacion, grupo, 100 as indice, 1 as factor FROM grupos;"+
-				@"INSERT INTO calprod SELECT 'a0000m00' as periodo, 0 as calculo, producto, promedioprod FROM calprod WHERE periodo='"+ultimoCodigoPeriodo+"' and calculo=-1"
-			);
-			*/
 		}
 		public void ReglasDeIntegridad(){
 			db.AssertSinRegistros(
@@ -696,6 +681,7 @@ AND c.calculo="+cal.cCalculo.Valor
 			Productos P100=new Productos(); P100.InsertarDirecto(db,"P100");
 			Productos P101=repo.CrearProducto("P101");
 			Productos P102=repo.CrearProducto("P102");
+			Productos P103=repo.CrearProducto("P103");
 			Agrupaciones A=repo.CrearAgrupacion("A");
 			Grupos A1=repo.CrearGrupo("A1",A,60);
 			Grupos A2=repo.CrearGrupo("A2",A,40);
@@ -704,6 +690,7 @@ AND c.calculo="+cal.cCalculo.Valor
 			repo.CrearHoja(P100,A1,60);
 			repo.CrearHoja(P101,A1,40);
 			repo.CrearHoja(P102,A2,100);
+			repo.CrearHoja(P103,A2,100);
 			repo.CrearHoja(P100,TU,60);
 			repo.CrearHoja(P101,TU,40);
 			repo.CrearHoja(P102,TU,100);
@@ -726,6 +713,7 @@ AND c.calculo="+cal.cCalculo.Valor
 			Productos P100=repo.AbrirProducto("P100");
 			Productos P101=repo.AbrirProducto("P101");
 			Productos P102=repo.AbrirProducto("P102");
+			Productos P103=repo.AbrirProducto("P103");
 			Agrupaciones A=repo.AbrirAgrupacion("A");
 			repo.RegistrarPromedio(pAnt,P100,2.0);
 			repo.RegistrarPromedio(pAnt,P101,10.0);
@@ -801,12 +789,21 @@ AND c.calculo="+cal.cCalculo.Valor
 			c.InsertarValores(repo.db,c.cPeriodo.Es("a2001m12"),c.cEsPeriodoBase,c.cPeriodoAnterior.Es("a2002m01"),c);
 			Assert.IsTrue(c.Buscar(repo.db,"a2001m12",-1),"está el primer período");
 			Assert.IsTrue(c.Buscar(repo.db,"a2002m02",-1),"está el último período");
+			// Producto P103 con imputación por Otros
+			inf.InsertarDirecto(repo.db,101,"","S");
+			CargarPrecio("a2001m12","P103"	,1,50.0);
+			CargarPrecio("a2002m01","P103"	,1,55.0);
+			CargarPrecio("a2002m02","P103"	,1,60.0);
+			CargarPrecio("a2001m12","P103"	,101,60.0);
+			CargarPrecio("a2002m02","P103"	,101,60.0);
 			repo.CalcularMatrizBase(2);
-			object[,] esperado={
+			object[,] esperado={ // Novedades (o sea altas del periodo base para el retroceso)
 				{"a2002m01","P100"	,4},
 				{"a2002m01","P101"	,2},
 				{"a2002m02","P100"	,1},
-				{"a2002m02","P100"	,2}
+				{"a2002m02","P100"	,2},
+				{"a2002m02","P103"	,1},
+				{"a2002m02","P103"	,101}
 			};
 			int cantidad=0;
 			foreach(NovEspInf n in new NovEspInf().Todos(repo.db)){
@@ -818,17 +815,23 @@ AND c.calculo="+cal.cCalculo.Valor
 				cantidad++;
 			}
 			Assert.AreEqual(esperado.GetLength(0),cantidad,"cantidad de registros vistos");
-			object[,] esperado2={
+			object[,] esperado2={ // precios sin imputaciones en el periodo base en retroceso
 				{"a2001m12","P100"	,1,2.0},
 				{"a2001m12","P100"	,2,2.0},
 				{"a2001m12","P100"	,4,3.0},
 				{"a2001m12","P101"	,2,12.2},
+				{"a2001m12","P103"	,1,50.0},
+				{"a2001m12","P103"	,101,60.0},
 				{"a2002m01","P100"	,1,2.0},
 				{"a2002m01","P100"	,2,null},
 				{"a2002m01","P100"	,4,Math.Sqrt(3.0*3.60)},
 				{"a2002m01","P101"	,2,12.2},
+				{"a2002m01","P103"	,1,55.0},
+				{"a2002m01","P103"	,101,null},
 				{"a2002m02","P100"	,1,Math.Sqrt(2.0*2.60)},
-				{"a2002m02","P100"	,2,2.2}};
+				{"a2002m02","P100"	,2,2.2},
+				{"a2002m02","P103"	,1,60.0},
+				{"a2002m02","P103"	,101,60.0}};
 			cantidad=0;
 			CalEspInf ceis=new CalEspInf();
 			foreach(CalEspInf cei in ceis.Algunos(repo.db,ceis.cCalculo.Igual(-1))){
@@ -838,7 +841,9 @@ AND c.calculo="+cal.cCalculo.Valor
 				Assert.AreEqual(esperado2[cantidad,0],cei.cPeriodo.Valor);
 				Assert.AreEqual(esperado2[cantidad,1],new CodigoVariedad(cei.cProducto.Valor,cei.cEspecificacion.Valor).ToString());
 				Assert.AreEqual(-1,cei.cCalculo.Valor);
-				if(cantidad!=5){ // 5 es nulo
+				if(esperado2[cantidad,3]==null){ 
+					// el valor está imputado
+				}else{
 					Assert.AreEqual((double)esperado2[cantidad,3],(double)cei.cPromedioEspInf.Valor,Controlar.DeltaDouble);
 				}
 				cantidad++;
@@ -851,6 +856,8 @@ AND c.calculo="+cal.cCalculo.Valor
 			CalEspInf cei1=new CalEspInf();
 			cei1.Leer(repo.db,"a2002m01",-1,"P100",1,2);
 			Assert.AreEqual(2.2*(2.0/Math.Sqrt(2.0*2.60)),(double)cei1.cPromedioEspInf.Valor,Controlar.DeltaDouble);
+			cei1.Leer(repo.db,"a2002m01",-1,"P103",1,101);
+			Assert.AreEqual("IOTI",cei1.cImputacionEspInf.Valor);
 			ce.Leer(repo.db,"a2002m01",-1,"P100",1,"T");
 			Assert.AreEqual(Math.Pow(2.0*Math.Sqrt(3.0*3.60)*2.2*(2.0/Math.Sqrt(2.0*2.60)),1.0/3.0),(double)ce.cPromedioEsp.Valor,Controlar.DeltaDouble);
 		}
