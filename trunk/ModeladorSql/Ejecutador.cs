@@ -33,7 +33,7 @@ namespace ModeladorSql
 		}
 		public string Dump(Sentencia laSentencia){
 			foreach(Tabla t in laSentencia.Tablas(QueTablas.Aliasables).Keys){
-				bitacora.Registrar("Tabla alias "+t.NombreTabla+","+t.Alias+","+t.AliasActual);
+				// bitacora.Registrar("Tabla alias "+t.NombreTabla+","+t.Alias+","+t.AliasActual);
 				t.AliasActual=t.Alias;
 				if(!t.LiberadaDelContextoDelEjecutador){
 					t.CamposContexto=CamposContexto;

@@ -218,7 +218,7 @@ namespace Indices
 					cei1.EsFkDe(cei0,cei1.cPeriodo.Es(c.cPeriodo));
 					ej.Ejecutar( // Calcular los relativos de imputación
 					    new SentenciaInsert(ce)
-					    .Select(c,cei1,i.cTipoInformante,ce.cPromedioEspMatchingActual.EsPromedioGeometrico(cei1.cPromedioEspInf),
+					    .Select(c,cei1,ce.cPromedioEspMatchingActual.EsPromedioGeometrico(cei1.cPromedioEspInf),
 					            ce.cPromedioEspMatchingAnterior.EsPromedioGeometrico(cei0.cPromedioEspInf))
 					    .Where(c.SiguienteDe(cei0),cei1.cPromedioEspInf.Mayor(Constante<double>.Cero),cei0.cPromedioEspInf.Mayor(Constante<double>.Cero))
 					);
@@ -226,15 +226,16 @@ namespace Indices
 				{ // Imputación 
 					CalEspInf cei=new CalEspInf();
 					cei.UsarFk();
-					Informantes i=cei.fkInformantes;
+					// Informantes i=cei.fkInformantes;
 					CalEspTI ce=new CalEspTI();
 					Calculos c=new Calculos();
 					CalEspInf cei0=new CalEspInf();
-					ce.EsFkDe(cei,ce.cTipoInformante.Es(i.cTipoInformante));
+					cei0.Alias="cei0";
+					ce.EsFkDe(cei); // ,ce.cTipoInformante.Es(i.cTipoInformante));
 					c.EsFkDe(cei);
 					cei0.EsFkDe(cei,cei0.cPeriodo.Es(c.cPeriodoAnterior));
 					cei0.LiberadaDelContextoDelEjecutador=true;
-					if(db is BdAccess && false){
+					if(db is BdAccess){
 						ej.ExecuteNonQuery(
 							@"UPDATE (((calespinf c INNER JOIN informantes i ON c.informante=i.informante) 
 INNER JOIN calespti ca ON c.periodo=ca.periodo AND c.calculo=ca.calculo AND c.producto=ca.producto AND c.especificacion=ca.especificacion AND i.tipoinformante=ca.tipoinformante)
@@ -264,7 +265,10 @@ AND c.calculo="+cal.cCalculo.Valor
 					}else{
 					ej.Ejecutar(
 						new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei0.cPromedioEspInf.Por(ce.cPromedioEspMatchingActual.Dividido(ce.cPromedioEspMatchingAnterior))))
-						.Where(cei.cPromedioEspInf.EsNulo())
+						.Where(cei.cPromedioEspInf.EsNulo()
+						       // ,i.cInformante.Igual(i.cInformante)
+						       ,c.cPeriodo.Igual(c.cPeriodo) // OJO condiciones dummy para que coloque las tablas en el FROM
+						      )
 					);
 					}
 				}
@@ -287,8 +291,8 @@ AND c.calculo="+cal.cCalculo.Valor
 					CalEspTI ce=new CalEspTI();
 					CalEspInf cei=new CalEspInf();
 					cei.UsarFk();
-					Informantes i=cei.fkInformantes;
-					ce.EsFkDe(cei,ce.cTipoInformante.Es(i.cTipoInformante));
+					// Informantes i=cei.fkInformantes;
+					ce.EsFkDe(cei); // ,ce.cTipoInformante.Es(i.cTipoInformante));
 					ej.Ejecutar(
 						new SentenciaUpdate(ce,ce.cPromedioEsp.Es(ce.SelectPromedioGeometrico(cei.cPromedioEspInf)))
 					);
@@ -645,7 +649,7 @@ AND c.calculo="+cal.cCalculo.Valor
 		public ProbarIndiceD3(){
 			BaseDatos db;
 			#pragma warning disable 162
-			switch(3){ // No anda con sqlite hasta que no implemente EXP 
+			switch(1){ // No anda con sqlite hasta que no implemente EXP 
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					repo=new RepositorioPruebaIndice(db);
@@ -747,7 +751,6 @@ AND c.calculo="+cal.cCalculo.Valor
 		}
 		[Test]
 		public void A02CalculosMatrizBase(){
-			
 			TipoInf ti=new TipoInf();
 			ti.InsertarDirecto(repo.db,"T","S");
 			ti.InsertarDirecto(repo.db,"S","T");
