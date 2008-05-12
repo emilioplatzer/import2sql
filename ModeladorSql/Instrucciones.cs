@@ -145,6 +145,7 @@ namespace ModeladorSql
 	public class SentenciaSelect:Sentencia{
 		public ElementosClausulaSelect ClausulaSelect;
 		public ElementosClausulaHaving ClausulaHaving;
+		public ListaElementos<Campo> ListaOrderBy=new ListaElementos<Campo>();
 		public bool ConGroupBy;
 		public bool EsInterno;
 		public SentenciaSelect(){
@@ -156,6 +157,10 @@ namespace ModeladorSql
 			:this()
 		{
 			ClausulaSelect.AddRange(campos);
+		}
+		public SentenciaSelect OrderBy(params Campo[] campos){
+			ListaOrderBy.AddRange(campos);
+			return this;
 		}
 		public override string ToSql(BaseDatos db){
 			StringBuilder rta=new StringBuilder();
@@ -186,6 +191,10 @@ namespace ModeladorSql
 			Separador havingComa=new Separador("\n HAVING ","\n AND ").AnchoLimitadoConIdentacion();
 			foreach(IExpresion e in ClausulaHaving){
 				havingComa.AgregarEn(rta,e.ToSql(db));
+			}
+			Separador orderByComa=new Separador("\n ORDER BY ",", ").AnchoLimitadoConIdentacion();
+			foreach(Campo c in ListaOrderBy){
+				orderByComa.AgregarEn(rta,c.ToSql(db)+c.DireccionOrderBy);
 			}
 			return rta.ToString();
 		}

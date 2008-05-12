@@ -8,12 +8,14 @@
  */
 
 using System;
+using System.Data;
+using System.Data.Common;
 using NUnit.Framework;
 
 using Comunes;
 using BasesDatos;
 using ModeladorSql;
-
+	
 namespace Tareas
 {
 	public class TablaTmp:Tabla{
@@ -85,7 +87,7 @@ namespace Tareas
 		ComparacionPadrones cp;
 		public PrComparacionPadrones(){
 			#pragma warning disable 162
-			switch(3){ // Solo se va a tomar un camino
+			switch(1){ // Solo se va a tomar un camino
 				case 1:
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					cp=new ComparacionPadrones(db);
@@ -126,7 +128,7 @@ namespace Tareas
 			Assert.AreEqual(viejosCoincidentes.Length,item,"Debe coincidir la cantidad");
 		}
 		[Test]
-		public void PrExacta(){
+		public void Pr01Exacta(){
 			string[] viejos={"San Martín","Belgrano","Corrientes","No esta"," distinta "};
 			string[] nuevos={"San Martín","Belgrano","Corrientes","Tampoco esta","distinta"};
 			string[] coinciden={"Belgrano","Corrientes","San Martín"};
@@ -134,6 +136,33 @@ namespace Tareas
 			cp.AsignacionExacta();
 			CompararCoincidencias(coinciden,coinciden);
 			cp.SepararPalabras();
+		}
+		[Test]
+		public void Pr02ExtraccionPalabras(){
+			var n=new ComparacionPadrones.Nombres();
+			using(var ej=new Ejecutador(db)){
+				var cPrimeraPalabra=new CampoDestino<string>("primerapalabra");
+				var cSinPrimeraPalabra=new CampoDestino<string>("sinprimerapalabra");
+				IDataReader dr=ej.EjecutarReader(
+					new SentenciaSelect(n.cNombre
+					                    ,cPrimeraPalabra.Es(n.cNombre.PrimeraPalabra())
+					                    ,cSinPrimeraPalabra.Es(n.cNombre.SinPrimeraPalabra())
+					                   )
+					.Where(n.cConjunto.Igual("viejo"))
+					.OrderBy(n.cNombre)
+				);
+				dr.Read();
+				Assert.AreEqual(" distinta ",dr["nombre"]);
+				Assert.AreEqual("distinta",dr["primerapalabra"]);
+				Assert.IsNull(dr["sinprimerapalabra"]);
+				dr.Read();
+				Assert.AreEqual("Belgrano",dr["primerapalabra"]);
+				Assert.IsNull(dr["sinprimerapalabra"]);
+				dr.Read();
+				dr.Read();
+				Assert.AreEqual("No",dr["primerapalabra"]);
+				Assert.AreEqual("esta",dr["sinprimerapalabra"]);
+			}
 		}
 	}
 }
