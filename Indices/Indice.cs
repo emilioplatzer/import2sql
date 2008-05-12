@@ -362,7 +362,7 @@ AND c.calculo="+cal.cCalculo.Valor
 				ultimoCodigoPeriodo=cal.cPeriodo.Valor;
 			}
 			System.Console.WriteLine("Copia del último periodo");
-			{	// Copia del 'ultimo periodo
+			if(false){	// Copia del 'ultimo periodo
 				new Ejecutador(db).ExecuteNonQuery(
 					@"INSERT INTO CalEspInf
 					   SELECT 'a0000m00' as periodo,0 as calculo,producto,especificacion,informante,tipoinformante,promedioespinf,imputacionespinf
@@ -371,11 +371,36 @@ AND c.calculo="+cal.cCalculo.Valor
 					"
 				);
 			}
-			System.Console.WriteLine("Periodo base = 100");
+			var calu=new Calculos();
+			calu.Leer(db,ultimoCodigoPeriodo,-1);
+			using(var ej=new Ejecutador(db,calu)){
+				var cal0=new Calculos();
+				cal0.Leer(db,"a0000m00",0);
+				var cei=new CalEspInf();
+				var cei0=new CalEspInf();
+				ej.Ejecutar(
+					new SentenciaInsert(cei)
+					.Select(cei.cPeriodo.Es(cal0.cPeriodo.Valor),cei.cCalculo.Es(cal0.cCalculo.Valor),cei0)
+				);
+				System.Console.WriteLine("Periodo base = 100");
+				var cg=new CalGru();
+				var g=new Grupos();
+				var cp0=new CalProd();
+				ej.Ejecutar(
+					new SentenciaInsert(cg)
+					.Select(cg.cPeriodo.Es(cal0.cPeriodo.Valor),cg.cCalculo.Es(cal0.cCalculo.Valor),cg.cIndice.Es(100.0),cg.cFactor.Es(1.0),g)
+				);
+				ej.Ejecutar(
+					new SentenciaInsert(cp0)
+					.Select(cp0.cPeriodo.Es(cal0.cPeriodo.Valor),cp0.cCalculo.Es(cal0.cCalculo.Valor),cp0)
+				);
+			}
+			/*
 			db.EjecutrarSecuencia(
 				@"INSERT INTO calgru SELECT 'a0000m00' as periodo, 0 as calculo, agrupacion, grupo, 100 as indice, 1 as factor FROM grupos;"+
 				@"INSERT INTO calprod SELECT 'a0000m00' as periodo, 0 as calculo, producto, promedioprod FROM calprod WHERE periodo='"+ultimoCodigoPeriodo+"' and calculo=-1"
 			);
+			*/
 		}
 		public void ReglasDeIntegridad(){
 			db.AssertSinRegistros(
