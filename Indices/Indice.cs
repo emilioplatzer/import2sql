@@ -432,6 +432,11 @@ AND c.calculo="+cal.cCalculo.Valor
 					"
 				);
 			}
+			System.Console.WriteLine("Periodo base = 100");
+			db.EjecutrarSecuencia(
+				@"INSERT INTO calgru SELECT 'a0000m00' as periodo, 0 as calculo, agrupacion, grupo, 100 as indice, 1 as factor FROM grupos;"+
+				@"INSERT INTO calprod SELECT 'a0000m00' as periodo, 0 as calculo, producto, promedioprod FROM calprod WHERE periodo='"+ultimoCodigoPeriodo+"' and calculo=-1"
+			);
 		}
 		public void ReglasDeIntegridad(){
 			db.AssertSinRegistros(
@@ -864,7 +869,7 @@ AND c.calculo="+cal.cCalculo.Valor
 			CalEspInf ceis=new CalEspInf();
 			foreach(CalEspInf cei in ceis.Algunos(repo.db,ceis.cCalculo.Igual(-1))){
 				Assert.IsTrue(cantidad<esperado2.GetLength(0),"Hay resultados de más");
-				System.Console.WriteLine("Registro {0}={1}",cantidad,cei.MostrarCampos());
+				// System.Console.WriteLine("Registro {0}={1}",cantidad,cei.MostrarCampos());
 				Assert.AreEqual(esperado2[cantidad,2],cei.cInformante.Valor);
 				Assert.AreEqual(esperado2[cantidad,0],cei.cPeriodo.Valor);
 				Assert.AreEqual(esperado2[cantidad,1],new CodigoVariedad(cei.cProducto.Valor,cei.cEspecificacion.Valor).ToString());
@@ -893,6 +898,7 @@ AND c.calculo="+cal.cCalculo.Valor
 			foreach(Calculos cal in calculos.Algunos(repo.db,calculos.cCalculo.Igual(0).And(calculos.cPeriodo.Mayor("a2")))){
 				Console.WriteLine("Calculo 0, periodo "+cal.cPeriodo.Valor);
 				repo.CalcularPreciosPeriodo(cal,true);
+				repo.CalcularCalGru(cal,A);
 			}
 			var cp=new CalProd();
 			cp.Leer(repo.db,"a2001m12",0,"P100");
@@ -930,6 +936,27 @@ AND c.calculo="+cal.cCalculo.Valor
 				,cp.cPromedioProd.Valor,
 				Controlar.DeltaDouble
 			);
+			var cg=new CalGru();
+			cg.Leer(repo.db,"a2001m12",0,"A","A");
+			Assert.AreEqual(100.0,cg.cIndice.Valor);
+			cg.Leer(repo.db,"a2002m01",0,"A","P101");
+			Assert.AreEqual(100.0,cg.cIndice.Valor);
+			cg.Leer(repo.db,"a2002m01",0,"A","P100");
+			Assert.AreEqual(100.0*Math.Pow(2.0*2.0*razonImp12a1_P100*Math.Sqrt(3.0*3.60),1.0/3.0)
+							/Math.Pow(2.0*2.0*3.0,1.0/3.0)
+			                ,cg.cIndice.Valor
+			               ,Controlar.DeltaDouble);
+			cg.Leer(repo.db,"a2002m01",0,"A","A1");
+			Assert.AreEqual(100.0*Math.Pow(2.0*2.0*razonImp12a1_P100*Math.Sqrt(3.0*3.60),1.0/3.0)
+			                         /Math.Pow(2.0*2.0*3.0,1.0/3.0)*0.36/0.6+
+			                         100*0.24/0.6
+			                ,cg.cIndice.Valor
+			               ,Controlar.DeltaDouble);
+			cg.Leer(repo.db,"a2002m02",0,"A","P100");
+			Assert.AreEqual(100.0*Math.Pow(Math.Sqrt(2.0*2.60)*2.2*Math.Sqrt(3.0*3.60)*razonImp1a2_P100,1.0/3.0)
+							/Math.Pow(2.0*2.0*3.0,1.0/3.0)
+			                ,cg.cIndice.Valor
+			               ,Controlar.DeltaDouble);
 		}
 		[Test]
 		public void VerCanasta(){
