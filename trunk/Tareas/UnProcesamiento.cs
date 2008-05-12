@@ -216,11 +216,6 @@ namespace Tareas
 			);
 			}
 			repo.CalcularMatrizBase(2);
-			System.Console.WriteLine("Periodo base = 100");
-			db.EjecutrarSecuencia(
-				@"INSERT INTO calgru SELECT 'a0000m00' as periodo, 0 as calculo, agrupacion, grupo, 100 as indice, 1 as factor FROM grupos;"+
-				@"INSERT INTO calprod SELECT 'a0000m00' as periodo, 0 as calculo, producto, promedioprod FROM calprod WHERE periodo='a2008m04s1' and calculo=-1"
-			);
 			Calculos cals=new Calculos();
 			string ultimoCodigoPeriodo="";
 			Agrupaciones agrupacion=new Agrupaciones();
