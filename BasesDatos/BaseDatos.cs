@@ -284,7 +284,7 @@ namespace BasesDatos
 		public abstract string StuffTabla(string nombreTabla);
 		public abstract string StuffFecha(DateTime fecha);
 		public virtual string StuffCampo(string nombreCampo){ return StuffTabla(nombreCampo); }
-		public virtual bool SoportaFkMixta{ get{ return true;}}
+		public virtual bool SoportaFkMixta{ get{ return false;}} // ! OJO hay que restaurar el true
 		public abstract bool UpdateConJoin{ get; }
 		public virtual bool UpdateSelectSumViaDSum{ get{ return false; } }
 		public virtual bool UpdateSoloUnaTabla{ get{ return false; } }
