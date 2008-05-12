@@ -58,15 +58,6 @@ namespace Indices
 			:base(db,paramPlanos)
 		{
 		}
-		/*
-		protected override string AdaptarSentecia(TodoASql.SentenciaSql sentencia)
-		{
-			return base.AdaptarSentecia(
-				sentencia.ToString()
-				.Replace("grupos#filtro","grupos.agrupacion={agrupacion}")
-			);
-		}
-		*/
 	}
 	public class RepositorioIndice:Repositorio
 	{
@@ -243,7 +234,7 @@ namespace Indices
 					c.EsFkDe(cei);
 					cei0.EsFkDe(cei,cei0.cPeriodo.Es(c.cPeriodoAnterior));
 					cei0.LiberadaDelContextoDelEjecutador=true;
-					if(db is BdAccess){
+					if(db is BdAccess && false){
 						ej.ExecuteNonQuery(
 							@"UPDATE (((calespinf c INNER JOIN informantes i ON c.informante=i.informante) 
 INNER JOIN calespti ca ON c.periodo=ca.periodo AND c.calculo=ca.calculo AND c.producto=ca.producto AND c.especificacion=ca.especificacion AND i.tipoinformante=ca.tipoinformante)
@@ -272,7 +263,7 @@ AND c.calculo="+cal.cCalculo.Valor
 						);
 					}else{
 					ej.Ejecutar(
-						new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(ce.cPromedioEspMatchingActual.Dividido(ce.cPromedioEspMatchingAnterior.Dividido(cei0.cPromedioEspInf))))
+						new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei0.cPromedioEspInf.Por(ce.cPromedioEspMatchingActual.Dividido(ce.cPromedioEspMatchingAnterior))))
 						.Where(cei.cPromedioEspInf.EsNulo())
 					);
 					}
