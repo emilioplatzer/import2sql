@@ -215,46 +215,12 @@ namespace Indices
 					ceiss.SubSelect("ceiss",rv.cPeriodo,ceiss.cCalculo.Es(cal.cCalculo.Valor),ceiss.cPromedioEspInf.EsPromedioGeometrico(rv.cPrecio),rv.cInformante)
 						.Where(rv.cPrecio.Mayor(Constante<double>.Cero));
 					cei.EsFkDe(ceiss);
-					if(db is BdAccess && false){
-						/*
-						db.EliminarVistaSiExiste("RelEsp");
-						ej.ExecuteNonQuery(
-						@"create view RelEsp as
-SELECT r.periodo, "+cal.cCalculo.Valor+@" AS calculo, EXP(AVG(LOG(r.precio))) AS promedio, r.informante, v.especificacion FROM relvar r, variedades v WHERE r.precio>0 AND v.variedad=r.variedad GROUP BY r.periodo, r.informante, v.especificacion
-						"
-						);
-						*/
-						string sUpdateImputados=@"UPDATE calespinf c SET c.promedioEspInf=
-iif(DAVG('LOG(precio)','RelVar','precio>0 AND periodo=''' & c.periodo & ''' AND producto=''' & c.producto & ''' AND especificacion=' & c.especificacion & ' AND informante=' & c.informante & '') is null, null, 
-EXP(DAVG('LOG(precio)','RelVar','precio>0 AND periodo=''' & c.periodo & ''' AND producto=''' & c.producto & ''' AND especificacion=' & c.especificacion & ' AND informante=' & c.informante & ''))),
-c.ImputacionEspInf='R' & DCOUNT('precio','RelVar','precio>0 AND periodo=''' & c.periodo & ''' AND producto=''' & c.producto & ''' AND especificacion=' & c.especificacion & ' AND informante=' & c.informante & '')
-WHERE c.periodo='"+cal.cPeriodo.Valor+@"'
-AND c.calculo="+cal.cCalculo.Valor;
-						#pragma warning disable 162
-						if("todo junto"=="no"){
-							ej.ExecuteNonQuery(
-								sUpdateImputados
-							);
-						}else{
-							Productos ps=new Productos();
-							foreach(Productos p in ps.Todos(db)){
-								ej.ExecuteNonQuery(
-									sUpdateImputados+" AND c.producto='"+p.cProducto.Valor+"'"
-								);
-							}
-						}
-						#pragma warning restore 162
-					}else{
 					RelVar rv2=new RelVar();
 					rv2.Alias="rv2";
 					cei.EsFkDe(rv2,cei.cCalculo.Es(cal.cCalculo.Valor),cal);
 					ej.Ejecutar( // Calcular el promedio si hay
 						new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei.SelectPromedioGeometrico(rv2.cPrecio)))
-						/*
-						new SentenciaUpdate(cei,cei.cPromedioEspInf.Set(cei.SelectSuma(ceiss.cPromedioEspInf)))
-						*/
 					);
-					}
 					CalEspTI ce=new CalEspTI();
 					CalEspInf cei1=new CalEspInf();
 					cei1.UsarFk();
@@ -332,26 +298,9 @@ AND c.calculo="+cal.cCalculo.Valor
 					cei.UsarFk();
 					Informantes i=cei.fkInformantes;
 					ce.EsFkDe(cei,ce.cTipoInformante.Es(i.cTipoInformante));
-					if(db is BdAccess){
-						/*
-						db.EliminarVistaSiExiste("CalEspInf_TI");
-						ej.ExecuteNonQuery(
-						@"create view CalEspInf_TI as
-						select c.periodo, c.calculo, c.especificacion, c.promedioespinf, i.tipoinformante from calespinf c inner join informantes i on c.informante=i.informante
-						"
-						);
-						*/
-						ej.ExecuteNonQuery(
-							@"UPDATE calespti AS c SET c.promedioesp = 
-							iif(DAvg('log(promedioespinf)','CalEspInf','promedioespinf>0 AND periodo=''' & periodo & ''' AND calculo=' & calculo & ' AND producto=''' & c.producto & ''' AND especificacion=' & c.especificacion & ' AND tipoinformante=''' & c.tipoinformante & '''') is null, null, 
-							Exp(DAvg('log(promedioespinf)','CalEspInf','promedioespinf>0 AND periodo=''' & periodo & ''' AND calculo=' & calculo & ' AND producto=''' & c.producto & ''' AND especificacion=' & c.especificacion & ' AND tipoinformante=''' & c.tipoinformante & '''')))
-							WHERE c.periodo='"+cal.cPeriodo.Valor+@"' AND c.calculo="+cal.cCalculo.Valor
-						);
-					}else{
 					ej.Ejecutar(
 						new SentenciaUpdate(ce,ce.cPromedioEsp.Es(ce.SelectPromedioGeometrico(cei.cPromedioEspInf)))
 					);
-					}
 				}
 				if(cal.cCalculo.Valor==-1){
 					ProdTipoInf pit=new ProdTipoInf();
@@ -364,7 +313,6 @@ AND c.calculo="+cal.cCalculo.Valor
 						.Select(ce,pit.cPonderadorTI.Es(1.0))
 						.Where(pit0.NoExistePara(ce))
 						.GroupBy()
-						// .Where(pit0.NoExistePara(e.cProducto,ce.cTipoInformante))
 					);
 				}
 				{
