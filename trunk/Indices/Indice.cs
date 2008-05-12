@@ -321,20 +321,11 @@ AND c.calculo="+cal.cCalculo.Valor
 					ce.UsarFk();
 					Especificaciones e=ce.fkEspecificaciones;
 					ct.EsFkDe(ce,ct.cProducto.Es(e.cProducto));
-					if(db is BdAccess){
-						ej.ExecuteNonQuery(
-							@"INSERT INTO calprodti (periodo, calculo, producto, tipoinformante, promedioprodti) 
-							 SELECT c.periodo, c.calculo, c.producto, c.tipoinformante, 
-							 iif(AVG(LOG(c.promedioesp)) is null,null,EXP(AVG(LOG(c.promedioesp)))) AS promedioprodti
-							 FROM calespti c WHERE c.promedioesp>0 AND c.periodo='"+cal.cPeriodo.Valor+@"' AND c.calculo="+cal.cCalculo.Valor+@"
-							 GROUP BY c.periodo, c.calculo, c.producto, c.tipoinformante
-						");
-					}else{
 					ej.Ejecutar(
 						new SentenciaInsert(ct)
 						.Select(ce,e,ct.cPromedioProdTI.EsPromedioGeometrico(ce.cPromedioEsp))
+						.Where(ce.cPromedioEsp.Mayor(0.0))
 					);
-					}
 				}
 				{
 					CalProd cp=new CalProd();
