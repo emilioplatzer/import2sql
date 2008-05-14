@@ -263,13 +263,24 @@ AND c.periodo='"+cal.cPeriodo.Valor+@"'
 AND c.calculo="+cal.cCalculo.Valor
 						);
 					}else{
-					ej.Ejecutar(
-						new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei0.cPromedioEspInf.Por(ce.cPromedioEspMatchingActual.Dividido(ce.cPromedioEspMatchingAnterior))))
-						.Where(cei.cPromedioEspInf.EsNulo()
-						       // ,i.cInformante.Igual(i.cInformante)
-						       ,c.cPeriodo.Igual(c.cPeriodo) // OJO condiciones dummy para que coloque las tablas en el FROM
-						      )
-					);
+						ej.Ejecutar(
+								new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei0.cPromedioEspInf.Por(ce.cPromedioEspMatchingActual.Dividido(ce.cPromedioEspMatchingAnterior))),cei.cImputacionEspInf.Es("IP"))
+							.Where(cei.cPromedioEspInf.EsNulo()
+							       // ,i.cInformante.Igual(i.cInformante)
+							       ,c.cPeriodo.Igual(c.cPeriodo) // OJO condiciones dummy para que coloque las tablas en el FROM
+							      )
+						);
+						var ceo=new CalEspTI(); // del otro tipo de informante
+						TipoInf ti=cei.fkTipoInf;
+						ceo.EsFkDe(cei,ceo.cTipoInformante.Es(ti.cOtroTipoInformante)); // ,ce.cTipoInformante.Es(i.cTipoInformante));
+						ej.Ejecutar(
+								new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei0.cPromedioEspInf.Por(ceo.cPromedioEspMatchingActual.Dividido(ceo.cPromedioEspMatchingAnterior))),cei.cImputacionEspInf.Es("IOTI"))
+							.Where(cei.cPromedioEspInf.EsNulo()
+							       // ,i.cInformante.Igual(i.cInformante)
+							       ,ti.cTipoInformante.Igual(ti.cTipoInformante)
+							       ,c.cPeriodo.Igual(c.cPeriodo) // OJO condiciones dummy para que coloque las tablas en el FROM
+							      )
+						);
 					}
 				}
 				{
@@ -649,7 +660,7 @@ AND c.calculo="+cal.cCalculo.Valor
 		public ProbarIndiceD3(){
 			BaseDatos db;
 			#pragma warning disable 162
-			switch(1){ // No anda con sqlite hasta que no implemente EXP 
+			switch(3){ // No anda con sqlite hasta que no implemente EXP 
 				case 1: // probar con postgre
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					repo=new RepositorioPruebaIndice(db);
