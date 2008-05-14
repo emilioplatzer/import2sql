@@ -162,7 +162,7 @@ namespace Indices
 	[Alias("ti")]
 	public class TipoInf:Tabla{
 		[Pk] public CampoTipo cTipoInformante;
-		CampoTipo cOtroTipoInformante;
+		public CampoTipo cOtroTipoInformante;
 	}
 	[Alias("i")]
 	public class Informantes:Tabla{
@@ -228,6 +228,7 @@ namespace Indices
 		[Fk] public Calculos fkCalculos;
 		[Fk] public Especificaciones fkEspecificaciones;
 		[Fk] public Informantes fkInformantes;
+		[Fk] public TipoInf fkTipoInf;
 	}
 	public class NovEspInf:Tabla{
 		public enum Estados{Alta,Baja,Reemplazo};
