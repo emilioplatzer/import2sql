@@ -313,6 +313,17 @@ namespace PrModeladorSql
 				PartesPiezas pp=new PartesPiezas();
 				pp.EsFkDe(p,pp.cParte.Es(num.cNumero),pp.cEmpresa.Es(1));
 				Sentencia s=
+					new SentenciaUpdate(p,p.cNombrePieza.Es(pp.cNombreParte));
+				Assert.AreEqual("UPDATE piezas p INNER JOIN partespiezas pp ON 1=pp.empresa AND " +
+				                " SET p.nombrepieza=pp.nombreparte\n" +
+				                " FROM piezas p, numeros, partespiezas pp\n" +
+				                " WHERE pp.empresa=1\n AND pp.pieza=p.pieza\n AND pp.parte=numeros.numero;\n",
+				                new Ejecutador(dba).Dump(s));
+			}
+			{
+				PartesPiezas pp=new PartesPiezas();
+				pp.EsFkDe(p,pp.cParte.Es(num.cNumero),pp.cEmpresa.Es(1));
+				Sentencia s=
 					new SentenciaSelect(p.cPieza,p.cNombrePieza,pp.cNombreParte);
 				Assert.Ignore("Falta considerar tablas que sirvan para los joins y no estén en los campos del select");
 				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pp.nombreparte\n" +
