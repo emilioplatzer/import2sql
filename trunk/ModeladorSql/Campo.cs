@@ -196,6 +196,12 @@ namespace ModeladorSql
 		public CampoAlias<T> Es(ElementoTipado<T> expresion){
 			return new CampoAlias<T>(this,expresion);
 		}
+		public CampoAlias<T> Es(CampoTipo<T> expresion){
+			return new CampoAlias<T>(this,expresion);
+		}
+		public CampoAlias<object> Es(Campo expresion){
+			return new CampoAlias<object>(this,expresion);
+		}
 		public virtual ElementoLogico EsNulo(){
 			return new OperacionSufijaLogica<T>(this,OperadorSufijoLogico.EsNulo);
 		}
@@ -323,8 +329,11 @@ namespace ModeladorSql
 			get { return "varchar("+LongitudDefinicion+")"; }
 		}
 	}
-	public class CampoDestino<T>:CampoNumericoTipo<T>{
+	public interface ICampoDestino{
+	}
+	public class CampoDestino<T>:CampoNumericoTipo<T>,ICampoDestino{
 		public CampoAlias<T> CampoContenedor;
+		public int OrdenDeReemplazo;
 		public CampoDestino(string NombreCampo){
 			this.NombreCampo=NombreCampo;
 			Archivo.Escribir("tmp_aca.txt",NombreCampo+": "+Objeto.ExpandirTodo(this.GetType()));

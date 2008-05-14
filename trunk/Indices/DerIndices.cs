@@ -120,7 +120,7 @@ namespace Indices
 		[Pk] public CampoPeriodo cPeriodo;
 		[Pk] public CampoVersion cCalculo;
 		public CampoLogico cEsPeriodoBase;
-		[FkMixta("ant")] public CampoPeriodo cPeriodoAnterior;
+		[FkMixta("ant",1)] public CampoPeriodo cPeriodoAnterior;
 		[Fk] public Periodos fkPeriodos;
 		[FkMixta("ant")] public Calculos fkCalculoAnterior;
 		public ElementoTipado<bool> SiguienteDe(Tabla t){

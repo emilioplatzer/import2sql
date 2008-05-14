@@ -98,7 +98,14 @@ namespace ModeladorSql
       					if(attr is Fk){
       						Fk fk=attr as Fk;
       						if(fk.Alias!=null){
-      							CamposFkAlias[fk.Alias]=c;
+      							if(fk.OrdenCampoAReemplazar==0){
+	      							CamposFkAlias[fk.Alias]=c;
+      							}else{
+      								CampoDestino<object> ca=new CampoDestino<object>("");
+      								ca.OrdenDeReemplazo=fk.OrdenCampoAReemplazar;
+      								ca.Es(c);
+	      							CamposFkAlias[fk.Alias]=ca;
+      							}
       						}
       					}
       				}
@@ -340,7 +347,13 @@ namespace ModeladorSql
 			foreach(var t in CamposReemplazo){
 				if(t!=null){
 					foreach(Campo CampoReemplazo in t.Campos()){
-						if(CampoReemplazo.TablaContenedora==maestra){
+						if(CampoReemplazo is ICampoDestino){
+							CampoDestino<object> cd=CampoReemplazo as CampoDestino<object>;
+							CampoAReemplazar.Add(CamposPk()[cd.OrdenDeReemplazo-1]);
+							Campo r=cd.CampoContenedor.Expresion as Campo;
+							Falla.SiEsNulo(r);
+							ExpresionDeReemplazo.Add(r);
+						}else if(CampoReemplazo.TablaContenedora==maestra){
 							CampoAReemplazar.Add(CamposPk()[cantidadCamposFk-1]);
 							ExpresionDeReemplazo.Add(CampoReemplazo);
 						}else if(CampoReemplazo is ICampoAlias){
@@ -580,6 +593,7 @@ namespace ModeladorSql
 		public enum Tipo { Obligatoria, Mixta/*puede tener algún campo null y otro no*/, Sugerida/*solo para los joins*/ };
 		public Tipo TipoFk;
 		public string Alias;
+		public int OrdenCampoAReemplazar;
 		public Fk(){}
 		public Fk(string Alias):this(Alias,Tipo.Obligatoria){}
 		protected Fk(string Alias,Tipo TipoFk){
@@ -591,6 +605,11 @@ namespace ModeladorSql
 		public FkMixta(string Alias)
 			:base(Alias,Tipo.Mixta)
 		{
+		}
+		public FkMixta(string Alias,int OrdenCampoAReemplazar)
+			:base(Alias,Tipo.Mixta)
+		{
+			this.OrdenCampoAReemplazar=OrdenCampoAReemplazar;
 		}
 	}
 	public class Insertador:InsertadorSql{
