@@ -15,7 +15,7 @@ using BasesDatos;
 namespace Indices
 {
 	/********************* CAMPOS ***************************/
-	public class CampoProducto:CampoChar{ public CampoProducto():base(4){} };
+	public class CampoProducto:CampoChar{ public CampoProducto():base(8){} };
 	public class CampoCodigoVariedad:CampoChar{ public CampoCodigoVariedad():base(12){} };
 	public class CampoEspecificacion:CampoEntero{};
 	public class CampoVariedad:CampoEntero{};

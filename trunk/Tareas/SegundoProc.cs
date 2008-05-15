@@ -26,7 +26,7 @@ namespace Tareas
 		BdAccess db;
 		RepositorioIndice repo;
 		public SegundoProc(){
-			param=new ParametrosPruebasExternas(Parametros.LeerPorDefecto.SI,"repo");
+			param=new ParametrosPruebasExternas(Parametros.LeerPorDefecto.SI,"repo2");
 		}
 		public void AbrirBase(){
 			db=BdAccess.Abrir(param.NombreBase);
@@ -38,15 +38,25 @@ namespace Tareas
 			Archivo.Copiar(param.NombreBaseEnBlanco,param.NombreBase);
 			AbrirBase();
 			repo.CrearTablas();
-			ProcesoLevantarPlanillas.CrearTablaReceptora(db);
 			System.Console.WriteLine("Importando codigos");
 			db.EjecutrarSecuencia(
+				@"
+				create table PreciosImportados(
+				Ano integer,
+				Mes integer,
+				Informante integer,
+				producto varchar(8),
+				Nombre varchar(100),
+				Especificacion integer,
+				Variedad integer,
+				Precio double precision,
+				Origen varchar(250)); "+
 				@"INSERT INTO tipoinf (tipoinformante,otrotipoinformante) VALUES ('S','T');"+
 				@"INSERT INTO tipoinf (tipoinformante,otrotipoinformante) VALUES ('T','S');"+
 				@"INSERT INTO productos (producto,nombreproducto) "+
 				@" SELECT 'P' & producto,nombreproducto FROM productos IN '"+param.NombreBaseImportacion+"';"+
 				@"INSERT INTO especificaciones (producto,especificacion,nombreespecificacion,tamannonormal) SELECT 'P' & producto,1,especificacion,null FROM productos IN '"+param.NombreBaseImportacion+"';"+
-				@"INSERT INTO variedades (producto,especificacion,variedad,nombrevariedad,tamanno,unidad) SELECT 'P' & producto,1,1,null,null,null FROM Variedades IN '"+param.NombreBaseImportacion+"';"+
+				@"INSERT INTO variedades (producto,especificacion,variedad,nombrevariedad,tamanno,unidad) SELECT 'P' & producto,1,1,null,null,null FROM productos IN '"+param.NombreBaseImportacion+"';"+
 				@"UPDATE variedades SET codigovariedad=producto & iif(especificacion>1,'.' & especificacion,'') & iif(variedad>1,'/' & variedad,'');"+
 				@"INSERT INTO agrupaciones (agrupacion) VALUES ('A');"+
 				@"INSERT INTO grupos (agrupacion,grupo,nombregrupo,grupopadre,ponderador,nivel,esproducto) VALUES ('A','A','Nivel General',null,1,0,'N'); "+
@@ -62,22 +72,19 @@ namespace Tareas
 				@"delete * from grupos where DCount('agrupacion','grupos','agrupacion=''' & agrupacion & ''' and grupopadre=''' & grupo & '''')=0 and nivel<=5;"+
 				@"INSERT INTO informantes (informante,nombreInformante,tipoinformante) "+
 				@" SELECT informante,nombreInformante,iif(tipoinformante='S' or tipoinformante='H','S','T') FROM informantes IN '"+param.NombreBaseImportacion+"';"+
-				@"INSERT INTO preciosImportados SELECT * FROM PreciosImportados IN '"+param.NombreBaseImportacion+"';"+
+				@"INSERT INTO preciosImportados (ano,mes,informante,producto,especificacion,variedad,precio,origen) "+
+				@" SELECT ano,mes,informante,'P' & producto,obs,1,precio,origen FROM PreciosImportados IN '"+param.NombreBaseImportacion+"';"+
 				@"CREATE VIEW [Control Codigos Informante] AS
-					SELECT PreciosImportados.Cod_Info, PreciosImportados.Origen
-					FROM PreciosImportados LEFT JOIN informantes ON PreciosImportados.Cod_Info = informantes.informante
+					SELECT PreciosImportados.informante, PreciosImportados.Origen
+					FROM PreciosImportados LEFT JOIN informantes ON PreciosImportados.informante = informantes.informante
 					WHERE (((informantes.informante) Is Null))
-					GROUP BY PreciosImportados.Cod_Info, PreciosImportados.Origen;"+
-				@"CREATE VIEW [Control Nombres Informante] AS
-					SELECT PreciosImportados.Cod_Info, PreciosImportados.Informante, informantes.nombreinformante, informantes.rubro, informantes.cadena, informantes.direccion, PreciosImportados.Origen
-					FROM informantes INNER JOIN PreciosImportados ON informantes.informante = PreciosImportados.Cod_Info
-					GROUP BY PreciosImportados.Cod_Info, PreciosImportados.Informante, informantes.nombreinformante, informantes.rubro, informantes.cadena, informantes.direccion, PreciosImportados.Origen;"+
-				@"CREATE VIEW [Control Codigos Variedad] AS
-					SELECT PreciosImportados.Cod_Var, PreciosImportados.Nombre, PreciosImportados.Especificacion, PreciosImportados.Variedad, PreciosImportados.Origen
-					FROM PreciosImportados LEFT JOIN variedades ON PreciosImportados.Cod_Var = variedades.codigovariedad
-					WHERE (((variedades.variedad) Is Null))
-					GROUP BY PreciosImportados.Cod_Var, PreciosImportados.Nombre, PreciosImportados.Especificacion, PreciosImportados.Variedad, PreciosImportados.Origen;"+
-				@"CREATE TABLE Opciones (producto varchar(4), foreign key (producto) references productos (producto))"+
+					GROUP BY PreciosImportados.informante, PreciosImportados.Origen;"+
+				@"CREATE VIEW [Control Codigos Producto] AS
+					SELECT PreciosImportados.producto, PreciosImportados.Nombre, PreciosImportados.Especificacion, PreciosImportados.Origen
+					FROM PreciosImportados LEFT JOIN especificaciones ON PreciosImportados.producto = especificaciones.producto AND preciosImportados.especificacion=especificaciones.especificacion
+					WHERE especificaciones.especificacion Is Null
+					GROUP BY PreciosImportados.producto, PreciosImportados.Nombre, PreciosImportados.Especificacion, PreciosImportados.Origen;"+
+				@"CREATE TABLE Opciones (producto varchar(8), foreign key (producto) references productos (producto))"
 				/*
 				@"CREATE VIEW Matriz_RelVar AS TRANSFORM Avg(relvar.precio) AS PromedioDeprecio
 					SELECT relvar.producto, relvar.especificacion, relvar.variedad, relvar.informante
@@ -90,10 +97,9 @@ namespace Tareas
 					GROUP BY calespinf.producto, calespinf.especificacion, calespinf.informante
 					PIVOT calespinf.periodo;"+
 				*/
-				@""
 			);
 			System.Console.WriteLine("Cálculo de ponderadores");
-			repo.CalcularPonderadores("C");
+			repo.CalcularPonderadores("A");
 			string periodoAnterior;
 			string periodoActual;
 			/*
@@ -110,14 +116,16 @@ namespace Tareas
 			}*/
 			System.Console.WriteLine("Detectar periodos");
 			db.EjecutrarSecuencia(
-				@"INSERT INTO periodos (ano,mes,semana,periodo) VALUES (0,0,9,'a0000m00');"+
-				@"INSERT INTO periodos (ano,mes,semana,periodo) SELECT ano,mes,semana,'a' & ano & 'm' & iif(mes<10,'0' & mes, mes) & 's' & semana FROM PreciosImportados WHERE semana>0 AND mes>=4 and ano=2008 GROUP BY ano,mes,semana;"+
+				@"INSERT INTO periodos (ano,mes,periodo) VALUES (0,0,'a0000m00');"+
+				@"INSERT INTO periodos (ano,mes,periodo) SELECT ano,mes,'a' & ano & 'm' & iif(mes<10,'0' & mes, mes) FROM PreciosImportados WHERE mes>=2 and ano=2008 GROUP BY ano,mes;"+
 				@"INSERT INTO calculos (periodo,calculo,esperiodobase) SELECT periodo,0,'N' FROM periodos;"+
-				@"UPDATE calculos SET periodoanterior=DMAX('periodo','calculos','periodo<''' & periodo & ''' AND calculo=0') WHERE calculo=0"
+				@"UPDATE calculos SET periodoanterior=DMAX('periodo','calculos','periodo<''' & periodo & ''' AND calculo=0') WHERE calculo=0;"+
+				@"INSERT INTO NovEspInf (periodo,calculo,producto,especificacion,informante,estado)"+
+				@" SELECT 'a0000m00',0,'P' & producto,1,informante,'Alta' FROM NovEspInf2008 IN '"+param.NombreBaseImportacion+"' WHERE estado='N' AND ano=2008 and mes=2 GROUP BY producto,informante;"+
+				@"INSERT INTO ProdTipoInf (producto,tipoinformante,ponderadorTI) SELECT 'P' & producto, 'S', PonderadorSupermercado/100 FROM productos IN '"+param.NombreBaseImportacion+"';"+
+				@"INSERT INTO ProdTipoInf (producto,tipoinformante,ponderadorTI) SELECT 'P' & producto, 'T', (100-PonderadorSupermercado)/100 FROM productos IN '"+param.NombreBaseImportacion+"'"
 			);
-			/*+
-				@"UPDATE calculos SET periodoanterior='a0000m00' WHERE calculo=0 AND periodo='a2008m04s1'"
-			 */
+			/*
 			{
 				periodoAnterior="null";
 				int mes=4;
@@ -129,38 +137,48 @@ namespace Tareas
 					periodoAnterior=periodoActual;
 				}
 			}
+			*/
 			System.Console.WriteLine("Importando Precios");
 			{
 			db.EjecutrarSecuencia(
-				@"CREATE INDEX PreciosImportados_ind ON PreciosImportados (ano,mes,semana,cod_var,cod_info);"+
-				@"CREATE INDEX PreciosImportados_ind2 ON PreciosImportados (cod_var,cod_info,ano,mes,semana);"+
-				@"CREATE UNIQUE INDEX Variedades_ind ON Variedades (codigovariedad);"+
-				@"CREATE UNIQUE INDEX periodos_ind ON periodos (ano,mes,semana);"+
+				@"CREATE INDEX PreciosImportados_ind ON PreciosImportados (ano,mes,producto,informante);"+
+				@"CREATE INDEX PreciosImportados_ind2 ON PreciosImportados (producto,informante,ano,mes);"+
+				@"CREATE UNIQUE INDEX periodos_ind ON periodos (ano,mes);"+
 				@"INSERT INTO RelVar 
-				    SELECT p.periodo, v.producto, v.especificacion, v.variedad, r.cod_info as informante, max(r.precio) as precio
+				    SELECT p.periodo, v.producto, v.especificacion, v.variedad, r.informante, max(r.precio) as precio
 				      FROM periodos p,
 				      	[preciosimportados] r,
 				      	informantes i,
 				      	variedades v
 				      WHERE p.ano=r.ano
 				        AND p.mes=r.mes
-				        AND p.semana=r.semana
-				        AND r.cod_var=v.codigovariedad
-				        AND r.cod_info=i.informante
+				        AND r.producto=v.producto
+				        AND r.especificacion=v.especificacion
+				        AND r.variedad=v.variedad
+				        AND r.informante=i.informante
 				        AND r.precio>0
-				        AND r.semana>0
-				        AND r.mes>3
-				        AND r.mes<10
-				        AND (r.cod_var IN ('P102','P180','P332','P391','P495') OR 1=1)
-				      GROUP BY r.ano,r.mes,r.semana,r.cod_var, r.cod_info,p.periodo, v.producto, v.especificacion, v.variedad
+				      GROUP BY r.ano,r.mes,r.producto, r.informante,p.periodo, v.producto, v.especificacion, v.variedad;
+				  INSERT INTO RelVar (periodo, producto, especificacion, variedad, informante, precio) SELECT 'a0000m00', producto, especificacion, variedad, informante, precio FROM RelVar WHERE periodo='a2008m02'
 				"
 			);
 			}
-			repo.CalcularMatrizBase(2);
+			// repo.CalcularMatrizBase(2);
+			Calculos cal0=new Calculos();
+			cal0.cPeriodo.Valor="a0000m00";
+			cal0.cCalculo.Valor=0;
+			repo.CalcularPreciosPeriodo(cal0,false);
 			Calculos cals=new Calculos();
+			/*
+			cals.cPeriodo.Valor="a2008m02";
+			cals.cCalculo.Valor=0;
+			*/
+			db.EjecutrarSecuencia(
+				// @"INSERT INTO CalProd (periodo,calculo,producto,promedioprod) SELECT 'a0000m00',calculo,producto,promedioprod FROM CalProd WHERE periodo='a2008m02' and calculo=0;"+
+				@"INSERT INTO CalGru (periodo,calculo,agrupacion,grupo,indice,factor) SELECT 'a0000m00',0,'A',iif(nivel=0,'A',iif(nivel=6,'P' & grupo,'A' & grupo)),indice,1 FROM CalGru2008 IN '"+param.NombreBaseImportacion+"' WHERE ano=2008 and mes=2 and version=0"
+			);
 			string ultimoCodigoPeriodo="";
 			Agrupaciones agrupacion=new Agrupaciones();
-			agrupacion.Leer(repo.db,"C");
+			agrupacion.Leer(repo.db,"A");
 			foreach(Calculos cal in new Calculos().Algunos(db,cals.cEsPeriodoBase.Igual(false).And(cals.cPeriodo.Distinto("a0000m00")))){
 				repo.CalcularPreciosPeriodo(cal,true);
 				repo.CalcularCalGru(cal,agrupacion);
@@ -169,6 +187,16 @@ namespace Tareas
 			System.Console.WriteLine("Control de integridad");
 			repo.ReglasDeIntegridad();
 			db.Close();
+		}
+		public void Generar(){
+			DateTime Empezo=DateTime.Now;
+			System.Console.WriteLine("Empezo "+Empezo.ToShortTimeString());
+			ArmarBase();
+			System.Console.WriteLine("Empezo "+Empezo.ToShortTimeString());
+			System.Console.WriteLine("Termino "+DateTime.Now.ToShortTimeString());
+			TimeSpan Tardo=DateTime.Now-Empezo;
+			System.Console.WriteLine("Tardo "+Tardo.ToString());
+			System.Console.WriteLine("Tardo "+(DateTime.Today+Tardo).ToShortTimeString());
 		}
 	}
 }

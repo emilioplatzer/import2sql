@@ -114,7 +114,7 @@ namespace Indices
 		}
 		public void CalcularPonderadores(string agrupacion){
 			Agrupaciones a=new Agrupaciones();
-			a.Leer(db,"C");
+			a.Leer(db,agrupacion);
 			CalcularPonderadores(a);
 		}
 		public void CalcularMesBase(Calculos cal,Agrupaciones agrupacion){
