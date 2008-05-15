@@ -78,7 +78,8 @@ namespace TodoASql
 			    // new PrModeladorSql.prModelador().FkConDatos();
 			    // new PrModeladorSql.prModelador().Subselect();
 			    // new Tareas.PruebasExternas().Generar();
-			    new Tareas.SegundoProc().Generar();
+			    // new Tareas.SegundoProc().Generar();
+			    new ProcesoLevantarPlanillasCVP().TraerPlanillasRecepcion();
 			    /*
 				Console.WriteLine("Listo!");
 				Console.Write("presione cualquier tecla . . . ");

@@ -84,6 +84,7 @@ namespace Tareas
 					FROM PreciosImportados LEFT JOIN especificaciones ON PreciosImportados.producto = especificaciones.producto AND preciosImportados.especificacion=especificaciones.especificacion
 					WHERE especificaciones.especificacion Is Null
 					GROUP BY PreciosImportados.producto, PreciosImportados.Nombre, PreciosImportados.Especificacion, PreciosImportados.Origen;"+
+				@"INSERT INTO especificaciones (producto,especificacion,nombreespecificacion,tamannonormal) SELECT 'P' & producto,obs,'P' & producto & ' obs ' & obs,null FROM preciosimportados IN '"+param.NombreBaseImportacion+"' WHERE obs>1 GROUP BY producto,obs;"+
 				@"CREATE TABLE Opciones (producto varchar(8), foreign key (producto) references productos (producto))"
 				/*
 				@"CREATE VIEW Matriz_RelVar AS TRANSFORM Avg(relvar.precio) AS PromedioDeprecio
@@ -121,7 +122,7 @@ namespace Tareas
 				@"INSERT INTO calculos (periodo,calculo,esperiodobase) SELECT periodo,0,'N' FROM periodos;"+
 				@"UPDATE calculos SET periodoanterior=DMAX('periodo','calculos','periodo<''' & periodo & ''' AND calculo=0') WHERE calculo=0;"+
 				@"INSERT INTO NovEspInf (periodo,calculo,producto,especificacion,informante,estado)"+
-				@" SELECT 'a0000m00',0,'P' & producto,1,informante,'Alta' FROM NovEspInf2008 IN '"+param.NombreBaseImportacion+"' WHERE estado='N' AND ano=2008 and mes=2 GROUP BY producto,informante;"+
+				@" SELECT 'a0000m00',0,'P' & producto,observacion,informante,'Alta' FROM NovEspInf2008 IN '"+param.NombreBaseImportacion+"' WHERE estado='N' AND ano=2008 and mes=2 GROUP BY producto,observacion,informante;"+
 				@"INSERT INTO ProdTipoInf (producto,tipoinformante,ponderadorTI) SELECT 'P' & producto, 'S', PonderadorSupermercado/100 FROM productos IN '"+param.NombreBaseImportacion+"';"+
 				@"INSERT INTO ProdTipoInf (producto,tipoinformante,ponderadorTI) SELECT 'P' & producto, 'T', (100-PonderadorSupermercado)/100 FROM productos IN '"+param.NombreBaseImportacion+"'"
 			);

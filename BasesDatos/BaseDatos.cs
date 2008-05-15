@@ -39,21 +39,42 @@ namespace BasesDatos
 		}
 		protected EjecutadorBaseDatos(){
 		}
+		public static void TratarDe(Accion accion){
+		reintentar:
+			try{
+				accion();
+			}catch(System.IO.IOException ex){
+				bitacora.Registrar("/* "+ex.Message+"\n*/\n");
+				throw;
+			}
+		}
 		public IDataReader ExecuteReader(SentenciaSql sentencia){
 			Falla.SiEsNulo(con);
 			IDbCommand cmd_local=con.CreateCommand();
 			cmd_local.CommandText=bitacora.RegistrarSql(AdaptarSentecia(sentencia));
-			return cmd_local.ExecuteReader();
+			IDataReader rta=null;
+			TratarDe(delegate(){
+				rta=cmd_local.ExecuteReader();
+			});
+			return rta;
 		}
 		public object ExecuteScalar(SentenciaSql sentencia){
 			Falla.SiEsNulo(cmd);
 			cmd.CommandText=AdaptarSentecia(sentencia);
-			return cmd.ExecuteScalar();
+			object rta=null;
+			TratarDe(delegate(){
+				rta=cmd.ExecuteScalar();
+			});
+			return rta;
 		}
 		public int ExecuteNonQuery(SentenciaSql sentencia){
 			Falla.SiEsNulo(cmd);
 			cmd.CommandText=bitacora.RegistrarSql(AdaptarSentecia(sentencia));
-			return cmd.ExecuteNonQuery();
+			int rta=0;
+			TratarDe(delegate(){
+         		rta=cmd.ExecuteNonQuery();
+			});
+			return rta;
 		}
 		public void EjecutrarSecuencia(SentenciaSql secuencia){
 			foreach(string sentencia in secuencia.Separar()){
