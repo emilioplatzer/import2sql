@@ -43,7 +43,7 @@ namespace BasesDatos
 		reintentar:
 			try{
 				accion();
-			}catch(System.IO.IOException ex){
+			}catch(System.Exception ex){
 				bitacora.Registrar("/* "+ex.Message+"\n*/\n");
 				throw;
 			}

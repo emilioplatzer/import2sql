@@ -121,6 +121,7 @@ namespace Tareas
 				@"INSERT INTO periodos (ano,mes,periodo) SELECT ano,mes,'a' & ano & 'm' & iif(mes<10,'0' & mes, mes) FROM PreciosImportados WHERE mes>=2 and ano=2008 GROUP BY ano,mes;"+
 				@"INSERT INTO calculos (periodo,calculo,esperiodobase) SELECT periodo,0,'N' FROM periodos;"+
 				@"UPDATE calculos SET periodoanterior=DMAX('periodo','calculos','periodo<''' & periodo & ''' AND calculo=0') WHERE calculo=0;"+
+				@"INSERT INTO especificaciones (producto,especificacion,nombreespecificacion,tamannonormal) SELECT 'P' & producto,obs,'P' & producto & ' obs ' & obs,null FROM NovEspInf n IN '"+param.NombreBaseImportacion+"' WHERE obs>1 AND NOT EXISTS (SELECT 1 FROM especificaciones x WHERE x.producto=n.producto AND x.especificacion=n.observacion) GROUP BY producto,observacion;"+
 				@"INSERT INTO NovEspInf (periodo,calculo,producto,especificacion,informante,estado)"+
 				@" SELECT 'a0000m00',0,'P' & producto,observacion,informante,'Alta' FROM NovEspInf2008 IN '"+param.NombreBaseImportacion+"' WHERE estado='N' AND ano=2008 and mes=2 GROUP BY producto,observacion,informante;"+
 				@"INSERT INTO ProdTipoInf (producto,tipoinformante,ponderadorTI) SELECT 'P' & producto, 'S', PonderadorSupermercado/100 FROM productos IN '"+param.NombreBaseImportacion+"';"+
