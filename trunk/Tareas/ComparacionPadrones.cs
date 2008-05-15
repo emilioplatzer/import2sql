@@ -87,7 +87,7 @@ namespace Tareas
 		ComparacionPadrones cp;
 		public PrComparacionPadrones(){
 			#pragma warning disable 162
-			switch(1){ // Solo se va a tomar un camino
+			switch(3){ // Solo se va a tomar un camino
 				case 1:
 					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
 					cp=new ComparacionPadrones(db);
@@ -140,6 +140,9 @@ namespace Tareas
 		[Test]
 		public void Pr02ExtraccionPalabras(){
 			var n=new ComparacionPadrones.Nombres();
+			if(db is BdAccess){
+				Assert.Ignore("Todavía no se puede sacar la primera palabra en Access");
+			}
 			using(var ej=new Ejecutador(db)){
 				var cPrimeraPalabra=new CampoDestino<string>("primerapalabra");
 				var cSinPrimeraPalabra=new CampoDestino<string>("sinprimerapalabra");

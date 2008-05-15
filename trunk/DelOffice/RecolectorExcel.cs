@@ -18,6 +18,8 @@ using ModeladorSql;
 
 namespace DelOffice
 {
+	#if SinOffice
+	#else
 	public class RecolectorExcel{
 		public RecolectorExcel(){
 		}
@@ -177,6 +179,7 @@ namespace DelOffice
 			Assert.AreEqual("123456",r["CUCID"]);
 		}
 	}
+	#endif
 	/*
 		1) Recorrer todos los excel de una carpeta. OK
 		2) Recorrer cada hoja del excel. 1hs

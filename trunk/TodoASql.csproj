@@ -18,7 +18,7 @@
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -82,6 +82,7 @@
     <Compile Include="Pruebas\PruebasReflexion.cs" />
     <Compile Include="Tareas\ComparacionPadrones.cs" />
     <Compile Include="Tareas\MailASql.cs" />
+    <Compile Include="Tareas\SegundoProc.cs" />
     <Compile Include="Tareas\UnProcesamiento.cs" />
   </ItemGroup>
   <ItemGroup>
