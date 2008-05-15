@@ -58,9 +58,9 @@ namespace Indices
 			receptor=new ReceptorSql(db,"formulariosimportados");
 			MatrizExcelASql matriz=new MatrizExcelASql(receptor);
 			LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
-			matriz.GuardarErroresEn=@"c:\cvp\temp\ErroresDeImportacion.sql";
+			// matriz.GuardarErroresEn=@"c:\cvp\temp\ErroresDeImportacion.sql";
 			string tipoPlanilla=libro.TextoCelda("A1");
-			if(tipoPlanilla=="FORM.PREC" || tipoPlanilla=="FORM.PREC.MV" ){
+			if(tipoPlanilla=="FORM.PREC" || tipoPlanilla=="FORM.PREC.MV" || tipoPlanilla=="area"){
 				int fila=7+(tipoPlanilla=="FORM.PREC.MV"?1:0);
 				int columna=6;
 				int filaFin=libro.BuscarPorColumnas("FIN!").NumeroFila-1;
