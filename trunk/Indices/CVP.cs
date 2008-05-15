@@ -59,13 +59,14 @@ namespace Indices
 			MatrizExcelASql matriz=new MatrizExcelASql(receptor);
 			LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
 			matriz.GuardarErroresEn=@"c:\cvp\temp\ErroresDeImportacion.sql";
-			if(libro.TextoCelda("A1")=="FORM.PREC"){
-				int fila=7;
+			string tipoPlanilla=libro.TextoCelda("A1");
+			if(tipoPlanilla=="FORM.PREC" || tipoPlanilla=="FORM.PREC.MV" ){
+				int fila=7+(tipoPlanilla=="FORM.PREC.MV"?1:0);
 				int columna=6;
 				int filaFin=libro.BuscarPorColumnas("FIN!").NumeroFila-1;
 				int columnaFin=libro.BuscarPorFilas("FIN!").NumeroColumna-1;
 				string[] camposFijos=new string[]{"formato","origen","fecha_importacion",""};
-				object[] valoresFijos=new object[]{libro.TextoCelda("A1"),nombreArchivo,DateTime.Now,null};
+				object[] valoresFijos=new object[]{tipoPlanilla,nombreArchivo,DateTime.Now,null};
 				libro.Rango("A3:A3").TextoRango1D().CopyTo(camposFijos,3);
 				libro.Rango("B3:B3").ValorRango1D().CopyTo(valoresFijos,3);
 				matriz.CamposFijos=Objeto.Paratodo(camposFijos,Cadena.Simplificar);
