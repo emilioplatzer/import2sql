@@ -33,10 +33,15 @@ namespace BasesDatos
 		}
 		*/
 		public static PostgreSql Abrir(string Servidor,string Base, string Usuario, string Clave){
-			OdbcConnection ConexionABase = new OdbcConnection();
-			ConexionABase.ConnectionString=@"DRIVER=PostgreSQL Unicode;UID="+Usuario+";PORT=5432;SERVER="+Servidor+";DATABASE="+Base+";PASSWORD="+Clave;
-			ConexionABase.Open();
-			return new PostgreSql(ConexionABase);
+			#if SinPostgre
+			Controlar.NoDefinido("SinPostgre");
+			#endif
+			{
+				OdbcConnection ConexionABase = new OdbcConnection();
+				ConexionABase.ConnectionString=@"DRIVER=PostgreSQL Unicode;UID="+Usuario+";PORT=5432;SERVER="+Servidor+";DATABASE="+Base+";PASSWORD="+Clave;
+				ConexionABase.Open();
+				return new PostgreSql(ConexionABase);
+			}
 		}
 		public override string ErrorCode_NoExisteTabla{ get{ return "ERROR [42P01]";}}
 		public override string ErrorCode_NoExisteVista{ get{ return "ERROR [42P01]";}}

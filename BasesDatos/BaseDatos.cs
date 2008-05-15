@@ -109,6 +109,12 @@ namespace BasesDatos
 				return sentencia.Split(';');
 			}
 		}
+		public void CompliarParaControlar(string sentencia){
+			if(cmd!=null){
+				cmd.CommandText=sentencia;
+				cmd.Prepare();
+			}
+		}
 	}
 	public enum OperadorBinario{Mas,Menos,Por,Dividido,Concatenado}
 	public enum OperadorBinarioRelacional{Igual,Distinto,Mayor,Menor,MayorOIgual,MenorOIgual,Or,And}

@@ -72,6 +72,37 @@ namespace PrModeladorSql
 	[TestFixture]
 	public class prModelador{
 		[Test]
+		public void A01FkConDatos(){
+			BaseDatos db=ProbarBdAccess.AbrirBase(2);
+			Repositorio.CrearTablas(db,this.GetType().Namespace);
+			Empresas e=new Empresas();
+			Piezas p=new Piezas();
+			PartesPiezas pp=new PartesPiezas();
+			Ejecutador ej=new Ejecutador(db);
+			if(!e.Buscar(db,7)){
+				e.InsertarValores(db,e.cEmpresa.Es(7),e.cNombreEmpresa.Es("Siete"));
+			}
+			Empresas e2=new Empresas();
+			e2.Leer(db,7);
+			e.Leer(db,7);
+			Assert.AreEqual("Siete",e2.cNombreEmpresa.Valor);
+			p.InsertarValores(db,e,p.cPieza.Es("P11"),p.cNombrePieza.Es("El once"),p.cEstado.Es(1));
+			p.InsertarValores(db,e,p.cPieza.Es("P12"),p.cNombrePieza.Es("El doce"),p.cEstado.Es(1));
+			p.Leer(db,e,"P11");
+			Assert.AreEqual("P11",p.cPieza.Valor);
+			pp.InsertarValores(db,p,pp.cParte.Es(1),pp.cNombreParte.Es("parte 11, 1"));
+			Assert.AreEqual("P11",p.cPieza.Valor);
+			PartesPiezas pp2=new PartesPiezas();
+			Assert.AreEqual("P11",p.cPieza.Valor);
+			pp2.Leer(db,p,1);
+			Assert.AreEqual("parte 11, 1",pp2.cNombreParte.Valor);
+			PartesPiezas pp3=new PartesPiezas();
+			pp3.Leer(db,7,"P11",1);
+			pp3.UsarFk();
+			Assert.AreEqual("P11",pp3.fkPiezas.cPieza.Valor);
+			db.Close();
+		}
+		[Test]
 		public void CreacionTablas(){
 			BdAccess dba=BdAccess.SinAbrir();
 			PostgreSql dbp=PostgreSql.SinAbrir();
@@ -311,6 +342,20 @@ namespace PrModeladorSql
 			}
 			{
 				PartesPiezas pp=new PartesPiezas();
+				NovedadesPiezas np=new NovedadesPiezas();
+				np.EsFkDe(p,np.cPiezaAuxiliar.Es(p.cPieza));
+				pp.EsFkDe(p,pp.cParte.Es(np.cNuevoEstado),pp.cEmpresa.Es(1));
+				Sentencia s=
+					new SentenciaUpdate(p,p.cNombrePieza.Es(pp.cNombreParte));
+				Assert.Ignore("Trabajando en esto");
+				Assert.AreEqual("UPDATE piezas p INNER JOIN partespiezas pp ON 1=pp.empresa AND pp.pieza=p.pieza\n AND pp.parte=numeros.numero" +
+				                " numeros" +
+				                "SET p.nombrepieza=pp.nombreparte\n" +
+				                " WHERE ;\n",
+				                new Ejecutador(dba).Dump(s));
+			}
+			{
+				PartesPiezas pp=new PartesPiezas();
 				pp.EsFkDe(p,pp.cParte.Es(num.cNumero),pp.cEmpresa.Es(1));
 				Sentencia s=
 					new SentenciaUpdate(p,p.cNombrePieza.Es(pp.cNombreParte));
@@ -369,45 +414,6 @@ namespace PrModeladorSql
 			Assert.AreEqual("UPDATE partespiezas pp\n "+
 			                "SET pp.cantidad=DSUM('estado','piezas','empresa=' & pp.empresa & ' AND pieza=''' & pp.pieza & '''');\n"
 			                ,new Ejecutador(dba).Dump(su));
-		}
-		[Test]
-		public void FkConDatos(){
-			BaseDatos db=ProbarBdAccess.AbrirBase(2);
-			Repositorio.CrearTablas(db,this.GetType().Namespace);
-			Empresas e=new Empresas();
-			Piezas p=new Piezas();
-			PartesPiezas pp=new PartesPiezas();
-			/*
-			db.ExecuteNonQuery(e.SentenciaCreateTable(db));
-			db.ExecuteNonQuery(p.SentenciaCreateTable(db));
-			db.ExecuteNonQuery(pp.SentenciaCreateTable(db));
-			*/
-			Ejecutador ej=new Ejecutador(db);
-			// ej.ExecuteNonQuery(new Empresas().SentenciaCreateTable(db));
-			// ej.ExecuteNonQuery(new Piezas().SentenciaCreateTable(db));
-			// ej.ExecuteNonQuery(new PartesPiezas().SentenciaCreateTable(db));
-			if(!e.Buscar(db,7)){
-				e.InsertarValores(db,e.cEmpresa.Es(7),e.cNombreEmpresa.Es("Siete"));
-			}
-			Empresas e2=new Empresas();
-			e2.Leer(db,7);
-			e.Leer(db,7);
-			Assert.AreEqual("Siete",e2.cNombreEmpresa.Valor);
-			p.InsertarValores(db,e,p.cPieza.Es("P11"),p.cNombrePieza.Es("El once"),p.cEstado.Es(1));
-			p.InsertarValores(db,e,p.cPieza.Es("P12"),p.cNombrePieza.Es("El doce"),p.cEstado.Es(1));
-			p.Leer(db,e,"P11");
-			Assert.AreEqual("P11",p.cPieza.Valor);
-			pp.InsertarValores(db,p,pp.cParte.Es(1),pp.cNombreParte.Es("parte 11, 1"));
-			Assert.AreEqual("P11",p.cPieza.Valor);
-			PartesPiezas pp2=new PartesPiezas();
-			Assert.AreEqual("P11",p.cPieza.Valor);
-			pp2.Leer(db,p,1);
-			Assert.AreEqual("parte 11, 1",pp2.cNombreParte.Valor);
-			PartesPiezas pp3=new PartesPiezas();
-			pp3.Leer(db,7,"P11",1);
-			pp3.UsarFk();
-			Assert.AreEqual("P11",pp3.fkPiezas.cPieza.Valor);
-			db.Close();
 		}
 		[Test]
 		public void G_Enumerados(){

@@ -30,12 +30,12 @@ namespace ModeladorSql
 			}
 		}
 		public void Ejecutar(Sentencia laSentencia){
-			base.ExecuteNonQuery(Dump(laSentencia));
+			base.ExecuteNonQuery(Obtener(laSentencia));
 		}
 		public IDataReader EjecutarReader(Sentencia laSentencia){
-			return base.ExecuteReader(Dump(laSentencia));
+			return base.ExecuteReader(Obtener(laSentencia));
 		}
-		public string Dump(Sentencia laSentencia){
+		public string Obtener(Sentencia laSentencia){
 			foreach(Tabla t in laSentencia.Tablas(QueTablas.Aliasables).Keys){
 				// bitacora.Registrar("Tabla alias "+t.NombreTabla+","+t.Alias+","+t.AliasActual);
 				t.AliasActual=t.Alias;
@@ -45,8 +45,13 @@ namespace ModeladorSql
 			}
 			return bitacora.RegistrarSql(laSentencia.ToSql(db)+";\n");
 		}
+		public string Dump(Sentencia laSentencia){
+			string obtenido=Obtener(laSentencia);
+			db.CompliarParaControlar(obtenido);
+			return obtenido;
+		}
 		public void AssertSinRegistros(string explicacion,Sentencia laSentencia){
-			db.AssertSinRegistros(explicacion,Dump(laSentencia));
+			db.AssertSinRegistros(explicacion,Obtener(laSentencia));
 		}
 	}
 }
