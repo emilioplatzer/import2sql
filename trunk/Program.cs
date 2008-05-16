@@ -47,6 +47,8 @@ namespace TodoASql
 				// Console.ReadKey(true);
 				return;
 			}else{
+				DateTime comenzo=DateTime.Now;
+				Console.WriteLine("Comenzo "+DateTime.Now.ToLongTimeString());
 				/*
 				PruebasExternas p=new PruebasExternas();
 				p.ArmarBase();
@@ -78,8 +80,14 @@ namespace TodoASql
 			    // new PrModeladorSql.prModelador().FkConDatos();
 			    // new PrModeladorSql.prModelador().Subselect();
 			    // new Tareas.PruebasExternas().Generar();
-			    // new Tareas.SegundoProc().Generar();
-			    new ProcesoLevantarPlanillasCVP().TraerPlanillasRecepcion();
+			    new Tareas.SegundoProc().Generar();
+				//{
+				//    var db=BdAccess.Abrir(@"c:\cvp\temp\Estructura.mdb");
+				//	var repo=new RepositorioIndice(db);
+				//	repo.CrearTablas();
+				//
+				//}
+			    // new ProcesoLevantarPlanillasCVP().TraerPlanillasRecepcion();
 			    /*
 				Console.WriteLine("Listo!");
 				Console.Write("presione cualquier tecla . . . ");
@@ -136,6 +144,13 @@ namespace TodoASql
 					);
 				
 				} // */
+				Console.WriteLine("Listo!");
+				Console.WriteLine("Terminó "+DateTime.Now.ToLongTimeString());
+				System.TimeSpan demoro=DateTime.Now-comenzo;
+				Console.WriteLine("Demoró "+demoro.ToString());
+				Console.Write("presione cualquier tecla . . . ");
+				System.Windows.Forms.MessageBox.Show("Listo");
+				Console.ReadKey(true);
 			}
 		}
 	}

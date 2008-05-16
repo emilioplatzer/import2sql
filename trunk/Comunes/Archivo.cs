@@ -91,7 +91,7 @@ namespace Comunes
 			return Directory.GetCurrentDirectory();
 		}
 		public static void Copiar(string ArchivoViejo,string ArchivoNuevo){
-			tratarDe("copiar el archivo "+ArchivoViejo+" en "+ArchivoViejo
+			tratarDe("copiar el archivo "+ArchivoViejo+" en "+ArchivoNuevo
 			         ,"quizás el archivo "+ArchivoViejo+" exista, en ese caso hay que borrarlo manualmente porque el programa no lo hace"
 			         ,delegate()
 			{
@@ -99,12 +99,22 @@ namespace Comunes
 			});
 		}
 		public static void CopiarPisando(string ArchivoViejo,string ArchivoNuevo){
-			tratarDe("copiar el archivo "+ArchivoViejo+" en "+ArchivoViejo+" (pisando éste si existe)"
+			tratarDe("copiar el archivo "+ArchivoViejo+" en "+ArchivoNuevo+" (pisando éste si existe)"
 			         ,"quizás el archivo "+ArchivoViejo+" esté abierto y por eso el programa no lo puede pisar"
 			         ,delegate()
 			{
 				File.Copy(ArchivoViejo,ArchivoNuevo,true);
 			});
 		}
+		public static void RenombrarMover(string ArchivoViejo,string ArchivoNuevo){
+			tratarDe("renombrar o mover el archivo "+ArchivoViejo+" en "+ArchivoNuevo+""
+			         ,"quizás el archivo "+ArchivoViejo+" esté abierto y por eso el programa puede renombrar o mover, "+
+			          "quizás el archivo "+ArchivoNuevo+" exista y por eso no se puede mover o renombrar el otro encima"
+			         ,delegate()
+			{
+				File.Move(ArchivoViejo,ArchivoNuevo);
+			});
+		}
+			
 	}
 }

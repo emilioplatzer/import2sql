@@ -56,6 +56,7 @@ namespace Indices
 		ReceptorSql receptor;
 		public bool LevantarPlanilla(string nombreArchivo){
 			receptor=new ReceptorSql(db,"formulariosimportados");
+			db.ExecuteNonQuery("delete from formulariosimportados where origen='"+nombreArchivo+"'");
 			MatrizExcelASql matriz=new MatrizExcelASql(receptor);
 			LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
 			// matriz.GuardarErroresEn=@"c:\cvp\temp\ErroresDeImportacion.sql";
@@ -88,7 +89,7 @@ namespace Indices
 		public void TraerPlanillasRecepcion(){
 			Carpeta dir=new Carpeta(@"c:\cvp\datos\ParaImportar\");
 			db=BdAccess.Abrir(@"c:\cvp\pruebas\Importaciones.mdb");
-			dir.ProcesarArchivos("*.xls","procesado",LevantarPlanilla);
+			dir.ProcesarArchivos("*.xls","procesados","salteados",LevantarPlanilla);
 		}
 	}
 	#endif
