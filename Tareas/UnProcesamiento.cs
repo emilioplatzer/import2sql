@@ -310,7 +310,7 @@ namespace Tareas
 			Carpeta dir=new Carpeta(@"c:\temp\indice\Campo\RecepcionPura\");
 			db=BdAccess.Abrir(param.NombreBaseImportacion);
 			// CrearUnaTabla231(db);
-			dir.ProcesarArchivos("*.xls","procesado",LevantarPlanilla);
+			dir.ProcesarArchivos("*.xls","procesados","salteados",LevantarPlanilla);
 		}
 		public static void InsertarValorCentralStringASennal(InsertadorSql insert,string campoValor,object valor){
 			if(valor is string){

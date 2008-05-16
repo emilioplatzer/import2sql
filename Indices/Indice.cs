@@ -149,6 +149,15 @@ namespace Indices
 					new SentenciaInsert(cg)
 					.Select(c,cg0.cAgrupacion,g.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedioProd.Dividido(cp0.cPromedioProd))),cg0.cFactor)
 				);
+				ej.EjecutrarSecuencia(
+					"INSERT INTO CalGru (periodo,calculo,agrupacion,grupo,indice,factor) " +
+					" SELECT c.periodo,c.calculo,cg.agrupacion,cg.grupo,cg.indice,cg.factor " +
+					" FROM calculos c, calgru cg, grupos g" +
+					" WHERE c.periodo='"+cal.cPeriodo.Valor+"' AND c.calculo="+cal.cCalculo.Valor+" " +
+					"   AND g.agrupacion=cg.agrupacion AND g.grupo=cg.grupo AND g.esproducto='S'" +
+					"   AND cg.calculo=c.calculo AND cg.periodo=c.periodoanterior " +
+					"   AND NOT EXISTS (SELECT 1 FROM calgru x WHERE x.periodo=c.periodo AND x.calculo=c.calculo AND x.agrupacion=cg.agrupacion AND x.grupo=cg.grupo)"
+				);
 				Grupos gh=new Grupos();
 				gh.Alias="gh";
 				cg.EsFkDe(gh,cg.cPeriodo.Es(cal.cPeriodo.Valor),cg.cCalculo.Es(cal.cCalculo.Valor));
@@ -747,13 +756,13 @@ AND c.calculo="+cal.cCalculo.Valor
 			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A2).cIndice.Valor,Controlar.DeltaDouble);
 			Assert.AreEqual(110.0,new CalGru(repo.db,Per2,A).cIndice.Valor,Controlar.DeltaDouble);
 			repo.ExpandirEspecificacionesYVariedades();
-			using(var ej=new Ejecutador(repo.db)){
-				ej.Ejecutar(new SentenciaDelete(new CalEspInf()));
-				ej.Ejecutar(new SentenciaDelete(new CalEspTI()));
-				ej.Ejecutar(new SentenciaDelete(new CalGru()));
-				ej.Ejecutar(new SentenciaDelete(new CalProd()));
-				ej.Ejecutar(new SentenciaDelete(new CalProdTI()));
-			}
+			Calculos Per3=repo.CrearProximo(Per2);
+			repo.RegistrarPromedio(Per3,P100,2.4);
+			repo.RegistrarPromedio(Per3,P102,24.0);
+			repo.CalcularCalGru(Per3,A);
+			Assert.AreEqual(120.0,new CalGru(repo.db,Per3,A1).cIndice.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(120.0,new CalGru(repo.db,Per3,A2).cIndice.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(120.0,new CalGru(repo.db,Per3,A).cIndice.Valor,Controlar.DeltaDouble);
 		}
 		public void CargarPrecio(string periodo, string producto, int informante, double precio){
 			RelVar r=new RelVar();
@@ -762,6 +771,13 @@ AND c.calculo="+cal.cCalculo.Valor
 		}
 		[Test]
 		public void A02CalculosMatrizBase(){
+			using(var ej=new Ejecutador(repo.db)){
+				ej.Ejecutar(new SentenciaDelete(new CalEspInf()));
+				ej.Ejecutar(new SentenciaDelete(new CalEspTI()));
+				ej.Ejecutar(new SentenciaDelete(new CalGru()));
+				ej.Ejecutar(new SentenciaDelete(new CalProd()));
+				ej.Ejecutar(new SentenciaDelete(new CalProdTI()));
+			}
 			TipoInf ti=new TipoInf();
 			ti.InsertarDirecto(repo.db,"T","S");
 			ti.InsertarDirecto(repo.db,"S","T");

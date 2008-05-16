@@ -450,10 +450,11 @@ namespace ModeladorSql
 			// SelectInterno=new SelectInterno(SentenciaSubSelect);
 			return SentenciaSubSelect;
 		}
-		public ElementoTipado<bool> NoExistePara(Tabla TablaContexto){
+		public ElementoTipado<bool> NoExistePara(Tabla TablaContexto/*,params Tabla[] OtrasTablaContexto*/){
 			Falla.Si(this.TablaRelacionada!=TablaContexto,"Para usar NoExistePara tiene que estar relacionada "+this.NombreTabla+" y "+TablaContexto.NombreTabla);
 			var select=new SentenciaSelect(campos[0]);
 			select.TablasQueEstanMasArriba.Add(TablaContexto);
+			// select.TablasQueEstanMasArriba.AddRange(OtrasTablaContexto);
 			select.TablaBase=TablaContexto;
 			return new ExpresionSubSelect{SubSelect=select};
 		}

@@ -61,7 +61,7 @@ namespace Tareas
  		}
 		public void Procesar(){
  			Carpeta dir=new Carpeta(DirectorioMails);
- 			dir.ProcesarArchivosPlanos("*.eml",".procesado",ProcesarMail);
+ 			dir.ProcesarArchivosPlanos("*.eml","procesados","salteados",ProcesarMail);
  		}
 	}
 	[TestFixture]

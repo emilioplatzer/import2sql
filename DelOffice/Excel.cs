@@ -138,7 +138,10 @@ namespace DelOffice
 	public class AccesoExcel{
 		internal Excel.Worksheet hoja;
 		internal Excel.Range rango;
-		static object ___ = Type.Missing; 		
+		static object ___ = Type.Missing;
+		Diccionario<int, object> cacheCelda=new Diccionario<int, object>();
+		Diccionario<int, object> cacheArriba=new Diccionario<int, object>();
+		Diccionario<int, object> cacheIzquierda=new Diccionario<int, object>();
 		protected AccesoExcel(Excel.Worksheet hoja):
 			this(hoja.get_Range("A1",___),hoja)
 		{
@@ -166,11 +169,19 @@ namespace DelOffice
 		public object ValorCelda(string rango){
 			return ValorCelda(this.rango.get_Range(rango,___));
 		}
-		public object ValorCelda(int fila, int col){
-			return ValorCelda((Excel.Range) rango.Cells[fila,col]);
+		public object ValorCelda(int fila, int columna){
+			object rta=null;
+			if(cacheCelda.ContainsKey(fila*256+columna)){
+				rta=cacheCelda[fila*256+columna];
+			}else{
+				rta=ValorCelda((Excel.Range) rango.Cells[fila,columna]);
+				cacheCelda[fila*256+columna]=rta;
+			}
+			return rta;
 		}
-		public void PonerTexto(int fila,int col,string valor){
-			((Excel.Range) rango.Cells[fila,col]).Value2=valor;
+		public void PonerTexto(int fila,int columna,string valor){
+			cacheCelda[fila*256+columna]=valor;
+			((Excel.Range) rango.Cells[fila,columna]).Value2=valor;
 		}
 		static void PonerValor(Excel.Range rango,object valor){
 			rango.Value2=valor;
@@ -253,21 +264,26 @@ namespace DelOffice
 		public RangoExcel BuscarPorFilas(string contenido){
 			return BuscarPor(contenido,Excel.XlSearchOrder.xlByRows);
 		}
-		object ValorNoNuloA(int fila,int columna,int deltaFila,int deltaColumna){
+		object ValorNoNuloA(int fila,int columna,int deltaFila,int deltaColumna,Diccionario<int, object> cache){
 			object rta=null;
-			while(fila>0 && columna>0){
-				rta=ValorCelda(fila,columna);
-			if(rta!=null) break;
-				fila+=deltaFila;
-				columna+=deltaColumna;
+			if(cache.ContainsKey(fila*256+columna)){
+				rta=cache[fila*256+columna];
+			}else{
+				if(fila>0 && columna>0){
+					rta=ValorCelda(fila,columna);
+					if(rta==null){
+						rta=ValorNoNuloA(fila+deltaFila,columna+deltaColumna,deltaFila,deltaColumna,cache);
+					}
+					cache[fila*256+columna]=rta;
+				}
 			}
 			return rta;
 		}
 		public object ValorNoNuloIzquierda(int fila, int columna){
-			return ValorNoNuloA(fila,columna,0,-1);
+			return ValorNoNuloA(fila,columna,0,-1,cacheIzquierda);
 		}
 		public object ValorNoNuloArriba(int fila, int columna){
-			return ValorNoNuloA(fila,columna,-1,0);
+			return ValorNoNuloA(fila,columna,-1,0,cacheArriba);
 		}
 	}
 	public class ColeccionExcel{

@@ -89,7 +89,7 @@ namespace DelOffice
 				System.Console.WriteLine("La base ya existe");
 			}
 			Carpeta dir=new Carpeta(CarpetaExcel);
-			dir.ProcesarArchivos("*.xls","procesado",
+			dir.ProcesarArchivos("*.xls","procesados","salteados",
 			    delegate(string nombreArchivo){
 			        LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
 			        bool tengoDatos=false;

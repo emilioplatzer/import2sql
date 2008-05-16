@@ -44,7 +44,7 @@ namespace BasesDatos
 			try{
 				accion();
 			}catch(System.Exception ex){
-				bitacora.Registrar("/* "+ex.Message+"\n*/\n");
+				bitacora.RegistrarAdicional("/* "+ex.Message+"\n*/\n");
 				throw;
 			}
 		}

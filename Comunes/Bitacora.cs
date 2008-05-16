@@ -41,6 +41,15 @@ namespace Comunes
 			}
 			return mensaje;
 		}
+		public T RegistrarAdicional<T>(T mensaje){
+			if(nombreArchivoUltimoRegistro!=null){
+				Archivo.Agregar(nombreArchivoUltimoRegistro,prefijo()+mensaje.ToString());
+			}
+			if(nombreArchivoTodosRegistros!=null){
+				Archivo.Agregar(nombreArchivoTodosRegistros,prefijo()+Cadena.AgregarSiFalta(mensaje.ToString(),"\n"));
+			}
+			return mensaje;
+		}
 		public string RegistrarSql(string sentencia){
 			Registrar(sentencia);
 			return sentencia;
