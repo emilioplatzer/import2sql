@@ -490,6 +490,21 @@ namespace PrModeladorSql
 					.Where(e.NoExistePara(pp),pp.cEmpresa.Distinto(0))
 				)
 			);
+			PartesPiezas ppa=new PartesPiezas();
+			ppa.Alias="ppa";
+			ppa.EsFkDe(p,p,pp);
+			Assert.AreEqual(
+				"INSERT INTO partespiezas (empresa, pieza, parte, nombreparte, cantidad,\n parteanterior)\n"+
+				" SELECT p.empresa, p.pieza, pp.parte, pp.nombreparte, pp.cantidad,\n pp.parteanterior\n" +
+				" FROM piezas p, partespiezas pp\n" +
+				" WHERE NOT EXISTS (SELECT ppa.empresa\n FROM partespiezas ppa\n WHERE ppa.empresa=p.empresa\n AND ppa.pieza=p.pieza\n AND ppa.parte=pp.parte)\n" +
+				" AND pp.empresa<>0;\n",
+				new Ejecutador(dba).Dump(
+					new SentenciaInsert(pp)
+					.Select(p, pp)
+					.Where(ppa.NoExiste(),pp.cEmpresa.Distinto(0))
+				)
+			);
 		}
 		[Test]
 		public void SubselectGroupBySqlite(){

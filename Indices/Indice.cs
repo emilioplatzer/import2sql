@@ -123,7 +123,14 @@ namespace Indices
 				Grupos g=new Grupos();
 				ej.Ejecutar(
 					new SentenciaInsert(cg)
-					.Select(cg.cPeriodo.Es(cal.cPeriodo.Valor),cg.cCalculo.Es(cal.cCalculo.Valor),g.cAgrupacion,g.cGrupo,cg.cIndice.Es(100.0),cg.cFactor.Es(1.0))
+					.Select(cg.cPeriodo.Es(cal.cPeriodo.Valor)
+					        ,cg.cCalculo.Es(cal.cCalculo.Valor)
+					        ,g.cAgrupacion
+					        ,g.cGrupo
+					        ,cg.cIndice.Es(100.0)
+					        ,cg.cFactor.Es(1.0)
+					        ,cg.cImutacionGru.Es(Imputaciones.MB)
+					       )
 				);
 			}
 		}
@@ -147,16 +154,12 @@ namespace Indices
 				Grupos g=cg0.fkGrupos;
 				ej.Ejecutar(
 					new SentenciaInsert(cg)
-					.Select(c,cg0.cAgrupacion,g.cGrupo,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedioProd.Dividido(cp0.cPromedioProd))),cg0.cFactor)
-				);
-				ej.EjecutrarSecuencia(
-					"INSERT INTO CalGru (periodo,calculo,agrupacion,grupo,indice,factor) " +
-					" SELECT c.periodo,c.calculo,cg.agrupacion,cg.grupo,cg.indice,cg.factor " +
-					" FROM calculos c, calgru cg, grupos g" +
-					" WHERE c.periodo='"+cal.cPeriodo.Valor+"' AND c.calculo="+cal.cCalculo.Valor+" " +
-					"   AND g.agrupacion=cg.agrupacion AND g.grupo=cg.grupo AND g.esproducto='S'" +
-					"   AND cg.calculo=c.calculo AND cg.periodo=c.periodoanterior " +
-					"   AND NOT EXISTS (SELECT 1 FROM calgru x WHERE x.periodo=c.periodo AND x.calculo=c.calculo AND x.agrupacion=cg.agrupacion AND x.grupo=cg.grupo)"
+					.Select(c,cg0.cAgrupacion,g.cGrupo
+					        ,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedioProd.Dividido(cp0.cPromedioProd)))
+					        ,cg.cIndiceParcialActual.Es(cg0.cIndice.Por(cp.cPromedioProd.Dividido(cp0.cPromedioProd)))
+					        ,cg.cIndiceParcialAnterior.Es(cg0.cIndice)
+					        ,cg.cImutacionGru.Es(cp.cImputacionProd)
+					        ,cg0.cFactor)
 				);
 				Grupos gh=new Grupos();
 				gh.Alias="gh";
@@ -169,10 +172,24 @@ namespace Indices
 				for(int i=9;i>=0;i--){
 					ej.Ejecutar(
 						new SentenciaInsert(cgp)
-						.Select(c,gp.cAgrupacion,gp.cGrupo,
-						        cgp.cIndice.Es(Fun.Sum(cg.cIndice.Por(gh.cPonderador)).Dividido(Fun.Sum(gh.cPonderador))),
-						        cgp.cFactor.Es(Fun.Sum(cg.cFactor.Por(gh.cPonderador)).Dividido(Fun.Sum(gh.cPonderador))))
+						.Select(c,gp,
+						        cgp.cIndiceParcialActual.Es(Fun.Sum(cg.cIndiceParcialActual.Por(gh.cPonderador)).Dividido(Fun.Sum(gh.cPonderador))),
+						        cgp.cIndiceParcialAnterior.Es(Fun.Sum(cg.cIndiceParcialAnterior.Por(gh.cPonderador)).Dividido(Fun.Sum(gh.cPonderador))),
+						        cgp.cImutacionGru.Es(Fun.Min(cg.cImutacionGru)))
 						.Where(gh.cNivel.Igual(i))
+					);
+				}
+				for(int i=0;i<9;i++){
+					ej.Ejecutar(
+						new SentenciaInsert(cg)
+						.Select(c,cg0.CamposPk(),
+						        cg.cIndiceParcialActual.Es(cg0.cIndice.Por(cgp.cIndiceParcialActual.Dividido(cgp.cIndiceParcialAnterior))),
+						        cg.cIndiceParcialAnterior.Es(cg0.cIndice),
+						        cg.cImutacionGru.Es(Imputaciones.G)
+						       )
+						.Where(g.cNivel.Igual(i),
+						       cg.NoExiste()
+						      )
 					);
 				}
 			}
@@ -208,7 +225,7 @@ namespace Indices
 					cei.EsFkDe(nei);
 					ej.Ejecutar(
 						new SentenciaInsert(cei)
-						.Select(nei,cei.cImputacionEspInf.Es("V"),i)
+						.Select(nei,cei.cImputacionEspInf.Es(Imputaciones.B),i)
 						.Where(cei.NoExistePara(nei),nei.cEstado.Igual(NovEspInf.Estados.Alta).Or(nei.cEstado.Igual(NovEspInf.Estados.Reemplazo)))
 					);
 					CalEspInf ceiss=new CalEspInf();
@@ -273,7 +290,7 @@ AND c.calculo="+cal.cCalculo.Valor
 						);
 					}else{
 						ej.Ejecutar(
-								new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei0.cPromedioEspInf.Por(ce.cPromedioEspMatchingActual.Dividido(ce.cPromedioEspMatchingAnterior))),cei.cImputacionEspInf.Es("IP"))
+								new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei0.cPromedioEspInf.Por(ce.cPromedioEspMatchingActual.Dividido(ce.cPromedioEspMatchingAnterior))),cei.cImputacionEspInf.Es(Imputaciones.IP))
 							.Where(cei.cPromedioEspInf.EsNulo()
 							       // ,i.cInformante.Igual(i.cInformante)
 							       ,c.cPeriodo.Igual(c.cPeriodo) // OJO condiciones dummy para que coloque las tablas en el FROM
@@ -283,7 +300,7 @@ AND c.calculo="+cal.cCalculo.Valor
 						TipoInf ti=cei.fkTipoInf;
 						ceo.EsFkDe(cei,ceo.cTipoInformante.Es(ti.cOtroTipoInformante)); // ,ce.cTipoInformante.Es(i.cTipoInformante));
 						ej.Ejecutar(
-								new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei0.cPromedioEspInf.Por(ceo.cPromedioEspMatchingActual.Dividido(ceo.cPromedioEspMatchingAnterior))),cei.cImputacionEspInf.Es("IOTI"))
+								new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei0.cPromedioEspInf.Por(ceo.cPromedioEspMatchingActual.Dividido(ceo.cPromedioEspMatchingAnterior))),cei.cImputacionEspInf.Es(Imputaciones.IOTI))
 							.Where(cei.cPromedioEspInf.EsNulo()
 							       // ,i.cInformante.Igual(i.cInformante)
 							       ,ti.cTipoInformante.Igual(ti.cTipoInformante)
@@ -648,6 +665,7 @@ AND c.calculo="+cal.cCalculo.Valor
 				t.cCalculo[ins]=cal.cCalculo;
 				t.cProducto[ins]=prod.cProducto;
 				t.cPromedioProd[ins]=promedio;
+				t.cImputacionProd[ins]=Imputaciones.O;
 			}		
 		}
 		public void ExpandirEspecificacionesYVariedades(){
@@ -742,12 +760,18 @@ AND c.calculo="+cal.cCalculo.Valor
 			Assert.AreEqual(1,Per1.fkPeriodos.cMes.Valor);
 			Grupos A1=repo.AbrirGrupo("A","A1");
 			Grupos A2=repo.AbrirGrupo("A","A2");
+			Grupos AP103=repo.AbrirGrupo("A","P103");
 			repo.RegistrarPromedio(Per1,P100,2.0);
 			repo.RegistrarPromedio(Per1,P101,10.0);
 			repo.RegistrarPromedio(Per1,P102,22.0);
 			repo.CalcularCalGru(Per1,A);
 			Assert.AreEqual(110.0,new CalGru(repo.db,Per1,A2).cIndice.Valor,Controlar.DeltaDouble);
 			Assert.AreEqual(104.0,new CalGru(repo.db,Per1,A).cIndice.Valor,Controlar.DeltaDouble);
+			/*
+			var cgP103=new CalGru();
+			Assert.IsFalse(cgP103.Buscar(repo.db,"a2002m01",0,"A","P103"));
+			*/
+			Assert.AreEqual(110.0,new CalGru(repo.db,Per1,AP103).cIndice.Valor,Controlar.DeltaDouble);
 			Calculos Per2=repo.CrearProximo(Per1);
 			repo.RegistrarPromedio(Per2,P100,2.2);
 			repo.RegistrarPromedio(Per2,P101,11.0);
@@ -878,7 +902,7 @@ AND c.calculo="+cal.cCalculo.Valor
 			cei1.Leer(repo.db,"a2002m01",-1,"P100",1,2);
 			Assert.AreEqual(2.2*(2.0/Math.Sqrt(2.0*2.60)),(double)cei1.cPromedioEspInf.Valor,Controlar.DeltaDouble);
 			cei1.Leer(repo.db,"a2002m01",-1,"P103",1,101);
-			Assert.AreEqual("IOTI",cei1.cImputacionEspInf.Valor);
+			Assert.AreEqual(Imputaciones.IOTI,cei1.cImputacionEspInf.Valor);
 			ce.Leer(repo.db,"a2002m01",-1,"P100",1,"T");
 			Assert.AreEqual(Math.Pow(2.0*Math.Sqrt(3.0*3.60)*2.2*(2.0/Math.Sqrt(2.0*2.60)),1.0/3.0),(double)ce.cPromedioEsp.Valor,Controlar.DeltaDouble);
 		}

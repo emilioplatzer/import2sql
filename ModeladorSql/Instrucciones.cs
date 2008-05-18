@@ -145,7 +145,7 @@ namespace ModeladorSql
 	public class SentenciaSelect:Sentencia{
 		public ElementosClausulaSelect ClausulaSelect;
 		public ElementosClausulaHaving ClausulaHaving;
-		public ListaElementos<Campo> ListaOrderBy=new ListaElementos<Campo>();
+		public ListaCampos ListaOrderBy=new ListaCampos();
 		public bool ConGroupBy;
 		public bool EsInterno;
 		public SentenciaSelect(){

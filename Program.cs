@@ -80,7 +80,8 @@ namespace TodoASql
 			    // new PrModeladorSql.prModelador().FkConDatos();
 			    // new PrModeladorSql.prModelador().Subselect();
 			    // new Tareas.PruebasExternas().Generar();
-			    new Tareas.SegundoProc().Generar();
+			    // new Tareas.SegundoProc().Generar();
+			    // new ProbarMailASql().Proceso();
 				//{
 				//    var db=BdAccess.Abrir(@"c:\cvp\temp\Estructura.mdb");
 				//	var repo=new RepositorioIndice(db);
@@ -94,6 +95,7 @@ namespace TodoASql
 				System.Windows.Forms.MessageBox.Show("Listo");
 				*/
 				// new Tareas.PrComparacionPadrones().PrExacta();
+				new PrModeladorSql.prModelador().SubselectGroupBy();
 			    /*
 			    ProbarIndiceD3 p=new ProbarIndiceD3();
 			    p.A01CalculosEstructuraBase();

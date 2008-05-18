@@ -58,17 +58,27 @@ namespace Comunes
 			DirectoryInfo dir=new DirectoryInfo(Directorio);
 			FileInfo[] archivos=dir.GetFiles(nombres);
 			foreach(FileInfo archivo in archivos){
-				string nombreProcesado=archivo.DirectoryName+@"\"+subcarpetaProcesados+@"\"+archivo.Name;
-				string nombreSalteado=archivo.DirectoryName+@"\"+subcarpetaSalteados+@"\"+archivo.Name;
+				string nombreProcesado=null;
+				if(subcarpetaProcesados!=null){
+					nombreProcesado=archivo.DirectoryName+@"\"+subcarpetaProcesados+@"\"+archivo.Name;
+					queNoExista(nombreProcesado);
+				}
+				string nombreSalteado=null;
+				if(subcarpetaSalteados!=null){
+					nombreSalteado=archivo.DirectoryName+@"\"+subcarpetaSalteados+@"\"+archivo.Name;
+					queNoExista(nombreSalteado);
+				}
 				System.Console.Write("Archivo "+archivo.FullName);
-				queNoExista(nombreProcesado);
-				queNoExista(nombreSalteado);
 				if(procesar(archivo.FullName)){
 					System.Console.WriteLine(" procesado");
-					Archivo.RenombrarMover(archivo.FullName,nombreProcesado);
+					if(subcarpetaProcesados!=null){
+						Archivo.RenombrarMover(archivo.FullName,nombreProcesado);
+					}
 				}else{
 					System.Console.WriteLine(" ERROR NO SE PUEDE PROCESAR");
-					Archivo.RenombrarMover(archivo.FullName,nombreSalteado);
+					if(subcarpetaSalteados!=null){
+						Archivo.RenombrarMover(archivo.FullName,nombreSalteado);
+					}
 				}
 			}
 		}

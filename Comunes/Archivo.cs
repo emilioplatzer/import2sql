@@ -78,11 +78,21 @@ namespace Comunes
 			}
 		}
 		public static void Borrar(string nombreArchivo){
-			tratarDe("borrar "+nombreArchivo
-			         ,"quizás el archivo esté abierto por otro programa"
-			         ,delegate(){
-				File.Delete(nombreArchivo);
-			});
+			if(nombreArchivo.Contains("*")){
+				Carpeta dir=new Carpeta(Path.GetDirectoryName(nombreArchivo));
+				dir.ProcesarArchivos(Path.GetFileName(nombreArchivo),null,null,
+					delegate(string nombre){
+						Archivo.Borrar(nombre);
+						return true;
+					}
+				);
+			}else{
+				tratarDe("borrar "+nombreArchivo
+				         ,"quizás el archivo esté abierto por otro programa"
+				         ,delegate(){
+					File.Delete(nombreArchivo);
+				});
+			}
 		}
 		public static bool Existe(string nombreArchivo){
 			return File.Exists(nombreArchivo);
