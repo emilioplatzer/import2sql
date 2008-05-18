@@ -90,6 +90,10 @@ namespace Tareas
 				   Observaciones varchar(250)
 				   )");
 			System.IO.Directory.CreateDirectory(directorio);
+			// System.IO.Directory.SetCurrentDirectory(directorio);
+			System.IO.Directory.CreateDirectory(directorio+@"\procesados");
+			// System.IO.Directory.SetCurrentDirectory("..");
+			Archivo.Borrar(directorio+@"\procesados\*.eml");
 			Archivo.Escribir(directorio+@"\unmail.eml",@"
 				lleno de basura
 				To:Numero@nombre.com

@@ -19,6 +19,15 @@ namespace Comunes
 		public Lista(T UnicoElemento){
 			this.Add(UnicoElemento);
 		}
+		public override string ToString(){
+			StringBuilder rta=new StringBuilder("Lista<"+typeof(T).Name+">=[");
+			Separador coma=new Separador(",");
+			foreach(T elemento in this){
+				rta.Append(coma+elemento.ToString());
+			}
+			rta.Append("]");
+			return rta.ToString();
+		}
 	};
 	public class Conjunto<T>:System.Collections.Generic.Dictionary<T, int>{
 		public Conjunto(){}

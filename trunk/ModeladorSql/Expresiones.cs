@@ -459,7 +459,7 @@ namespace ModeladorSql
 		}
 	}
 	public class ExpresionSubSelect:ElementoTipado<bool>{
-		public ListaElementos<Campo> CamposRelacionados;
+		public ListaCampos CamposRelacionados;
 		public string Relacion="NOT EXISTS";
 		public SentenciaSelect SubSelect;
 		public override bool CandidatoAGroupBy { get { return false; } }
@@ -531,6 +531,9 @@ namespace ModeladorSql
 		}
 		public static ElementoTipado<T> Sum<T>(IElementoTipado<T> expresion){
 			return new FuncionAgrupacion<T, T>(expresion, OperadorAgrupada.Suma);
+		}
+		public static ElementoTipado<T> Min<T>(IElementoTipado<T> expresion){
+			return new FuncionAgrupacion<T, T>(expresion, OperadorAgrupada.Minimo);
 		}
 		public static IElementoTipado<T> Dividido<T>(this IElementoTipado<T> Dividendo, IElementoTipado<T> Divisor){
 			return new Binomio<T>{E1=Dividendo,Operador=OperadorBinario.Dividido,E2=Divisor};

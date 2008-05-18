@@ -22,7 +22,7 @@ namespace Indices
 	public class CampoNombre:CampoChar{ public CampoNombre():base(250){} };
 	public class CampoAgrupacion:CampoChar{ public CampoAgrupacion():base(9){} };
 	public class CampoGrupo:CampoChar{ public CampoGrupo():base(9){} };
-	public class CampoImputacion:CampoChar{ public CampoImputacion():base(9){ this.Obligatorio=true; } };
+	public class CampoImputacion:CampoEnumerado<Imputaciones>{ public CampoImputacion(){ Obligatorio=true; }}
 	public class CampoPonderador:CampoRealOpcional{};
 	public class CampoNivel:CampoEnteroOpcional{}
 	public class CampoPrecio:CampoRealOpcional{};
@@ -52,6 +52,16 @@ namespace Indices
 	public class CampoInformante:CampoEntero{};
 	public class CampoTipo:CampoChar{ public CampoTipo():base(1){this.Obligatorio=true;} };
 	public class CampoNovedad<T>:CampoEnumerado<T>{};
+	/******************* ENUMERADOS *************************/
+	public enum Imputaciones{
+		B, // dato en Blanco
+		G, // grupal (grupo completo)
+		IOG, // por otro grupo
+		IOTI, // por otro tipo de informante
+		IP, // por los pares
+		MB, // Mes base
+		O, // Observado efectivamente
+	};
 	/********************* TABLAS ***************************/
 	[Alias("pr")]
 	public class Productos:Tabla{
@@ -83,7 +93,7 @@ namespace Indices
 			ExpresionSubSelect ee;
 			Grupos gp=new Grupos();
 			gp.Alias="g_p";
-			var campos=new ListaElementos<Campo>();
+			var campos=new ListaCampos();
 			campos.Add(this.cGrupoPadre); // no se necesita poner la agrupación porque está en el contexto
 			return new ExpresionSubSelect{
 				CamposRelacionados=campos,
@@ -137,6 +147,7 @@ namespace Indices
 		[Pk] public CampoVersion cCalculo;
 		[Pk] public CampoProducto cProducto;
 		public CampoPrecio cPromedioProd;
+		public CampoImputacion cImputacionProd;
 		[Fk] public Periodos fkPeriodos;
 		[Fk] public Calculos fkCalculos;
 		[Fk] public Productos fkProductos;
@@ -147,7 +158,10 @@ namespace Indices
 		[Pk] public CampoAgrupacion cAgrupacion;
 		[Pk] public CampoGrupo cGrupo;
 		public CampoIndice cIndice;
+		public CampoIndice cIndiceParcialActual;
+		public CampoIndice cIndiceParcialAnterior;
 		public CampoFactor cFactor;
+		public CampoImputacion cImutacionGru;
 		[Fk] public Periodos fkPeriodos;
 		[Fk] public Calculos fkCalculos;
 		[Fk] public Grupos fkGrupos;

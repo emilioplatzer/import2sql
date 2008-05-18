@@ -14,6 +14,14 @@ using BasesDatos;
 
 namespace ModeladorSql
 {
+	public class ListaCampos:ListaElementos<Campo>,IConCampos{
+		public Lista<Campo> Campos(){
+			return this;
+		}
+		public string ToSql(BaseDatos db){
+			return this.ToSql(db);
+		}
+	}
 	public abstract class Campo:IConCampos,IExpresion{
 		public string Nombre;
 		public string NombreCampo; 
@@ -50,6 +58,15 @@ namespace ModeladorSql
 		}
 		public virtual string ToSql(BaseDatos db){
 			return ToSql(db,false);
+		}
+		public override string ToString(){
+			return 
+				"«"+
+				(TablaContenedora!=null?(
+					TablaContenedora.Alias!=null?TablaContenedora.Alias:TablaContenedora.NombreTabla
+				)+".":"")+
+				Nombre+
+				(ValorSinTipo!=null?"="+ValorSinTipo.ToString():"")+"»";
 		}
 		public virtual bool CandidatoAGroupBy{ 
 			get{

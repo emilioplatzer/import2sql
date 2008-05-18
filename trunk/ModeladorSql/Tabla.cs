@@ -27,12 +27,13 @@ namespace ModeladorSql
 		public int CantidadCamposPk;
 		public bool IniciadasFk=false;
 		public Tabla TablaRelacionada;
+		public ConjuntoTablas OtrasTablasRelacionadas;
 		public Lista<Tabla> TablasFk;
 		public Diccionario<string, Campo> CamposFkAlias=new Diccionario<string, Campo>();
 		public Diccionario<Campo, IExpresion> CamposRelacionFk=new Diccionario<Campo, IExpresion>();
 		public Fk.Tipo TipoFk=Fk.Tipo.Obligatoria;
 		public bool LiberadaDelContextoDelEjecutador; // Del contexto del ejecutador
-		public ListaElementos<Campo> CamposContexto; // Para agregar en las clausulas where
+		public ListaCampos CamposContexto; // Para agregar en las clausulas where
 		public bool RegistroConDatos=false;
 		public SentenciaSelect SentenciaSubSelect;
 		// public SelectInterno SelectInterno;
@@ -299,8 +300,8 @@ namespace ModeladorSql
 				c.AsignarValor(SelectAbierto[c.NombreCampo]);
   			}
 		}
-		public virtual ListaElementos<Campo> Campos(Filtro filtro){
-			ListaElementos<Campo> rta=new ListaElementos<Campo>();
+		public virtual ListaCampos Campos(Filtro filtro){
+			ListaCampos rta=new ListaCampos();
 			foreach(Campo c in campos){
 				if(filtro==null || filtro(c)){
 					rta.Add(c);
@@ -308,7 +309,7 @@ namespace ModeladorSql
   			}
   			return rta;
 		}
-		public virtual ListaElementos<Campo> CamposPk(){
+		public virtual ListaCampos CamposPk(){
 			return Campos(delegate(Campo c){ return c.EsPk; });
 		}
 		public virtual string OrderBy(BaseDatos db){
@@ -339,30 +340,51 @@ namespace ModeladorSql
 		}
 		public void EsFkDe(Tabla maestra,Fk.Tipo TipoFk,params IConCampos[] CamposReemplazo){
 			this.TablaRelacionada=maestra;
+			this.OtrasTablasRelacionadas=new ConjuntoTablas();
 			int cantidadCamposFk=CamposPk().Count;
-			ListaElementos<Campo> CampoAReemplazar=new ListaElementos<Campo>();
+			ListaCampos CampoAReemplazar=new ListaCampos();
 			ListaElementos<IExpresion> ExpresionDeReemplazo=new ListaElementos<IExpresion>();
-			ListaElementos<Campo> CampoASaltear=new ListaElementos<Campo>();
+			ListaCampos CampoASaltear=new ListaCampos();
 			CamposRelacionFk=new Diccionario<Campo,IExpresion>();
+			Console.WriteLine("{0} EsFkDe: {1}",this,maestra);
+			var OtrasTablas=new ConjuntoTablas();
 			foreach(var t in CamposReemplazo){
-				if(t!=null){
+				if(t==null){
+				}else if(t is Campo){
+					Campo CampoReemplazo=t as Campo;
+					if(CampoReemplazo is ICampoDestino){
+						CampoDestino<object> cd=CampoReemplazo as CampoDestino<object>;
+						CampoAReemplazar.Add(CamposPk()[cd.OrdenDeReemplazo-1]);
+						Campo r=cd.CampoContenedor.Expresion as Campo;
+						Falla.SiEsNulo(r);
+						ExpresionDeReemplazo.Add(r);
+						OtrasTablasRelacionadas.Add(r.TablaContenedora);
+					}else if(CampoReemplazo.TablaContenedora==maestra){
+						CampoAReemplazar.Add(CamposPk()[cantidadCamposFk-1]);
+						ExpresionDeReemplazo.Add(CampoReemplazo);
+						OtrasTablasRelacionadas.Add(CampoReemplazo.TablaContenedora);
+					}else if(CampoReemplazo is ICampoAlias){
+						CampoAReemplazar.Add((CampoReemplazo as ICampoAlias).CampoReceptor);
+						ExpresionDeReemplazo.Add((CampoReemplazo as ICampoAlias).ExpresionBase);
+						OtrasTablasRelacionadas.AddRange((CampoReemplazo as ICampoAlias).ExpresionBase.Tablas(QueTablas.Aliasables));
+					}else if(CampoReemplazo.TablaContenedora==this){ // No es un alias, quitar
+						CampoASaltear.Add(CampoReemplazo);
+					}
+				}else{
+					OtrasTablas.Add(t as Tabla);
+					OtrasTablasRelacionadas.Add(t as Tabla);
+					/*
 					foreach(Campo CampoReemplazo in t.Campos()){
-						if(CampoReemplazo is ICampoDestino){
-							CampoDestino<object> cd=CampoReemplazo as CampoDestino<object>;
-							CampoAReemplazar.Add(CamposPk()[cd.OrdenDeReemplazo-1]);
-							Campo r=cd.CampoContenedor.Expresion as Campo;
-							Falla.SiEsNulo(r);
-							ExpresionDeReemplazo.Add(r);
-						}else if(CampoReemplazo.TablaContenedora==maestra){
-							CampoAReemplazar.Add(CamposPk()[cantidadCamposFk-1]);
+						var CampoReemplazado=CampoIndirecto(CampoReemplazo);
+						if(!CampoAReemplazar.Contains(CampoReemplazado)){
+							CampoAReemplazar.Add(CampoReemplazado);
 							ExpresionDeReemplazo.Add(CampoReemplazo);
-						}else if(CampoReemplazo is ICampoAlias){
-							CampoAReemplazar.Add((CampoReemplazo as ICampoAlias).CampoReceptor);
-							ExpresionDeReemplazo.Add((CampoReemplazo as ICampoAlias).ExpresionBase);
-						}else if(CampoReemplazo.TablaContenedora==this){ // No es un alias, quitar
-							CampoASaltear.Add(CampoReemplazo);
+							OtrasTablasRelacionadas.Add(CampoReemplazo.TablaContenedora);
 						}
 					}
+					Console.WriteLine("Paso: {0} {1}",CampoAReemplazar,ExpresionDeReemplazo);
+					}
+					*/
 				}
 			}
 			foreach(Campo c in CamposPk()){
@@ -370,7 +392,15 @@ namespace ModeladorSql
 					if(CampoAReemplazar!=null && CampoAReemplazar.IndexOf(c)>=0){
 						CamposRelacionFk[c]=ExpresionDeReemplazo[CampoAReemplazar.IndexOf(c)];
 					}else{
-						CamposRelacionFk[c]=maestra.CampoIndirecto(c);
+						Campo CampoReemplazo=maestra.CampoIndirecto(c);
+						if(CampoReemplazo==null){
+							foreach(Tabla t in OtrasTablas.Keys){
+								CampoReemplazo=t.CampoIndirecto(c);
+								if(CampoReemplazo!=null) break;
+							}
+						}
+						Falla.SiEsNulo(CampoReemplazo);
+						CamposRelacionFk[c]=CampoReemplazo;
 					}
 				}
 			}
@@ -454,8 +484,20 @@ namespace ModeladorSql
 			Falla.Si(this.TablaRelacionada!=TablaContexto,"Para usar NoExistePara tiene que estar relacionada "+this.NombreTabla+" y "+TablaContexto.NombreTabla);
 			var select=new SentenciaSelect(campos[0]);
 			select.TablasQueEstanMasArriba.Add(TablaContexto);
-			// select.TablasQueEstanMasArriba.AddRange(OtrasTablaContexto);
 			select.TablaBase=TablaContexto;
+			return new ExpresionSubSelect{SubSelect=select};
+		}
+		public ElementoTipado<bool> NoExiste(){
+			Falla.SiEsNulo(CamposFkAlias);
+			var select=new SentenciaSelect(campos[0]);
+			ConjuntoTablas contexto=new ConjuntoTablas();
+			System.Console.WriteLine("NoExiste: {0}",this.NombreTabla);
+			foreach(var par in CamposRelacionFk){
+				System.Console.WriteLine("Campo relacionado Fk {0},{1}",par.Key.Nombre,par.Value.ToString());
+				contexto.AddRange(par.Value.Tablas(QueTablas.Aliasables));
+			}
+			select.TablasQueEstanMasArriba.AddRange(contexto);
+			// select.TablaBase=TablaContexto;
 			return new ExpresionSubSelect{SubSelect=select};
 		}
 		/*
