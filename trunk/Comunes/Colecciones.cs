@@ -59,6 +59,13 @@ namespace Comunes
 		public bool Contiene(T t){
 			return ContainsKey(t);
 		}
+		public bool ContieneTodas(Conjunto<T> conj){
+			bool rta=true;
+			foreach(var t in this.Keys){
+				rta&=Contiene(t);
+			}
+			return rta;
+		}
 		public override string ToString(){
 			StringBuilder rta=new StringBuilder("<");
 			Separador coma=new Separador("; ");

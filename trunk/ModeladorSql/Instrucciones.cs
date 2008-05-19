@@ -34,8 +34,9 @@ namespace ModeladorSql
 			while(true){
 				int CantidadARevisar=TablasARevisar.Count;
 				foreach(Tabla t in TablasARevisar.Keys){
+					Console.WriteLine("Viendo {0}-{1}-{2}-{3}-",t,TablasVistas,t.TablaRelacionada,t.OtrasTablasRelacionadas);
 					if(t.TablaRelacionada!=null && (tablas.Contiene(t.TablaRelacionada) || TablasQueEstanMasArriba.Contiene(t.TablaRelacionada))){
-						if(TablasVistas.Contiene(t.TablaRelacionada) || TablasQueEstanMasArriba.Contiene(t.TablaRelacionada)){
+						if(TablasVistas.Contiene(t.TablaRelacionada) && TablasVistas.ContieneTodas(t.OtrasTablasRelacionadas) || TablasQueEstanMasArriba.Contiene(t.TablaRelacionada)){
 							procesarTabla(t);
 							foreach(System.Collections.Generic.KeyValuePair<Campo, IExpresion> par in t.CamposRelacionFk){
 								procesarPar(par);
