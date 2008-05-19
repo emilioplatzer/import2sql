@@ -202,13 +202,11 @@ namespace Indices
 					.Where(g.cEsProducto.Igual(true))
 				);
 				var cg_agrup=new CalGru();
-				/*
 				cg_agrup.SubSelect("cgag"
 				                   ,cg_agrup.cIndice.Es(Fun.Sum(cg.cIndice.Por(g.cPonderador)).Dividido(Fun.Sum(g.cPonderador)))
 				                   ,cg_agrup.cImutacionGru.EsMin(cg.cImutacionGru)
 				                   ,cg_agrup.cGrupo.Es(g.cGrupoPadre)
 				                   ,cg);
-				                   */
 				cgp.EsFkDe(cg,cgp.cGrupo.Es(g.cGrupoPadre));
 				cg_agrup.EsFkDe(cg,cg_agrup.cGrupo.Es(g.cGrupoPadre));
 				for(int i=9;i>=0;i--){

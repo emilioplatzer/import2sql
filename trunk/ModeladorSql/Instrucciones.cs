@@ -148,6 +148,8 @@ namespace ModeladorSql
 		public ListaCampos ListaOrderBy=new ListaCampos();
 		public bool ConGroupBy;
 		public bool EsInterno;
+		public bool EsVistaExistente;
+		public Tabla TablaParaRestringirCampos;
 		public SentenciaSelect(){
 			ClausulaSelect=new ElementosClausulaSelect();
 			ClausulaHaving=new ElementosClausulaHaving();
@@ -168,14 +170,18 @@ namespace ModeladorSql
 			StringBuilder groupby=new StringBuilder();
 			Separador groupbyComa=new Separador("\n GROUP BY ",", ").AnchoLimitadoConIdentacion();
 			bool TieneAgrupadas=ConGroupBy;
+			var CamposElegidos=new ListaCampos();
 			foreach(IConCampos campos in ClausulaSelect){
 				foreach(Campo c in campos.Campos()){
-					selectComa.AgregarEn(rta,c.ToSql(db,EsInterno && db.InternosForzarAs));
-					// IExpresion e=(c is ICampoAlias)?(c as ICampoAlias).ExpresionBase:c;
-					IExpresion e=c.Expresion;
-					TieneAgrupadas=TieneAgrupadas || e.EsAgrupada;
-					if(e.CandidatoAGroupBy){
-						groupbyComa.AgregarEn(groupby,e.ToSql(db));
+					if(TablaParaRestringirCampos==null || TablaParaRestringirCampos.ContieneMismoNombre(c) && !CamposElegidos.Exists(campo => c.NombreCampo==campo.NombreCampo)){
+						CamposElegidos.Add(c);
+						selectComa.AgregarEn(rta,c.ToSql(db,EsInterno && db.InternosForzarAs));
+						// IExpresion e=(c is ICampoAlias)?(c as ICampoAlias).ExpresionBase:c;
+						IExpresion e=c.Expresion;
+						TieneAgrupadas=TieneAgrupadas || e.EsAgrupada;
+						if(e.CandidatoAGroupBy){
+							groupbyComa.AgregarEn(groupby,e.ToSql(db));
+						}
 					}
 				}
 			}

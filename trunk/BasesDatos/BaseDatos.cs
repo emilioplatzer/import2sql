@@ -39,17 +39,20 @@ namespace BasesDatos
 		}
 		protected EjecutadorBaseDatos(){
 		}
-		public static void TratarDe(Accion accion){
+		public void TratarDe(Accion accion){
 		reintentar:
 			try{
 				accion();
 			}catch(System.Exception ex){
 				bitacora.RegistrarAdicional("/* "+ex.Message+"\n*/\n");
-				throw;
+				if(cmd.CommandText==null || !cmd.CommandText.StartsWith("DROP")){
+					throw;
+				}
 			}
 		}
 		public IDataReader ExecuteReader(SentenciaSql sentencia){
 			Falla.SiEsNulo(con);
+			cmd.CommandText=null;
 			IDbCommand cmd_local=con.CreateCommand();
 			cmd_local.CommandText=bitacora.RegistrarSql(AdaptarSentecia(sentencia));
 			IDataReader rta=null;
@@ -78,7 +81,9 @@ namespace BasesDatos
 		}
 		public void EjecutrarSecuencia(SentenciaSql secuencia){
 			foreach(string sentencia in secuencia.Separar()){
-				ExecuteNonQuery(sentencia);
+				if(sentencia.Trim(" \t\r\n;".ToCharArray())!=""){
+					ExecuteNonQuery(sentencia);
+				}
 			}
 		}
 		public bool SinRegistros(string sentencia){
@@ -302,7 +307,7 @@ namespace BasesDatos
 		public bool DebeStuffear(string nombreTabla){
 			return TipoStuffActual==TipoStuff.Siempre 
 			   || TipoStuffActual==TipoStuff.Inteligente
-			   && nombreTabla.IndexOfAny("[],._·ÈÌÛ˙Ò¡…Õ”⁄—¸‹!@#$%^&*'\" /\\}{()<>:;∞".ToCharArray())>=0;
+			   && nombreTabla.IndexOfAny("[],.·ÈÌÛ˙Ò¡…Õ”⁄—¸‹!@#$%^&*'\" /\\}{()<>:;∞".ToCharArray())>=0;
 		}
 		public object Verdadero{ get {return "S";} }
 		public object Falso{ get {return "N";} }
@@ -317,6 +322,8 @@ namespace BasesDatos
 		public virtual bool UpdateSoloUnaTabla{ get{ return false; } }
 		public abstract bool InternosForzarAs{ get; } 
 		public abstract string MarcaMotor{ get; }
+		public abstract bool SubSelectsDeUpdateViaVista{ get; }
+		public virtual string PrefijoViewSubSelect{ get{ return "subselect_"; }}
 	}
 	public class SentenciaSql{
 		StringBuilder sentencia;

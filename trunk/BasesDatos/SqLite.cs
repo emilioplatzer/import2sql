@@ -47,6 +47,7 @@ namespace BasesDatos
 		public override bool UpdateConJoin{ get{ return false; } }
 		public override bool InternosForzarAs { get { return true; } }
 		public override string MarcaMotor{ get{ return "Sqlite"; }}
+		public override bool SubSelectsDeUpdateViaVista { get { return true; } } 
 		public override string OperadorToSql(OperadorBinario Operador){
 			switch(Operador){
 				case OperadorBinario.Concatenado: return "||";

@@ -59,6 +59,7 @@ namespace BasesDatos
 		public override bool UpdateSelectSumViaDSum{ get{ return true; } }
 		public override bool InternosForzarAs { get { return false; } }
 		public override string MarcaMotor{ get{ return "MS Access"; }}
+		public override bool SubSelectsDeUpdateViaVista { get { return true; } } 
 		public override string OperadorToSql(OperadorBinario Operador){
 			switch(Operador){
 				case OperadorBinario.Concatenado: return " & ";
