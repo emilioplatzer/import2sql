@@ -95,8 +95,8 @@ namespace TodoASql
 				System.Windows.Forms.MessageBox.Show("Listo");
 				*/
 				// new Tareas.PrComparacionPadrones().PrExacta();
-				new PrModeladorSql.prModelador().SubselectGroupBy();
-			    /*
+				// new PrModeladorSql.prModelador().SubselectGroupBy();
+			    // /*
 			    ProbarIndiceD3 p=new ProbarIndiceD3();
 			    p.A01CalculosEstructuraBase();
 			    p.A02CalculosMatrizBase();

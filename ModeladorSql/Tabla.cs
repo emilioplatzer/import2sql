@@ -412,6 +412,9 @@ namespace ModeladorSql
 		public void EsFkDe(Tabla maestra,params IConCampos[] CampoReemplazo){
 			EsFkDe(maestra,Fk.Tipo.Sugerida,CampoReemplazo);
 		}
+		public void NoEsFk(){
+			TablaRelacionada=null;
+		}
 		public void UsarFk(){
 			if(!IniciadasFk || RegistroConDatos){
 				TablasFk=new Lista<Tabla>();

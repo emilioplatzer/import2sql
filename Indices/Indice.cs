@@ -179,7 +179,11 @@ namespace Indices
 						.Where(gh.cNivel.Igual(i))
 					);
 				}
-				for(int i=0;i<9;i++){
+				cg0.NoEsFk();
+				cg.EsFkDe(c,cg0);
+				gh.EsFkDe(cg0);
+				cgp.EsFkDe(c,cgp.cGrupo.Es(gh.cGrupoPadre),cg0);
+				for(int i=1;i<=9;i++){
 					ej.Ejecutar(
 						new SentenciaInsert(cg)
 						.Select(c,cg0.CamposPk(),
@@ -187,7 +191,7 @@ namespace Indices
 						        cg.cIndiceParcialAnterior.Es(cg0.cIndice),
 						        cg.cImutacionGru.Es(Imputaciones.G)
 						       )
-						.Where(g.cNivel.Igual(i),
+						.Where(gh.cNivel.Igual(i),
 						       cg.NoExiste()
 						      )
 					);
