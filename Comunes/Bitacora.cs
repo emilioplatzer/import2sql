@@ -30,7 +30,7 @@ namespace Comunes
 			}
 		}
 		public string prefijo(){
-			return "-- "+DateTime.Now.Hour+":"+DateTime.Now.Minute+":"+DateTime.Now.Second+"\r\n";
+			return "-- "+DateTime.Now.Hour+":"+DateTime.Now.Minute+":"+DateTime.Now.Second+Archivo.Eol;
 		}
 		public T Registrar<T>(T mensaje){
 			if(nombreArchivoUltimoRegistro!=null){

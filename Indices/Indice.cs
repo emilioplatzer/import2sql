@@ -196,6 +196,27 @@ namespace Indices
 						      )
 					);
 				}
+				g.EsFkDe(cg);
+				ej.Ejecutar(
+					new SentenciaUpdate(cg,cg.cIndice.Es(cg.cIndiceParcialActual))
+					.Where(g.cEsProducto.Igual(true))
+				);
+				var cg_agrup=new CalGru();
+				/*
+				cg_agrup.SubSelect("cgag"
+				                   ,cg_agrup.cIndice.Es(Fun.Sum(cg.cIndice.Por(g.cPonderador)).Dividido(Fun.Sum(g.cPonderador)))
+				                   ,cg_agrup.cImutacionGru.EsMin(cg.cImutacionGru)
+				                   ,cg_agrup.cGrupo.Es(g.cGrupoPadre)
+				                   ,cg);
+				                   */
+				cgp.EsFkDe(cg,cgp.cGrupo.Es(g.cGrupoPadre));
+				cg_agrup.EsFkDe(cg,cg_agrup.cGrupo.Es(g.cGrupoPadre));
+				for(int i=9;i>=0;i--){
+					ej.Ejecutar(
+						new SentenciaUpdate(cg,cg.cIndice.Es(cg_agrup.cIndice),cg.cImutacionGru.Es(cg_agrup.cImutacionGru))
+						.Where(g.cEsProducto.Igual(false),g.cNivel.Igual(i))
+					);
+				}
 			}
 		}
 		public void CalcularPreciosPeriodo(Calculos cal,bool ControlarPeriodoAnterior){
@@ -769,7 +790,7 @@ AND c.calculo="+cal.cCalculo.Valor
 			repo.RegistrarPromedio(Per1,P101,10.0);
 			repo.RegistrarPromedio(Per1,P102,22.0);
 			repo.CalcularCalGru(Per1,A);
-			Assert.AreEqual(110.0,new CalGru(repo.db,Per1,A2).cIndice.Valor,Controlar.DeltaDouble);
+			Assert.AreEqual(110.0,new CalGru(repo.db,Per1,A2).cIndice.Valor,Controlar.DeltaDouble); 
 			Assert.AreEqual(104.0,new CalGru(repo.db,Per1,A).cIndice.Valor,Controlar.DeltaDouble);
 			/*
 			var cgP103=new CalGru();

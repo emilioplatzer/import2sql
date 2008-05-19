@@ -430,13 +430,14 @@ namespace PrModeladorSql
 		[Test]
 		public void Subselect(){
 			BaseDatos dba=BdAccess.SinAbrir();
+			BaseDatos dbp=PostgreSql.SinAbrir();
 			Piezas pss=new Piezas();
 			PartesPiezas pp=new PartesPiezas();
 			pp.UsarFk();
 			Empresas e=pp.fkEmpresas;
-			pss.SubSelect("pss",pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
+			pss.SubSelect("x",pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
 				.Where(pp.cParteAnterior.EsNulo(),e.cNombreEmpresa.Distinto("este"));
-			pss.Alias="x";
+			// pss.Alias="x";
 			Piezas p=new Piezas();
 			Assert.AreEqual(
 				"INSERT INTO piezas (empresa, pieza, nombrepieza)\n"+
@@ -448,6 +449,17 @@ namespace PrModeladorSql
 				new Ejecutador(dba).Dump(
 					new SentenciaInsert(p)
 					.Select(pss.cEmpresa,pss.cPieza, pss.cNombrePieza)
+					.Where(pss.cEmpresa.Distinto(0))
+				)
+			);
+			Assert.AreEqual(
+				"UPDATE piezas p\n SET nombrepieza=x.nombrepieza\n"+
+				" FROM (SELECT pp.empresa, pp.pieza, pp.nombreparte AS nombrepieza\n" +
+				" FROM partespiezas pp, empresas e\n" +
+				" WHERE pp.parteanterior IS NULL\n AND e.nombreempresa<>'este'\n AND e.empresa=pp.empresa) x\n" +
+				" WHERE x.empresa<>0;\n",
+				new Ejecutador(dbp).Dump(
+					new SentenciaUpdate(p,p.cNombrePieza.Es(pss.cNombrePieza))
 					.Where(pss.cEmpresa.Distinto(0))
 				)
 			);

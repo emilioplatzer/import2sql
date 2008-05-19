@@ -152,7 +152,7 @@ namespace TodoASql
 				Console.WriteLine("Demoró "+demoro.ToString());
 				Console.Write("presione cualquier tecla . . . ");
 				System.Windows.Forms.MessageBox.Show("Listo");
-				Console.ReadKey(true);
+				// Console.ReadKey(true);
 			}
 		}
 	}
