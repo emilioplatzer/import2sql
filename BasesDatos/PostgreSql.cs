@@ -68,6 +68,7 @@ namespace BasesDatos
 		public override bool UpdateConJoin{ get{ return false; } }
 		public override bool InternosForzarAs { get { return false; } }
 		public override string MarcaMotor{ get{ return "PostgreSql"; }}
+		public override bool SubSelectsDeUpdateViaVista { get { return false; } } 
 		public override string OperadorToSql(OperadorBinario Operador){
 			switch(Operador){
 				case OperadorBinario.Concatenado: return "||";

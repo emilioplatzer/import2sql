@@ -276,7 +276,7 @@ namespace PrModeladorSql
 				CampoDestino<int> d2=new CampoDestino<int>("otro_estado");
 				su=new SentenciaSelect(p.cPieza,p.cNombrePieza,pi.cNombrePieza,d.Es(pi.cNombrePieza.Concatenado(p.cPieza)))
 					.Where(p.cPieza.Igual(pi.cPieza.Concatenado("2")),d.Distinto("A"),d2.Es(pi.cEstado).Distinto(3));
-				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pi.nombrepieza,\n pi.nombrepieza & p.pieza AS [otro_nombre]\n" +
+				Assert.AreEqual("SELECT p.pieza, p.nombrepieza, pi.nombrepieza,\n pi.nombrepieza & p.pieza AS otro_nombre\n" +
 				                " FROM piezas p, piezas pi\n" +
 				                " WHERE p.pieza=pi.pieza & '2'\n AND pi.nombrepieza & p.pieza<>'A'\n AND pi.estado<>3\n AND p.empresa=13\n AND pi.empresa=13;\n",
 				                ej.Dump(su));
@@ -435,15 +435,14 @@ namespace PrModeladorSql
 			PartesPiezas pp=new PartesPiezas();
 			pp.UsarFk();
 			Empresas e=pp.fkEmpresas;
-			pss.SubSelect("x",pp.cEmpresa,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
+			pss.SubSelect("x",e,pp.cPieza,pss.cNombrePieza.Es(pp.cNombreParte))
 				.Where(pp.cParteAnterior.EsNulo(),e.cNombreEmpresa.Distinto("este"));
-			// pss.Alias="x";
 			Piezas p=new Piezas();
 			Assert.AreEqual(
 				"INSERT INTO piezas (empresa, pieza, nombrepieza)\n"+
 				" SELECT x.empresa, x.pieza, x.nombrepieza\n" +
-				" FROM (SELECT pp.empresa, pp.pieza, pp.nombreparte AS nombrepieza\n" +
-				" FROM partespiezas pp, empresas e\n" +
+				" FROM (SELECT e.empresa, pp.pieza, pp.nombreparte AS nombrepieza\n" +
+				" FROM empresas e, partespiezas pp\n" +
 				" WHERE pp.parteanterior IS NULL\n AND e.nombreempresa<>'este'\n AND e.empresa=pp.empresa) x\n" +
 				" WHERE x.empresa<>0;\n",
 				new Ejecutador(dba).Dump(
@@ -452,13 +451,28 @@ namespace PrModeladorSql
 					.Where(pss.cEmpresa.Distinto(0))
 				)
 			);
+			pss.EsFkDe(p);
 			Assert.AreEqual(
 				"UPDATE piezas p\n SET nombrepieza=x.nombrepieza\n"+
-				" FROM (SELECT pp.empresa, pp.pieza, pp.nombreparte AS nombrepieza\n" +
-				" FROM partespiezas pp, empresas e\n" +
+				" FROM (SELECT e.empresa, pp.pieza, pp.nombreparte AS nombrepieza\n" +
+				" FROM empresas e, partespiezas pp\n" +
 				" WHERE pp.parteanterior IS NULL\n AND e.nombreempresa<>'este'\n AND e.empresa=pp.empresa) x\n" +
-				" WHERE x.empresa<>0;\n",
+				" WHERE x.empresa<>0\n AND x.empresa=p.empresa\n AND x.pieza=p.pieza;\n",
 				new Ejecutador(dbp).Dump(
+					new SentenciaUpdate(p,p.cNombrePieza.Es(pss.cNombrePieza))
+					.Where(pss.cEmpresa.Distinto(0))
+				)
+			);
+			Assert.AreEqual(
+				"DROP VIEW subselect_x;\n"+
+				"CREATE VIEW subselect_x AS\n" +
+				" SELECT e.empresa, pp.pieza, pp.nombreparte AS nombrepieza\n" +
+				" FROM empresas e, partespiezas pp\n" +
+				" WHERE pp.parteanterior IS NULL\n AND e.nombreempresa<>'este'\n AND e.empresa=pp.empresa;\n" +
+				"UPDATE piezas p INNER JOIN subselect_x x ON p.empresa=x.empresa AND p.pieza=x.pieza\n" +
+				" SET p.nombrepieza=x.nombrepieza\n"+
+				" WHERE x.empresa<>0;\n",
+				new Ejecutador(dba).Dump(
 					new SentenciaUpdate(p,p.cNombrePieza.Es(pss.cNombrePieza))
 					.Where(pss.cEmpresa.Distinto(0))
 				)

@@ -58,14 +58,11 @@ namespace ModeladorSql
 			return campos;
 		}
 		public virtual string ToSql(BaseDatos db){
-			/*
-			return (SelectInterno==null
-					?db.StuffTabla(this.NombreTabla)
-					:"("+SelectInterno.ToSql(db)+")")
-				+(this.Alias==null?"":" "+this.Alias);
-			*/
-			return (SentenciaSubSelect==null?db.StuffTabla(this.NombreTabla):"("+SentenciaSubSelect.ToSql(db)+")")
-				+(this.AliasActual==null?"":" "+this.AliasActual);
+			return (SentenciaSubSelect==null || SentenciaSubSelect.EsVistaExistente
+			        ?db.StuffTabla(NombreTabla)
+		            :"("+SentenciaSubSelect.ToSql(db)+")"
+			       )
+				+(AliasActual==null?"":" "+AliasActual);
 		}
 		public ConjuntoTablas Tablas(QueTablas queTablas){
 			var rta=new ConjuntoTablas(this);
@@ -476,10 +473,11 @@ namespace ModeladorSql
 			clausula.Add(ClausulaWhere);
 			return new RegistrosEnumerables(this,db,clausula,CamposOrden);
 		}
-		public SentenciaSelect SubSelect(string AliasSubSelect,params Campo[] Campos){
+		public SentenciaSelect SubSelect(string AliasSubSelect,params IConCampos[] Campos){
 			Alias=AliasSubSelect;
 			SentenciaSubSelect=new SentenciaSelect(Campos);
 			SentenciaSubSelect.EsInterno=true;
+			SentenciaSubSelect.TablaParaRestringirCampos=this;
 			// SelectInterno=new SelectInterno(SentenciaSubSelect);
 			return SentenciaSubSelect;
 		}
