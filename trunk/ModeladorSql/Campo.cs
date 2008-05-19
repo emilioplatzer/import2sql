@@ -311,6 +311,9 @@ namespace ModeladorSql
 		public CampoTipo<T> EsMax(IElementoTipado<T> expresion){
 			return Es(new FuncionAgrupacion<T,T>(expresion,OperadorAgrupada.Maximo));
 		}
+		public CampoTipo<T> EsMin(IElementoTipado<T> expresion){
+			return Es(new FuncionAgrupacion<T,T>(expresion,OperadorAgrupada.Minimo));
+		}
 		#if NuncaAccess
 		// habilitar esto si nunca se va a trabajar en Access
 		public Campo EsCountDistinct(ExpresionSql expresion){
