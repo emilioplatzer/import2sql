@@ -22,7 +22,7 @@ namespace ModeladorSql
 		public ConjuntoTablas TablasQueEstanMasArriba;
 		public ListaElementos<ElementoTipado<bool>> ClausulaWhere=new ListaElementos<ElementoTipado<bool>>();
 		protected bool IncluirJoinEnWhere=true;
-		public void ParaCada Junta(ConjuntoTablas tablas,Tabla TablaBase,ProcesamientoTabla procesarTabla,ProcesamientoPar procesarPar){
+		public void ParaCadaJunta(ConjuntoTablas tablas,Tabla TablaBase,ProcesamientoTabla procesarTabla,ProcesamientoPar procesarPar){
 			var TablasVistas=new ConjuntoTablas();
 			var TablasARevisar=new ConjuntoTablas();
 			TablasARevisar.AddRange(tablas);
