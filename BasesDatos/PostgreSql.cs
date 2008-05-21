@@ -80,15 +80,21 @@ namespace BasesDatos
 				case OperadorFuncion.LogE: return "LN(";
 				case OperadorFuncion.Str: return "";
 				case OperadorFuncion.Nvl: return "COALESCE(";
+				case OperadorFuncion.PrimeraPalabra: return "PRIMERPALABRA(";
+				case OperadorFuncion.SinPrimeraPalabra: return "SINPRIMERPALABRA(";
+				/*
 				case OperadorFuncion.PrimeraPalabra: return "TRANSLATE(SUBSTRING(TRIM(BOTH ";
 				case OperadorFuncion.SinPrimeraPalabra: return "TRIM(BOTH ' ' FROM TRIM(BOTH '.' FROM REGEXP_REPLACE(";
+				*/
 				default: return base.OperadorToSqlPrefijo(Operador);
 			}
 		}
 		public override string OperadorToSqlSufijo(OperadorFuncion Operador){
 			switch(Operador){
+				/*
 				case OperadorFuncion.PrimeraPalabra: return ") FROM '^([^ .]+)(?:[ .]+|$)'),' .','')";
-				case OperadorFuncion.SinPrimeraPalabra: return ",'^[^ .]+(?:[ .]|$)','')))";
+				case OperadorFuncion.SinPrimeraPalabra: return ",'^[ .]*[^ .]+(?:[ .]|$)','')))";
+				*/
 				case OperadorFuncion.Str: return "";
 				default: return base.OperadorToSqlSufijo(Operador);
 			}

@@ -94,9 +94,14 @@ namespace TodoASql
 				Console.Write("presione cualquier tecla . . . ");
 				System.Windows.Forms.MessageBox.Show("Listo");
 				*/
-				// new Tareas.PrComparacionPadrones().PrExacta();
+				// /*
+				var t=new Tareas.PrComparacionPadrones();
+				t.Pr01Exacta();
+				t.Pr02ExtraccionPalabras();
+				t.Pr03Reordenacion();
+				// */
 				// new PrModeladorSql.prModelador().Subselect();
-			    // /*
+			    /*
 			    ProbarIndiceD3 p=new ProbarIndiceD3();
 			    p.A01CalculosEstructuraBase();
 			    p.A02CalculosMatrizBase();

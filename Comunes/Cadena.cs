@@ -273,18 +273,18 @@ namespace Comunes
 			}
 			return CadenaSeparadora;
 		}
-		public string Concatenar(object[] elementos){
+		public string Concatenar<T>(T[] elementos){
 			StringBuilder rta=new StringBuilder();
-			foreach(string elemento in elementos){
+			foreach(T elemento in elementos){
 				//rta.Append(s+elemento);
-				AgregarEn(rta,elemento);
+				AgregarEn(rta,elemento.ToString());
 			}
 			return rta.ToString();
 		}
-		public static string Concatenar(ArrayList elementos,string separador){
+		public static string Concatenar<T>(List<T> elementos,string separador){
 			return Concatenar(elementos.ToArray(),separador);
 		}
-		public static string Concatenar(object[] elementos,string separador){
+		public static string Concatenar<T>(T[] elementos,string separador){
 			Separador s=new Separador(separador);
 			return s.Concatenar(elementos);
 		}
@@ -353,7 +353,7 @@ namespace Comunes
 		}
 		[Test]
 		public void ProbarConcatenar(){
-			ArrayList datos=new ArrayList();
+			List<string> datos=new List<string>();
 			Assert.AreEqual("",Separador.Concatenar(datos,","));
 			datos.Add("uno");
 			Assert.AreEqual("uno",Separador.Concatenar(datos,","));
