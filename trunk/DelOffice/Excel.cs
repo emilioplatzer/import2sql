@@ -82,6 +82,11 @@ namespace DelOffice
 			libro.Close(___,___,___);
 			abierto=false;
 		}
+		public HojaExcel NuevaHoja(string NombreHoja){
+			Excel.Worksheet hoja=(Excel.Worksheet) libro.Worksheets.Add(___,___,___,___);
+			hoja.Name=NombreHoja;
+			return new HojaExcel(hoja);
+		}
 	}
 	public class HojaExcel:AccesoExcel{
 		static object ___ = Type.Missing; 		

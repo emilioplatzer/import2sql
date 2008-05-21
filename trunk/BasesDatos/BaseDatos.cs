@@ -40,7 +40,6 @@ namespace BasesDatos
 		protected EjecutadorBaseDatos(){
 		}
 		public void TratarDe(Accion accion){
-		reintentar:
 			try{
 				accion();
 			}catch(System.Exception ex){
