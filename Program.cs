@@ -94,7 +94,8 @@ namespace TodoASql
 				Console.Write("presione cualquier tecla . . . ");
 				System.Windows.Forms.MessageBox.Show("Listo");
 				*/
-				// /*
+				new PBG.PrCierrePBG();
+				/*
 				var t=new Tareas.PrComparacionPadrones();
 				t.Pr01Exacta();
 				t.Pr02ExtraccionPalabras();
