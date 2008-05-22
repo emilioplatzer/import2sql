@@ -74,6 +74,9 @@ namespace DelOffice
 			libro.Saved=true;
 			libro.Close(false,___,___);
 		}
+		public void Guardar(){
+			libro.Save();
+		}
 		public void GuardarYCerrar(){
 			libro.Close(true,___,___);
 		}
