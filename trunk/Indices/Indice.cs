@@ -192,7 +192,8 @@ namespace Indices
 						        cg.cImputacionGru.Es(Imputaciones.G)
 						       )
 						.Where(gh.cNivel.Igual(i),
-						       cg.NoExiste()
+						       cg.NoExiste(),
+						       cg0.cPeriodo.Igual(c.cPeriodoAnterior) // OJO! Esto deber'ia calcularse automaticamente. Pero falta indicarselo arriba en alguna fk
 						      )
 					);
 				}
@@ -206,7 +207,8 @@ namespace Indices
 				                   ,cg_agrup.cIndice.Es(Fun.Sum(cg.cIndice.Por(g.cPonderador)).Dividido(Fun.Sum(g.cPonderador)))
 				                   ,cg_agrup.cImputacionGru.EsMin(cg.cImputacionGru)
 				                   ,cg_agrup.cGrupo.Es(g.cGrupoPadre)
-				                   ,cg);
+				                   ,cg_agrup.cFactor.Es(Fun.Sum(cg.cFactor.Por(g.cPonderador)).Dividido(Fun.Sum(g.cPonderador)))
+				                   ,cgp);
 				cgp.EsFkDe(cg,cgp.cGrupo.Es(g.cGrupoPadre));
 				cg_agrup.EsFkDe(cg,cg_agrup.cGrupo.Es(g.cGrupoPadre));
 				for(int i=9;i>=0;i--){
@@ -215,9 +217,9 @@ namespace Indices
 @"DROP VIEW subselect_cgag;
 CREATE VIEW subselect_cgag AS
  SELECT SUM(calgru.indice*gr.ponderador)/SUM(gr.ponderador) AS indice,
- MIN(calgru.imputaciongru) AS imputaciongru, gr.grupopadre AS grupo, calgru.periodo, calgru.calculo,
- calgru.agrupacion, calgru.indiceparcialactual, calgru.indiceparcialanterior,
- calgru.factor
+ MIN(calgru.imputaciongru) AS imputaciongru, 
+ gr.grupopadre AS grupo, calgru.periodo, calgru.calculo,
+ calgru.agrupacion
  FROM calgru, grupos gr
  WHERE gr.agrupacion=calgru.agrupacion
  AND gr.grupo=calgru.grupo
@@ -226,14 +228,13 @@ CREATE VIEW subselect_cgag AS
  AND calgru.calculo=0
  AND gr.agrupacion='A'
  GROUP BY gr.grupopadre, calgru.periodo, calgru.calculo,
- calgru.agrupacion, calgru.indiceparcialactual, calgru.indiceparcialanterior,
- calgru.factor;
+ calgru.agrupacion;
 UPDATE calgru
- INNER JOIN grupos gr ON calgru.agrupacion=gr.agrupacion AND calgru.grupo=gr.grupo 
+ INNER JOIN grupos gr ON calgru.agrupacion=gr.agrupacion AND calgru.grupo=gr.grupo
 SET calgru.indice=
-  DLookUp('indice','subselect_cgag','periodo=''' & calgru.periodo & ''' AND calculo=' & calgru.calculo & ' AND agrupacion=''' & calgru.agrupacion & ''' AND cgag.grupo=''' & gr.grupopadre & '''') , 
+  DLookUp('indice','subselect_cgag','periodo=''' & calgru.periodo & ''' AND calculo=' & calgru.calculo & ' AND agrupacion=''' & gr.agrupacion & ''' AND grupo=''' & gr.grupo & '''') , 
 calgru.imputaciongru=
-  DLookUp('imputaciongru','subselect_cgag','periodo=''' & calgru.periodo & ''' AND calculo=' & calgru.calculo & ' AND agrupacion=''' & calgru.agrupacion & ''' AND cgag.grupo=''' & gr.grupopadre & '''') 
+  DLookUp('imputaciongru','subselect_cgag','periodo=''' & calgru.periodo & ''' AND calculo=' & calgru.calculo & ' AND agrupacion=''' & calgru.agrupacion & ''' AND grupo=''' & gr.grupo & '''') 
 WHERE gr.esproducto='N'
  AND gr.nivel=9
  AND calgru.agrupacion='A'
@@ -252,6 +253,19 @@ WHERE gr.esproducto='N'
 						);
 					}
 				}
+				cg.NoEsFk();
+				c.EsFkDe(cg);
+				cg0.EsFkDe(cg,cg0.cPeriodo.Es(c.cPeriodoAnterior));
+				var cg0ng=new CalGru();
+				cg0ng.EsFkDe(cg,cg0ng.cGrupo.Es(cg.cAgrupacion),cg0ng.cPeriodo.Es(c.cPeriodoAnterior)); // !OJO Definici'on ambigua de nivel general
+				cg0ng.Alias="cNG";
+				cg0ng.LiberadaDelContextoDelEjecutador=true;
+				g.EsFkDe(cg);
+				ej.Ejecutar(
+					new SentenciaUpdate(cg
+					                    ,cg.cIncidencia.Es(cg.cIndice.Menos(cg0.cIndice).Por(g.cPonderador).Por(100.0).Dividido(cg0ng.cIndice)))
+					.Where(c.cPeriodo.Igual(c.cPeriodo)) // OJO esta incluisi'on la deber'ia calcular automaticamente
+				);
 			}
 		}
 		public void CalcularPreciosPeriodo(Calculos cal,bool ControlarPeriodoAnterior){
@@ -305,7 +319,8 @@ WHERE gr.esproducto='N'
 					ej.Ejecutar( // Calcular los relativos de imputación
 					    new SentenciaInsert(ce)
 					    .Select(c,cei1,ce.cPromedioEspMatchingActual.EsPromedioGeometrico(cei1.cPromedioEspInf),
-					            ce.cPromedioEspMatchingAnterior.EsPromedioGeometrico(cei0.cPromedioEspInf))
+					            ce.cPromedioEspMatchingAnterior.EsPromedioGeometrico(cei0.cPromedioEspInf)
+					            ,ce.cImputacionEspTI.Es(Imputaciones.CI))
 					    .Where(c.SiguienteDe(cei0),cei1.cPromedioEspInf.Mayor(Constante<double>.Cero),cei0.cPromedioEspInf.Mayor(Constante<double>.Cero))
 					);
 				}
@@ -379,7 +394,7 @@ AND c.calculo="+cal.cCalculo.Valor
 					ce0.EsFkDe(cei1);
 					ej.Ejecutar( // Insertar registros cuando no haya promedios
 					    new SentenciaInsert(ce)
-					    .Select(cei1,cei1)
+					    .Select(ce.cImputacionEspTI.Es(Imputaciones.B),cei1,cei1)
 					    .Where(ce0.NoExistePara(cei1))
 					    .GroupBy()
 					);
@@ -415,7 +430,7 @@ AND c.calculo="+cal.cCalculo.Valor
 					ct.EsFkDe(ce,ct.cProducto.Es(e.cProducto));
 					ej.Ejecutar(
 						new SentenciaInsert(ct)
-						.Select(ce,e,ct.cPromedioProdTI.EsPromedioGeometrico(ce.cPromedioEsp))
+						.Select(ce,e,ct.cPromedioProdTI.EsPromedioGeometrico(ce.cPromedioEsp),ct.cImputacionProdTI.EsMin(ce.cImputacionEspTI))
 						.Where(ce.cPromedioEsp.Mayor(0.0))
 					);
 				}
@@ -425,7 +440,8 @@ AND c.calculo="+cal.cCalculo.Valor
 					cp.EsFkDe(cpt);
 					ej.Ejecutar(
 						new SentenciaInsert(cp)
-						.Select(cpt,cp.cPromedioProd.EsPromedioGeometrico(cpt.cPromedioProdTI))
+						.Select(cpt,cp.cPromedioProd.EsPromedioGeometrico(cpt.cPromedioProdTI)
+						        ,cp.cImputacionProd.EsMin(cpt.cImputacionProdTI))
 					);
 				}
 			}
@@ -471,11 +487,11 @@ AND c.calculo="+cal.cCalculo.Valor
 				var cp0=new CalProd();
 				ej.Ejecutar(
 					new SentenciaInsert(cg)
-					.Select(cg.cPeriodo.Es(cal0.cPeriodo.Valor),cg.cCalculo.Es(cal0.cCalculo.Valor),cg.cIndice.Es(100.0),cg.cFactor.Es(1.0),g)
+					.Select(cg.cPeriodo.Es(cal0.cPeriodo.Valor),cg.cCalculo.Es(cal0.cCalculo.Valor),cg.cIndice.Es(100.0),cg.cFactor.Es(1.0),cg.cImputacionGru.Es(Imputaciones.MB),g)
 				);
 				ej.Ejecutar(
 					new SentenciaInsert(cp0)
-					.Select(cp0.cPeriodo.Es(cal0.cPeriodo.Valor),cp0.cCalculo.Es(cal0.cCalculo.Valor),cp0)
+					.Select(cp0.cPeriodo.Es(cal0.cPeriodo.Valor),cp0.cCalculo.Es(cal0.cCalculo.Valor),cp0.cImputacionProd.Es(Imputaciones.MB),cp0)
 				);
 			}
 		}

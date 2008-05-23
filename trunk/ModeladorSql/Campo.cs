@@ -376,8 +376,8 @@ namespace ModeladorSql
 		public IElementoTipado<T> Mas(ElementoTipado<T> Valor){
 			return new Binomio<T>{E1=this,Operador=OperadorBinario.Mas,E2=Valor};
 		}
-		public IElementoTipado<T> Por(IElementoTipado<T> Valor){
-			return new Binomio<T>{E1=this,Operador=OperadorBinario.Por,E2=Valor};
+		public IElementoTipado<T> Menos(IElementoTipado<T> Valor){
+			return new Binomio<T>{E1=this,Operador=OperadorBinario.Menos,E2=Valor};
 		}
 		public ElementoTipado<string> NumeroACadena(){
 			return new OperacionFuncion<T,string>(this, OperadorFuncion.Str);
