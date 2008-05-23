@@ -112,7 +112,7 @@ namespace PrModeladorSql
 			Assert.AreEqual("CREATE TABLE periodos(ano INTEGER NOT NULL,mes INTEGER NOT NULL,anoant INTEGER,mesant INTEGER,PRIMARY KEY(ano,mes));"
 			                ,Cadena.Simplificar(p.SentenciaCreateTable(dba)));
 			Piezas pr=new Piezas();
-			System.Console.WriteLine(pr.SentenciaCreateTable(dba));
+			//System.Console.WriteLine(pr.SentenciaCreateTable(dba));
 			Assert.AreEqual("CREATE TABLE piezas(empresa INTEGER NOT NULL,pieza VARCHAR(4),nombrepieza VARCHAR(250),estado INTEGER NOT NULL,costo DOUBLE PRECISION,PRIMARY KEY(empresa,pieza),FOREIGN KEY(empresa)REFERENCES empresas(empresa));"
 			                ,Cadena.Simplificar(pr.SentenciaCreateTable(dba)));
 			PartesPiezas pa=new PartesPiezas();
@@ -241,11 +241,11 @@ namespace PrModeladorSql
 				                ,ej.Dump(new SentenciaSelect(cCantidadPartes.EsSuma(pp.cCantidad)).Where(pi.cPieza.Distinto(pi.cNombrePieza))));
 				Sentencia su=
 					new SentenciaUpdate(pp,pp.cNombreParte.Es(pi.cNombrePieza.Concatenado(pp.cParte.NumeroACadena()))).Where(pp.cNombreParte.EsNulo());
-				Console.WriteLine(ej.Dump(su));
-				Assert.AreEqual("UPDATE [partespiezas] pp INNER JOIN [piezas] p ON pp.[empresa]=p.[empresa] AND pp.[pieza]=p.[pieza]\n " +
+				//Console.WriteLine(ej.Dump(su));
+				Assert.AreEqual("UPDATE [partespiezas] pp\n INNER JOIN [piezas] p ON pp.[empresa]=p.[empresa] AND pp.[pieza]=p.[pieza]\n " +
 				                "SET pp.[nombreparte]=p.[nombrepieza] & STR(pp.[parte])\n WHERE pp.[nombreparte] IS NULL\n AND pp.[empresa]=13\n AND p.[empresa]=13;\n",
 				                ej.Dump(su));
-				Assert.AreEqual("UPDATE [partespiezas] pp INNER JOIN [piezas] p ON pp.[empresa]=p.[empresa] AND pp.[pieza]=p.[pieza]\n " +
+				Assert.AreEqual("UPDATE [partespiezas] pp\n INNER JOIN [piezas] p ON pp.[empresa]=p.[empresa] AND pp.[pieza]=p.[pieza]\n " +
 				                "SET pp.[nombreparte]=p.[nombrepieza] & STR(pp.[parte])\n WHERE pp.[nombreparte] IS NULL\n AND pp.[empresa]=13\n AND p.[empresa]=13;\n",
 				                ej.Dump(su));
 				Assert.AreEqual("UPDATE partespiezas pp\n " +
@@ -286,7 +286,7 @@ namespace PrModeladorSql
 				Assert.AreEqual(pi,np.TablaRelacionada);
 				pi.Alias="p";
 				su=new SentenciaUpdate(pi,pi.cEstado.Es(np.cNuevoEstado.PeroSiEsNulo(pi.cEstado)),pi.cNombrePieza.Es(pi.cNombrePieza.Concatenado(np.cNuevoEstado))).Where(pi.cPieza.Distinto("P_este"));
-				Assert.AreEqual("UPDATE piezas p INNER JOIN novedadespiezas np ON p.empresa=np.empresa AND p.pieza=np.piezaauxiliar\n" +
+				Assert.AreEqual("UPDATE piezas p\n INNER JOIN novedadespiezas np ON p.empresa=np.empresa AND p.pieza=np.piezaauxiliar\n" +
 				                " SET p.estado=NZ(np.nuevoestado, p.estado),\n p.nombrepieza=p.nombrepieza & np.nuevoestado\n" +
 				                " WHERE p.pieza<>'P_este'\n AND p.empresa=13\n AND np.empresa=13;\n",
 				                ej.Dump(su));
@@ -295,7 +295,7 @@ namespace PrModeladorSql
 				                " WHERE p.pieza<>'P_este'\n AND np.empresa=p.empresa\n AND np.piezaauxiliar=p.pieza\n AND p.empresa=13\n AND np.empresa=13;\n",
 				                ejp.Dump(su));
 				su=new SentenciaUpdate(pi,pi.cEstado.Es(np.cNuevoEstado),pi.cCosto.SeaNulo()).Where(pi.cPieza.Distinto("P_este"));
-				Assert.AreEqual("UPDATE piezas p INNER JOIN novedadespiezas np ON p.empresa=np.empresa AND p.pieza=np.piezaauxiliar\n SET p.estado=np.nuevoestado, p.costo=NULL\n WHERE p.pieza<>'P_este'\n AND p.empresa=13\n AND np.empresa=13;\n",
+				Assert.AreEqual("UPDATE piezas p\n INNER JOIN novedadespiezas np ON p.empresa=np.empresa AND p.pieza=np.piezaauxiliar\n SET p.estado=np.nuevoestado, p.costo=NULL\n WHERE p.pieza<>'P_este'\n AND p.empresa=13\n AND np.empresa=13;\n",
 				                ej.Dump(su));
 				
 				/* Falta programar
@@ -348,7 +348,7 @@ namespace PrModeladorSql
 				Sentencia s=
 					new SentenciaUpdate(p,p.cNombrePieza.Es(pp.cNombreParte));
 				Assert.Ignore("Trabajando en esto");
-				Assert.AreEqual("UPDATE piezas p INNER JOIN partespiezas pp ON 1=pp.empresa AND pp.pieza=p.pieza\n AND pp.parte=numeros.numero" +
+				Assert.AreEqual("UPDATE piezas p\n INNER JOIN partespiezas pp ON 1=pp.empresa AND pp.pieza=p.pieza\n AND pp.parte=numeros.numero" +
 				                " numeros" +
 				                "SET p.nombrepieza=pp.nombreparte\n" +
 				                " WHERE ;\n",
@@ -469,7 +469,7 @@ namespace PrModeladorSql
 				" SELECT e.empresa, pp.pieza, pp.nombreparte AS nombrepieza\n" +
 				" FROM empresas e, partespiezas pp\n" +
 				" WHERE pp.parteanterior IS NULL\n AND e.nombreempresa<>'este'\n AND e.empresa=pp.empresa;\n" +
-				"UPDATE piezas p INNER JOIN subselect_x x ON p.empresa=x.empresa AND p.pieza=x.pieza\n" +
+				"UPDATE piezas p\n INNER JOIN subselect_x x ON p.empresa=x.empresa AND p.pieza=x.pieza\n" +
 				" SET p.nombrepieza=x.nombrepieza\n"+
 				" WHERE x.empresa<>0;\n",
 				new Ejecutador(dba).Dump(
