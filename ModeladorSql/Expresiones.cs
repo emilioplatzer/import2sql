@@ -508,6 +508,12 @@ namespace ModeladorSql
 			return new BinomioRelacional<bool>(E1,OperadorBinarioRelacional.And,E2);
 		}
 		*/
+		public static IElementoTipado<T> Por<T>(this IElementoTipado<T> Valor1,IElementoTipado<T> Valor2){
+			return new Binomio<T>{E1=Valor1,Operador=OperadorBinario.Por,E2=Valor2};
+		}
+		public static IElementoTipado<T> Por<T>(this IElementoTipado<T> Valor1,T Valor2){
+			return new Binomio<T>{E1=Valor1,Operador=OperadorBinario.Por,E2=new Constante<T>(Valor2)};
+		}
 		public static ElementoLogico Or(this IElementoLogico E1, IElementoLogico E2){
 			return new BinomioRelacional<bool>(E1,OperadorBinarioRelacional.Or,E2);
 		}

@@ -27,6 +27,8 @@ namespace Indices
 	public class CampoNivel:CampoEnteroOpcional{}
 	public class CampoPrecio:CampoRealOpcional{};
 	public class CampoIndice:CampoRealOpcional{};
+	public class CampoIncidencia:CampoRealOpcional{};
+	public class CampoVariacion:CampoRealOpcional{};
 	public class CampoFactor:CampoRealOpcional{};
 	public class CampoPeriodo:CampoChar{ 
 		public CampoPeriodo():base(5+3
@@ -55,6 +57,7 @@ namespace Indices
 	/******************* ENUMERADOS *************************/
 	public enum Imputaciones{
 		B, // dato en Blanco
+		CI, // calculo incompleto
 		G, // grupal (grupo completo)
 		IOG, // por otro grupo
 		IOTI, // por otro tipo de informante
@@ -158,10 +161,12 @@ namespace Indices
 		[Pk] public CampoAgrupacion cAgrupacion;
 		[Pk] public CampoGrupo cGrupo;
 		public CampoIndice cIndice;
+		public CampoIncidencia cIncidencia;
+		public CampoVariacion cVariacion;
+		public CampoImputacion cImputacionGru;
+		public CampoFactor cFactor;
 		public CampoIndice cIndiceParcialActual;
 		public CampoIndice cIndiceParcialAnterior;
-		public CampoFactor cFactor;
-		public CampoImputacion cImputacionGru;
 		[Fk] public Periodos fkPeriodos;
 		[Fk] public Calculos fkCalculos;
 		[Fk] public Grupos fkGrupos;
@@ -201,6 +206,7 @@ namespace Indices
 		[Pk] public CampoProducto cProducto;
 		[Pk] public CampoTipo cTipoInformante;
 		public CampoPrecio cPromedioProdTI;
+		public CampoImputacion cImputacionProdTI;
 		[Fk] public Periodos fkPeriodos;
 		[Fk] public Calculos fkCalculos;
 		[Fk] public Productos fkProductos;
@@ -223,6 +229,7 @@ namespace Indices
 		public CampoPrecio cPromedioEsp;
 		public CampoPrecio cPromedioEspMatchingActual;
 		public CampoPrecio cPromedioEspMatchingAnterior;
+		public CampoImputacion cImputacionEspTI;
 		[Fk] public Periodos fkPeriodos;
 		[Fk] public Calculos fkCalculos;
 		[Fk] public Especificaciones fkEspecificaciones;
