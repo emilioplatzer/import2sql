@@ -161,7 +161,7 @@ namespace Indices
 		public CampoIndice cIndiceParcialActual;
 		public CampoIndice cIndiceParcialAnterior;
 		public CampoFactor cFactor;
-		public CampoImputacion cImutacionGru;
+		public CampoImputacion cImputacionGru;
 		[Fk] public Periodos fkPeriodos;
 		[Fk] public Calculos fkCalculos;
 		[Fk] public Grupos fkGrupos;
