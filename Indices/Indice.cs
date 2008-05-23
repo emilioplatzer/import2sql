@@ -129,7 +129,7 @@ namespace Indices
 					        ,g.cGrupo
 					        ,cg.cIndice.Es(100.0)
 					        ,cg.cFactor.Es(1.0)
-					        ,cg.cImutacionGru.Es(Imputaciones.MB)
+					        ,cg.cImputacionGru.Es(Imputaciones.MB)
 					       )
 				);
 			}
@@ -158,7 +158,7 @@ namespace Indices
 					        ,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedioProd.Dividido(cp0.cPromedioProd)))
 					        ,cg.cIndiceParcialActual.Es(cg0.cIndice.Por(cp.cPromedioProd.Dividido(cp0.cPromedioProd)))
 					        ,cg.cIndiceParcialAnterior.Es(cg0.cIndice)
-					        ,cg.cImutacionGru.Es(cp.cImputacionProd)
+					        ,cg.cImputacionGru.Es(cp.cImputacionProd)
 					        ,cg0.cFactor)
 				);
 				Grupos gh=new Grupos();
@@ -175,7 +175,7 @@ namespace Indices
 						.Select(c,gp,
 						        cgp.cIndiceParcialActual.Es(Fun.Sum(cg.cIndiceParcialActual.Por(gh.cPonderador)).Dividido(Fun.Sum(gh.cPonderador))),
 						        cgp.cIndiceParcialAnterior.Es(Fun.Sum(cg.cIndiceParcialAnterior.Por(gh.cPonderador)).Dividido(Fun.Sum(gh.cPonderador))),
-						        cgp.cImutacionGru.Es(Fun.Min(cg.cImutacionGru)))
+						        cgp.cImputacionGru.Es(Fun.Min(cg.cImputacionGru)))
 						.Where(gh.cNivel.Igual(i))
 					);
 				}
@@ -189,7 +189,7 @@ namespace Indices
 						.Select(c,cg0.CamposPk(),
 						        cg.cIndiceParcialActual.Es(cg0.cIndice.Por(cgp.cIndiceParcialActual.Dividido(cgp.cIndiceParcialAnterior))),
 						        cg.cIndiceParcialAnterior.Es(cg0.cIndice),
-						        cg.cImutacionGru.Es(Imputaciones.G)
+						        cg.cImputacionGru.Es(Imputaciones.G)
 						       )
 						.Where(gh.cNivel.Igual(i),
 						       cg.NoExiste()
@@ -204,16 +204,53 @@ namespace Indices
 				var cg_agrup=new CalGru();
 				cg_agrup.SubSelect("cgag"
 				                   ,cg_agrup.cIndice.Es(Fun.Sum(cg.cIndice.Por(g.cPonderador)).Dividido(Fun.Sum(g.cPonderador)))
-				                   ,cg_agrup.cImutacionGru.EsMin(cg.cImutacionGru)
+				                   ,cg_agrup.cImputacionGru.EsMin(cg.cImputacionGru)
 				                   ,cg_agrup.cGrupo.Es(g.cGrupoPadre)
 				                   ,cg);
 				cgp.EsFkDe(cg,cgp.cGrupo.Es(g.cGrupoPadre));
 				cg_agrup.EsFkDe(cg,cg_agrup.cGrupo.Es(g.cGrupoPadre));
 				for(int i=9;i>=0;i--){
-					ej.Ejecutar(
-						new SentenciaUpdate(cg,cg.cIndice.Es(cg_agrup.cIndice),cg.cImutacionGru.Es(cg_agrup.cImutacionGru))
-						.Where(g.cEsProducto.Igual(false),g.cNivel.Igual(i))
-					);
+					if(db is BdAccess){
+						ej.EjecutrarSecuencia(
+@"DROP VIEW subselect_cgag;
+CREATE VIEW subselect_cgag AS
+ SELECT SUM(calgru.indice*gr.ponderador)/SUM(gr.ponderador) AS indice,
+ MIN(calgru.imputaciongru) AS imputaciongru, gr.grupopadre AS grupo, calgru.periodo, calgru.calculo,
+ calgru.agrupacion, calgru.indiceparcialactual, calgru.indiceparcialanterior,
+ calgru.factor
+ FROM calgru, grupos gr
+ WHERE gr.agrupacion=calgru.agrupacion
+ AND gr.grupo=calgru.grupo
+ AND calgru.agrupacion='A'
+ AND calgru.periodo='a2002m01'
+ AND calgru.calculo=0
+ AND gr.agrupacion='A'
+ GROUP BY gr.grupopadre, calgru.periodo, calgru.calculo,
+ calgru.agrupacion, calgru.indiceparcialactual, calgru.indiceparcialanterior,
+ calgru.factor;
+UPDATE calgru
+ INNER JOIN grupos gr ON calgru.agrupacion=gr.agrupacion AND calgru.grupo=gr.grupo 
+SET calgru.indice=
+  DLookUp('indice','subselect_cgag','periodo=''' & calgru.periodo & ''' AND calculo=' & calgru.calculo & ' AND agrupacion=''' & calgru.agrupacion & ''' AND cgag.grupo=''' & gr.grupopadre & '''') , 
+calgru.imputaciongru=
+  DLookUp('imputaciongru','subselect_cgag','periodo=''' & calgru.periodo & ''' AND calculo=' & calgru.calculo & ' AND agrupacion=''' & calgru.agrupacion & ''' AND cgag.grupo=''' & gr.grupopadre & '''') 
+WHERE gr.esproducto='N'
+ AND gr.nivel=9
+ AND calgru.agrupacion='A'
+ AND calgru.periodo='a2002m01'
+ AND calgru.calculo=0
+ AND gr.agrupacion='A'
+".Replace("a2002m01",cal.cPeriodo.Valor)
+.Replace("nivel=9","nivel="+i)
+.Replace("calculo=0","calculo="+cal.cCalculo.Valor)
+.Replace("agrupacion='A'","agrupacion='"+agrupacion.cAgrupacion.Valor+"'")
+);
+					}else{
+						ej.Ejecutar(
+							new SentenciaUpdate(cg,cg.cIndice.Es(cg_agrup.cIndice),cg.cImputacionGru.Es(cg_agrup.cImputacionGru))
+							.Where(g.cEsProducto.Igual(false),g.cNivel.Igual(i))
+						);
+					}
 				}
 			}
 		}
