@@ -43,10 +43,11 @@ namespace Tareas
 			[Pk] public CampoConjunto cConjunto;
 			[Pk] public CampoNombre cNombre;
 			public CampoNombre cNombreReordenado;
+			public CampoLogico cUsado;
 		}
 		public class Asignacion:TablaTmp{
 			[Pk] public CampoNombre cNombreViejo;
-			[Pk] public CampoNombre cNombreNuevo;
+			public CampoNombre cNombreNuevo;
 			public CampoMetodo cMetodo;
 		}
 		public class NombresPalabras:TablaTmp{
@@ -58,7 +59,7 @@ namespace Tareas
 			:base(db)
 		{
 		}
-		public void AsignacionOrdenada(){
+		public void AsignacionOrdenada(string queMetodo){
 			Asignacion a=new Asignacion();
 			Nombres n=new Nombres();
 			n.Alias="n";
@@ -67,8 +68,22 @@ namespace Tareas
 			using(Ejecutador ej=new Ejecutador(db)){
 				ej.Ejecutar(
 					new SentenciaInsert(a)
-						.Select(a.cNombreViejo.Es(v.cNombre),a.cNombreNuevo.Es(n.cNombre),a.cMetodo.Es("exacta"))
-						.Where(v.cNombreReordenado.Igual(n.cNombreReordenado).And(v.cConjunto.Igual("viejo")).And(n.cConjunto.Igual("nuevo")))
+						.Select(a.cNombreViejo.Es(v.cNombre),a.cNombreNuevo.Es(n.cNombre),a.cMetodo.Es(queMetodo))
+						.Where(v.cNombreReordenado.Igual(n.cNombreReordenado)
+						       ,v.cConjunto.Igual("viejo")
+						       ,n.cConjunto.Igual("nuevo")
+						       ,v.cUsado.Igual(false)
+						       ,n.cUsado.Igual(false))
+				);
+				ej.Ejecutar(
+					new SentenciaUpdate(n,n.cUsado.Es(true))
+					.Where(n.cConjunto.Igual("nuevo")
+					       ,n.cNombreReordenado.Igual(a.cNombreNuevo))
+				);
+				ej.Ejecutar(
+					new SentenciaUpdate(n,n.cUsado.Es(true))
+					.Where(n.cConjunto.Igual("viejo")
+					       ,n.cNombreReordenado.Igual(a.cNombreViejo))
 				);
 			}
 		}
@@ -81,7 +96,7 @@ namespace Tareas
 					new SentenciaUpdate(n,n.cNombreReordenado.Es(n.cNombre))
 				);
 			}
-			AsignacionOrdenada();
+			AsignacionOrdenada("exacta");
 		}
 		public void SepararPalabras(){
 			Nombres nombres=new ComparacionPadrones.Nombres();
@@ -100,8 +115,8 @@ begin
 	for c in select {PKS} from {TABLA} GROUP BY {PKS} loop
 		v_frase:=c.nombre;
 		v_palabra:='';
+		i:=1;
 		loop
-			i:=1;
 			v_palabra=primerpalabra(v_frase);
 			v_frase=sinprimerpalabra(v_frase);
 			begin
@@ -135,6 +150,7 @@ begin
 		c_palabra record;
 		ordenada text;
 	begin
+		update {TABLA} set nombrereordenado=null where usado='N';
 		for c_frase in select * from {TABLA} where nombrereordenado is null loop
 			ordenada:='';
 			for c_palabra in 
@@ -258,15 +274,15 @@ LANGUAGE plpgsql".Replace("{TABLA}",nombres.NombreTabla)
 			string[] viejos={"San Martín","Belgrano","Corrientes","No esta"," distinta "};
 			string[] nuevos={"Martín San","Belgrano","Corrientes","Tampoco esta","distinta"};
 			string[] coinciden1={"Belgrano","Corrientes"};
-			string[] coinciden2v={"Belgrano","Corrientes","San Martín"};
-			string[] coinciden2n={"Belgrano","Corrientes","Martín San"};
+			string[] coinciden2v={" distinta ","Belgrano","Corrientes","San Martín"};
+			string[] coinciden2n={"distinta","Belgrano","Corrientes","Martín San"};
 			Vaciar();
 			Cargar(viejos,nuevos);
 			cp.AsignacionExacta();
 			CompararCoincidencias(coinciden1,coinciden1);
 			cp.SepararPalabras();
 			cp.ReordenarPalabras();
-			cp.AsignacionOrdenada();
+			cp.AsignacionOrdenada("reordenada");
 			CompararCoincidencias(coinciden2v,coinciden2n);			
 		}
 	}
