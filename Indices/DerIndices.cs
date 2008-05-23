@@ -93,7 +93,6 @@ namespace Indices
 		[Fk] public Agrupaciones fkAgrupaciones;
 		[FkMixta("padre")] public Grupos fkGrupoPadre;
 		public ElementoTipado<bool> InPadresWhere(int nivel){
-			ExpresionSubSelect ee;
 			Grupos gp=new Grupos();
 			gp.Alias="g_p";
 			var campos=new ListaCampos();
