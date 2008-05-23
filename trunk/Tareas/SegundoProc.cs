@@ -101,8 +101,6 @@ namespace Tareas
 			);
 			System.Console.WriteLine("Cálculo de ponderadores");
 			repo.CalcularPonderadores("A");
-			string periodoAnterior;
-			string periodoActual;
 			/*
 			periodoAnterior="null";
 			for(int mes=4;mes<=DateTime.Today.Month;mes++){

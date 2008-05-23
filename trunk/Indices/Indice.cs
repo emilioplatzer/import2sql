@@ -406,7 +406,9 @@ AND c.calculo="+cal.cCalculo.Valor
 					// Informantes i=cei.fkInformantes;
 					ce.EsFkDe(cei); // ,ce.cTipoInformante.Es(i.cTipoInformante));
 					ej.Ejecutar(
-						new SentenciaUpdate(ce,ce.cPromedioEsp.Es(ce.SelectPromedioGeometrico(cei.cPromedioEspInf)))
+						new SentenciaUpdate(ce
+						                    ,ce.cPromedioEsp.Es(ce.SelectPromedioGeometrico(cei.cPromedioEspInf))
+						                    ,ce.cImputacionEspTI.Es(ce.SelectMin(cei.cImputacionEspInf)))
 					);
 				}
 				if(cal.cCalculo.Valor==-1){

@@ -465,6 +465,9 @@ namespace ModeladorSql
 		public IElementoTipado<T> SelectPromedioGeometrico<T>(IElementoTipado<T> expresion){
 			return new SubSelectAgrupado<T>(expresion,OperadorAgrupada.PromedioGeometrico,this,expresion.Mayor<T>(Constante<T>.Cero));
 		}
+		public IElementoTipado<T> SelectMin<T>(IElementoTipado<T> expresion){
+			return new SubSelectAgrupado<T>(expresion,OperadorAgrupada.Minimo,this);
+		}
 		public RegistrosEnumerables Todos(BaseDatos db){
 			return new RegistrosEnumerables(this,db);
 		}

@@ -92,7 +92,7 @@ namespace Tareas
 			db=BdAccess.Abrir(param.NombreBase);
 			repo=new RepositorioIndice(db);
 		}
-		public void ArmarBase(){
+		public void ArmarBase(bool soloSemanal){
 			System.Console.WriteLine("Recreando la base");
 			Archivo.Borrar(param.NombreBase);
 			Archivo.Copiar(param.NombreBaseEnBlanco,param.NombreBase);
@@ -190,11 +190,32 @@ namespace Tareas
 			}
 			System.Console.WriteLine("Importando Precios");
 			{
-			db.EjecutrarSecuencia(
-				@"CREATE INDEX PreciosImportados_ind ON PreciosImportados (ano,mes,semana,cod_var,cod_info);"+
-				@"CREATE INDEX PreciosImportados_ind2 ON PreciosImportados (cod_var,cod_info,ano,mes,semana);"+
-				@"CREATE UNIQUE INDEX Variedades_ind ON Variedades (codigovariedad);"+
-				@"CREATE UNIQUE INDEX periodos_ind ON periodos (ano,mes,semana);"+
+				db.EjecutrarSecuencia(
+					@"CREATE INDEX PreciosImportados_ind ON PreciosImportados (ano,mes,semana,cod_var,cod_info);"+
+					@"CREATE INDEX PreciosImportados_ind2 ON PreciosImportados (cod_var,cod_info,ano,mes,semana);"+
+					@"CREATE UNIQUE INDEX Variedades_ind ON Variedades (codigovariedad);"+
+					@"CREATE UNIQUE INDEX periodos_ind ON periodos (ano,mes,semana);"+
+					@"INSERT INTO RelVar 
+					    SELECT p.periodo, v.producto, v.especificacion, v.variedad, r.cod_info as informante, max(r.precio) as precio
+					      FROM periodos p,
+					      	[preciosimportados] r,
+					      	informantes i,
+					      	variedades v
+					      WHERE p.ano=r.ano
+					        AND p.mes=r.mes
+					        AND p.semana=r.semana
+					        AND r.cod_var=v.codigovariedad
+					        AND r.cod_info=i.informante
+					        AND r.precio>0
+					        AND r.semana>0
+					        AND r.mes>3
+					        AND r.mes<10
+					        AND (r.cod_var IN ('P102','P180','P332','P391','P495') OR 1=1)
+					      GROUP BY r.ano,r.mes,r.semana,r.cod_var, r.cod_info,p.periodo, v.producto, v.especificacion, v.variedad
+					"
+				);
+				if(!soloSemanal){
+				db.EjecutrarSecuencia(
 				@"INSERT INTO RelVar 
 				    SELECT p.periodo, v.producto, v.especificacion, v.variedad, r.cod_info as informante, max(r.precio) as precio
 				      FROM periodos p,
@@ -203,17 +224,17 @@ namespace Tareas
 				      	variedades v
 				      WHERE p.ano=r.ano
 				        AND p.mes=r.mes
-				        AND p.semana=r.semana
 				        AND r.cod_var=v.codigovariedad
 				        AND r.cod_info=i.informante
 				        AND r.precio>0
-				        AND r.semana>0
+				        AND r.semana=0
 				        AND r.mes>3
 				        AND r.mes<10
 				        AND (r.cod_var IN ('P102','P180','P332','P391','P495') OR 1=1)
 				      GROUP BY r.ano,r.mes,r.semana,r.cod_var, r.cod_info,p.periodo, v.producto, v.especificacion, v.variedad
 				"
-			);
+				);
+				}
 			}
 			repo.CalcularMatrizBase(2);
 			Calculos cals=new Calculos();
@@ -229,15 +250,26 @@ namespace Tareas
 			repo.ReglasDeIntegridad();
 			db.Close();
 		}
-		public void Generar(){
+		public void Generar(bool soloSemanal){
+			if(soloSemanal){
+				param.NombreBase+="Semanal.mdb";
+			}else{
+				param.NombreBase+="Mensual.mdb";
+			}
 			DateTime Empezo=DateTime.Now;
 			System.Console.WriteLine("Empezo "+Empezo.ToShortTimeString());
-			ArmarBase();
+			ArmarBase(soloSemanal);
 			System.Console.WriteLine("Empezo "+Empezo.ToShortTimeString());
 			System.Console.WriteLine("Termino "+DateTime.Now.ToShortTimeString());
 			TimeSpan Tardo=DateTime.Now-Empezo;
 			System.Console.WriteLine("Tardo "+Tardo.ToString());
 			System.Console.WriteLine("Tardo "+(DateTime.Today+Tardo).ToShortTimeString());
+		}
+		public void GenerarMensual(){
+			Generar(false);
+		}
+		public void GenerarSemanal(){
+			Generar(true);
 		}
 	}
 	public class ProcesoLevantarPlanillas{
