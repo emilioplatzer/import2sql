@@ -343,7 +343,7 @@ namespace ModeladorSql
 			ListaElementos<IExpresion> ExpresionDeReemplazo=new ListaElementos<IExpresion>();
 			ListaCampos CampoASaltear=new ListaCampos();
 			CamposRelacionFk=new Diccionario<Campo,IExpresion>();
-			Console.WriteLine("{0} EsFkDe: {1}",this,maestra);
+			// Console.WriteLine("{0} EsFkDe: {1}",this,maestra);
 			var OtrasTablas=new ConjuntoTablas();
 			foreach(var t in CamposReemplazo){
 				if(t==null){
@@ -492,9 +492,9 @@ namespace ModeladorSql
 			Falla.SiEsNulo(CamposFkAlias);
 			var select=new SentenciaSelect(campos[0]);
 			ConjuntoTablas contexto=new ConjuntoTablas();
-			System.Console.WriteLine("NoExiste: {0}",this.NombreTabla);
+			// System.Console.WriteLine("NoExiste: {0}",this.NombreTabla);
 			foreach(var par in CamposRelacionFk){
-				System.Console.WriteLine("Campo relacionado Fk {0},{1}",par.Key.Nombre,par.Value.ToString());
+				// System.Console.WriteLine("Campo relacionado Fk {0},{1}",par.Key.Nombre,par.Value.ToString());
 				contexto.AddRange(par.Value.Tablas(QueTablas.Aliasables));
 			}
 			select.TablasQueEstanMasArriba.AddRange(contexto);

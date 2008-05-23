@@ -61,7 +61,7 @@ namespace Comunes
 		}
 		public bool ContieneTodas(Conjunto<T> conj){
 			bool rta=true;
-			foreach(var t in this.Keys){
+			foreach(var t in conj.Keys){
 				rta&=Contiene(t);
 			}
 			return rta;

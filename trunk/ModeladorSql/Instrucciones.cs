@@ -23,6 +23,10 @@ namespace ModeladorSql
 		public ListaElementos<ElementoTipado<bool>> ClausulaWhere=new ListaElementos<ElementoTipado<bool>>();
 		protected bool IncluirJoinEnWhere=true;
 		public void ParaCadaJunta(ConjuntoTablas tablas,Tabla TablaBase,ProcesamientoTabla procesarTabla,ProcesamientoPar procesarPar){
+			//Console.WriteLine("******** Nueva junta ***********");
+			//Console.WriteLine("tablas {0}",tablas);
+			//Console.WriteLine("Tabla Base {0}",TablaBase);
+			//Console.WriteLine("TQEMA {0}",TablasQueEstanMasArriba);
 			var TablasVistas=new ConjuntoTablas();
 			var TablasARevisar=new ConjuntoTablas();
 			TablasARevisar.AddRange(tablas);
@@ -34,21 +38,30 @@ namespace ModeladorSql
 			while(true){
 				int CantidadARevisar=TablasARevisar.Count;
 				foreach(Tabla t in TablasARevisar.Keys){
-					Console.WriteLine("Viendo {0}-{1}-{2}-{3}-",t,TablasVistas,t.TablaRelacionada,t.OtrasTablasRelacionadas);
+					//Console.WriteLine("Viendo {0}-{1}-{2}-{3}-",t,TablasVistas,t.TablaRelacionada,t.OtrasTablasRelacionadas);
 					if(t.TablaRelacionada!=null && (tablas.Contiene(t.TablaRelacionada) || TablasQueEstanMasArriba.Contiene(t.TablaRelacionada))){
-						if(TablasVistas.Contiene(t.TablaRelacionada) && TablasVistas.ContieneTodas(t.OtrasTablasRelacionadas) || TablasQueEstanMasArriba.Contiene(t.TablaRelacionada)){
+						//Console.WriteLine("uno");
+						if((TablasVistas.Contiene(t.TablaRelacionada) 
+						    || TablasQueEstanMasArriba.Contiene(t.TablaRelacionada)) 
+						   && (TablasVistas.ContieneTodas(t.OtrasTablasRelacionadas) 
+						    || TablasQueEstanMasArriba.ContieneTodas(t.OtrasTablasRelacionadas)))
+						{
+							//Console.WriteLine("dos {0} {1} {2} {3}",TablasVistas.Contiene(t.TablaRelacionada),TablasQueEstanMasArriba.Contiene(t.TablaRelacionada),TablasVistas.ContieneTodas(t.OtrasTablasRelacionadas),TablasQueEstanMasArriba.ContieneTodas(t.OtrasTablasRelacionadas));
 							procesarTabla(t);
 							foreach(System.Collections.Generic.KeyValuePair<Campo, IExpresion> par in t.CamposRelacionFk){
+								//Console.WriteLine("tres");
 								procesarPar(par);
 							}
 							TablasVistas.Add(t);
 						}else{
+							//Console.WriteLine("cuatro");
 							TablasNoIncluidas.Add(t);
 							if((TablasQueEstanMasArriba==null || !TablasQueEstanMasArriba.Contiene(t.TablaRelacionada)) && !tablas.Contiene(t.TablaRelacionada)){
 								Falla.Detener("Falta la tabla "+t.TablaRelacionada.NombreTabla+" relacionada a "+t.NombreTabla);
 							}
 						}
 					}else{
+						//Console.WriteLine("cinco");
 						TablasVistas.Add(t);
 					}
 				}
@@ -294,16 +307,24 @@ namespace ModeladorSql
 		}
 		public override string ToSql(BaseDatos db){
 			var rta=new StringBuilder();
-			rta.Append("UPDATE "+TablaBase.ToSql(db));
+			rta.Append("UPDATE ");
 			if(db.UpdateConJoin){
+				var origen=new StringBuilder();
+				origen.Append(TablaBase.ToSql(db));
 				IncluirJoinEnWhere=false;
 				var tablas=Tablas(QueTablas.AlFrom);
 				TablasQueEstanMasArriba=new ConjuntoTablas(TablaBase);
 				var onAnd=new Separador(" ON "," AND ");
+				int vez=0;
 				ParaCadaJunta(tablas,TablaBase
-				    , tabla => {rta.Append(" INNER JOIN "+tabla.ToSql(db)); onAnd.Reiniciar(); }
-					, par => onAnd.AgregarEn(rta,par.Value.ToSql(db)+"="+par.Key.ToSql(db))
+		            , tabla => { vez++; if(vez>1){origen.Append(")"); origen.Insert(0,"("); }
+				              	origen.Append("\n INNER JOIN "+tabla.ToSql(db)); onAnd.Reiniciar(); 
+				              }
+					, par => onAnd.AgregarEn(origen,par.Value.ToSql(db)+"="+par.Key.ToSql(db))
 				);
+				rta.Append(origen);
+			}else{
+				rta.Append(TablaBase.ToSql(db));
 			}
 			var setComa=new Separador("\n SET ",", ").AnchoLimitadoConIdentacion();
 			foreach(var a in Asignaciones){
