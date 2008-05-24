@@ -160,7 +160,7 @@ namespace BasesDatos
 		public bool EliminarTablaSiExiste(string nombreTabla){
 			Falla.SiEsNulo(cmd);
 			try{
-				ExecuteNonQuery("DROP TABLE "+StuffTabla(nombreTabla)+";");
+				ExecuteNonQuery(" DROP TABLE "+StuffTabla(nombreTabla)+";");
 				return true;
 			}catch(DbException ex){
 				if(ex.Message.StartsWith(ErrorCode_NoExisteTabla)){
