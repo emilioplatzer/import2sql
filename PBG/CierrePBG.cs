@@ -171,12 +171,10 @@ namespace PBG
 					RangoExcel rango=hoja.BuscarPorColumnas("Tabla!RA!");
 					Conjunto<int> Vistos=new Conjunto<int>();
 					while(rango.EsValido && !Vistos.Contiene(rango.NumeroFila*256+rango.NumeroColumna)){
+						Rangos.Add(rango);
 				      	Vistos.Add(rango.NumeroFila*256+rango.NumeroColumna);
 						Console.WriteLine("voy por {0} {1},{2} ",rango.NombreHoja,rango.NumeroFila,rango.NumeroColumna);
-						rango=hoja.BuscarProximo();
-						if(rango.EsValido){
-							Rangos.Add(rango);
-						}
+						rango=hoja.BuscarProximo(rango);
 					}
 				}
 				haciendo="recorriendo los rangos donde hay tablas";
