@@ -216,7 +216,7 @@ namespace DelOffice
 				rango.Value2=null;
 			}else if(valor is string){
 				var cadena=valor as string;
-				rango.Value2=(cadena.StartsWith("0")?"'":"")+cadena;
+				rango.Value2=(cadena.Length>0 && Char.IsNumber(cadena,0)?"'":"")+cadena;
 			}else if(valor is System.Collections.IEnumerable){
 				var rta=new StringBuilder();
 				var coma=new Separador(", ");

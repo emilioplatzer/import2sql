@@ -117,13 +117,13 @@ namespace PBG
 				haciendo="buscando la indicación de cuál es el primer año a considerar. Dice '"+rango.TextoCelda(1,5)+"'";
 				int desdeAno=rango.NumeroCelda(1,5);
 				int ano=0;
-				int fila=2;
+				int fila=1;
 				while(ano!=desdeAno && fila<22){
+					fila++;
 					try{
 						ano=rango.NumeroCelda(fila,1);
 					}catch(InvalidCastException){
 					}
-					fila++;
 				}
 				if(ano!=desdeAno){
 					resumen.Error="Error no se encontró el primer renglón con año "+desdeAno+" en hoja "+rango.NombreHoja;
@@ -165,6 +165,7 @@ namespace PBG
 				haciendo="abriendo el libro de excel "+NombreArchivo;
 				LibroExcel libroDatos=LibroExcel.Abrir(NombreArchivo);
 				haciendo="buscando entre las hojas una Tabla!RA!";
+				Conjunto<RangoExcel> Rangos=new Conjunto<RangoExcel>();
 			    for(int i=1; i<=libroDatos.CantidadHojas; i++){
 					HojaExcel hoja=libroDatos.Hoja(i);
 					RangoExcel rango=hoja.BuscarPorColumnas("Tabla!RA!");
@@ -172,9 +173,15 @@ namespace PBG
 					while(rango.EsValido && !Vistos.Contiene(rango.NumeroFila*256+rango.NumeroColumna)){
 				      	Vistos.Add(rango.NumeroFila*256+rango.NumeroColumna);
 						Console.WriteLine("voy por {0} {1},{2} ",rango.NombreHoja,rango.NumeroFila,rango.NumeroColumna);
-						ProcesarTabla(rango);
 						rango=hoja.BuscarProximo();
+						if(rango.EsValido){
+							Rangos.Add(rango);
+						}
 					}
+				}
+				haciendo="recorriendo los rangos donde hay tablas";
+				foreach(RangoExcel r in Rangos.Keys){
+					ProcesarTabla(r);
 				}
 				libroDatos.CerrarNoHayCambios();
 			}catch(Exception ex){
@@ -264,46 +271,53 @@ namespace PBG
 		}
 		public void CrearEjemploAgricultura(){
 			object[,] datos={
+				{null,null,null,null,null,null,null},
 				{"Tabla!RA!","Rama",15000,"Desde",1993,null,null},
 				{"basura",0,0,0,0,0,0},
-				{null,0,0,0,0,0,0},
+				{null,null,null,null,null,null,null},
 				{"Años","VBP a corrientes","VA a precios corrientes","Consumo Intermedio a precios corrientes","VBP a precios de 1993","VA  a precios de 1993","Consumo Intermedio a precios de 1993"},
 				{1993,21800,11000,10800,21800,11000,10800},
 				{1994,22800,12000,10800,23800,12000,11800},
 				{1995,23800,13000,10800,25800,13000,12800},
 				{null,0,0,0,0,0,0},
-				{null,0,0,0,0,0,0},
-				{null,0,0,0,0,0,0},
+				{null,null,null,null,null,null,null},
+				{null,null,null,null,null,null,null},
+				{null,null,null,null,null,null,null},
 				{"Tabla!RA!","Rama","01120","Desde",1993,null,null},
 				{"titulos",0,0,0,0,0,0},
-				{null,0,0,0,0,0,0},
-				{null,0,0,0,0,0,0},
+				{null,null,null,null,null,null,null},
+				{null,null,null,null,null,null,null},
+				{null,null,null,null,null,null,null},
 				{"Años","VBP a precios corrientes","VA a precios corrientes","Consumo Intermedio a precios corrientes","VBP a precios de 1993","VA  a precios de 1993","Consumo Intermedio a precios de 1993"},
 				{1993,1800,1000,800,1800,1000,800},
 				{1994,2800,2000,800,3800,2000,1800},
-				{1995,3800,3000,800,5800,3000,2800}
+				{1995,3800,3000,800,5800,3000,2800},
+				{null,null,null,null,null,null,null},
+				{null,null,null,null,null,null,null}
 			};
 			CrearEjemplo(datos,Archivo.CarpetaActual()+@"\Agricultura.xls","Agri");
 		}
 		public void CrearEjemploProdAli(){
 			object[,] datos={
-				{"Tabla!RA!","Rama",01110,"Desde",1993,null,null},
-				{null,0,0,0,0,0,0},
-				{null,0,0,0,0,0,0},
-				{null,0,0,0,0,0,1993},
-				{"Años","VBP a precios corrientes","VA a precios corrientes","Consumo Intermedio a precios corrientes","VBP a precios de 1993","VA  a precios de 1993","Consumo Intermedio a precios de 1993"},
-				{1993,18763.94047,10220.71837,8543.222095,18763.94047,10220.71837,8543.222095},
-				{1994,19837.6915,10805.590,9032.1009,19042.1474,10372.25769,8669.889713},
-				{1995,20813.45171,11337.0871,9476.3645,19326.39177,10527.0856,8799.306174},
-				{null,0,0,0,0,0,0},
-				{null,0,0,0,0,0,0},
-				{"Tabla!RA!","Rama","91120","Desde",1993,null,null},
-				{"basura",0,0,0,0,0,0},
-				{null,0,0,0,0,0,0},
-				{"Años","VBP a precios corrientes","VA a precios corrientes","Consumo Intermedio a precios corrientes","VBP a precios de 1993","VA  a precios de 1993","Consumo Intermedio a precios de 1993"},
-				{1993,1800,1000,800,1800,1000,800},
-				{1994,2800,2000,800,3800,2000,1800},
-				{1995,3800,3000,800,5800,3000,2800}
+				{null,null,null,null,null,null,null,null},
+				{null,"Tabla!RA!","Rama",01110,"Desde",1993,null,null},
+				{null,null,0,0,0,0,0,0},
+				{null,null,0,0,0,0,0,0},
+				{null,null,0,0,0,0,0,1993},
+				{null,"Años","VBP a precios corrientes","VA a precios corrientes","Consumo Intermedio a precios corrientes","VBP a precios de 1993","VA  a precios de 1993","Consumo Intermedio a precios de 1993"},
+				{null,1993,18763.94047,10220.71837,8543.222095,18763.94047,10220.71837,8543.222095},
+				{null,1994,19837.6915,10805.590,9032.1009,19042.1474,10372.25769,8669.889713},
+				{null,1995,20813.45171,11337.0871,9476.3645,19326.39177,10527.0856,8799.306174},
+				{null,null,0,0,0,0,0,0},
+				{null,null,0,0,0,0,0,0},
+				{null,"Tabla!RA!","Rama","91120","Desde",1993,null,null},
+				{null,"basura",0,0,0,0,0,0},
+				{null,null,0,0,0,0,0,0},
+				{null,"Años","VBP a precios corrientes","VA a precios corrientes","Consumo Intermedio a precios corrientes","VBP a precios de 1993","VA  a precios de 1993","Consumo Intermedio a precios de 1993"},
+				{null,1993,1800,1000,800,1800,1000,800},
+				{null,1994,2800,2000,800,3800,2000,1800},
+				{null,1995,3800,3000,800,5800,3000,2800},
+				{null,1996,4800,4000,800,7800,4000,3800}
 			};
 			CrearEjemplo(datos,Archivo.CarpetaActual()+@"\temp_borrar\ProdAlim.xls","ProdAlim");
 		}
