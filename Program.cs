@@ -94,7 +94,7 @@ namespace TodoASql
 				Console.Write("presione cualquier tecla . . . ");
 				System.Windows.Forms.MessageBox.Show("Listo");
 				*/
-				// new PBG.PrCierrePBG();
+				// new PBG.PrCierrePBG().Estamos();
 				/*
 				var t=new Tareas.PrComparacionPadrones();
 				t.Pr01Exacta();
@@ -102,7 +102,7 @@ namespace TodoASql
 				t.Pr03Reordenacion();
 				// */
 				// new PrModeladorSql.prModelador().Subselect();
-			    // /*
+			    /*
 			    ProbarIndiceD3 p=new ProbarIndiceD3();
 			    p.A01CalculosEstructuraBase();
 			    p.A02CalculosMatrizBase();
@@ -131,6 +131,12 @@ namespace TodoASql
 				// */
 				// PruebaFormularios.Primero();
 				// new Pruebas().Proceso(); /*
+				var p=new ProbarMatrizExcelASql();
+				p.crear();
+				p.crearReceptor();
+				p.revisar();
+				p.trasvasar();
+				p.trasvasarConParametros();
 				/*
 				PruebasParametros.MostrarVariablesDelSistema();
 				try{

@@ -8,6 +8,7 @@
  */
 
 using System;
+using System.Text;
 #if SinOffice
 #else
 using Excel = Microsoft.Office.Interop.Excel;
@@ -152,7 +153,7 @@ namespace DelOffice
 		Diccionario<int, object> cacheIzquierda=new Diccionario<int, object>();
 		protected AccesoExcel(Excel.Worksheet hoja):
 			this(hoja.get_Range("A1",___),hoja)
-		{
+		{ 	
 		}
 		protected AccesoExcel(Excel.Range rango,Excel.Worksheet hoja){
 			this.rango=rango;
@@ -163,6 +164,25 @@ namespace DelOffice
 		}
 		public string TextoCelda(int fila, int col){
 			return ((Excel.Range) rango.Cells[fila,col]).Text.ToString();
+		}
+		static int ANumero(object valor){
+			int rta;
+			if(valor==null){
+				return 0;
+			}
+			try{
+				rta=(int)valor;
+			}catch(InvalidCastException){
+				try{
+					rta=int.Parse(valor.ToString());
+				}catch(FormatException){
+					rta=0;	
+				}
+			}
+			return rta;
+		}
+		public int NumeroCelda(int fila, int columna){
+			return ANumero(ValorCelda(fila,columna));
 		}
 		static object ValorCelda(Excel.Range rango){
 			object valor=rango.Value2;
@@ -189,20 +209,34 @@ namespace DelOffice
 		}
 		public void PonerTexto(int fila,int columna,string valor){
 			cacheCelda[fila*256+columna]=valor;
-			((Excel.Range) rango.Cells[fila,columna]).Value2=valor;
+			PonerValor((Excel.Range) rango.Cells[fila,columna],valor);
 		}
 		static void PonerValor(Excel.Range rango,object valor){
-			rango.Value2=valor;
-			if(valor!=null && valor.GetType()==typeof(DateTime)){
-				if(LibroExcel.FormatoFechas==null){
-					rango.NumberFormat="dd/mm/yyyy";
-					if(rango.Text.ToString().IndexOf("y")>0){
-						LibroExcel.FormatoFechas="dd/mm/aaaa";
-					}else{
-						LibroExcel.FormatoFechas="dd/mm/yyyy";
-					}
+			if(valor==null){
+				rango.Value2=null;
+			}else if(valor is string){
+				var cadena=valor as string;
+				rango.Value2=(cadena.StartsWith("0")?"'":"")+cadena;
+			}else if(valor is System.Collections.IEnumerable){
+				var rta=new StringBuilder();
+				var coma=new Separador(", ");
+				foreach(var elemento in valor as System.Collections.IEnumerable){
+					rta.Append(coma+elemento.ToString());
 				}
-				rango.NumberFormat=LibroExcel.FormatoFechas;
+				rango.Value2=rta.ToString();
+			}else{
+				rango.Value2=valor;
+				if(valor!=null && valor.GetType()==typeof(DateTime)){
+					if(LibroExcel.FormatoFechas==null){
+						rango.NumberFormat="dd/mm/yyyy";
+						if(rango.Text.ToString().IndexOf("y")>0){
+							LibroExcel.FormatoFechas="dd/mm/aaaa";
+						}else{
+							LibroExcel.FormatoFechas="dd/mm/yyyy";
+						}
+					}
+					rango.NumberFormat=LibroExcel.FormatoFechas;
+				}
 			}
 		}
 		public void PonerValor(int fila,int col,object valor){
@@ -210,6 +244,20 @@ namespace DelOffice
 		}
 		public void PonerValor(string celda,object valor){
 			PonerValor((Excel.Range) rango.get_Range(celda,celda),valor);
+		}
+		public void PonerHorizontal(int fila,int col,object objeto){
+			Type tipo=objeto.GetType();
+			foreach(var f in tipo.GetFields()){
+				PonerValor(fila,col,f.GetValue(objeto));
+				col++;
+			}
+		}
+		public void RellenarHorizontal(System.Collections.IEnumerable nombres){
+			int i=1;
+			foreach(var nombre in nombres){
+				PonerValor(1,i,nombre);
+				i++;
+			}
 		}
 		public void Rellenar(string[,] matriz){
 			for(int fila=0;fila<matriz.GetLength(0);fila++){
@@ -272,6 +320,9 @@ namespace DelOffice
 		public RangoExcel BuscarPorFilas(string contenido){
 			return BuscarPor(contenido,Excel.XlSearchOrder.xlByRows);
 		}
+		public RangoExcel BuscarProximo(){
+			return new RangoExcel(rango.FindNext(___),hoja);
+		}
 		object ValorNoNuloA(int fila,int columna,int deltaFila,int deltaColumna,Diccionario<int, object> cache){
 			object rta=null;
 			if(cache.ContainsKey(fila*256+columna)){
@@ -292,6 +343,9 @@ namespace DelOffice
 		}
 		public object ValorNoNuloArriba(int fila, int columna){
 			return ValorNoNuloA(fila,columna,-1,0,cacheArriba);
+		}
+		public string NombreHoja{
+			get{ return hoja.Name; }
 		}
 	}
 	public class ColeccionExcel{
