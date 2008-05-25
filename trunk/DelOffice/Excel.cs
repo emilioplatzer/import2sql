@@ -320,6 +320,10 @@ namespace DelOffice
 		public RangoExcel BuscarPorFilas(string contenido){
 			return BuscarPor(contenido,Excel.XlSearchOrder.xlByRows);
 		}
+		public RangoExcel BuscarProximo(RangoExcel RangoAnterior){
+			rango.add
+			return new RangoExcel(rango.FindNext(RangoAnterior.rango),hoja);
+		}
 		public RangoExcel BuscarProximo(){
 			return new RangoExcel(rango.FindNext(___),hoja);
 		}
