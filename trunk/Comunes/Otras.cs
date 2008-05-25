@@ -187,6 +187,14 @@ namespace Comunes
 			return rta;
 		}
 	}
+	public static class ParaObjetos{
+		public static System.Collections.Generic.IEnumerable<string> NombresMiembros(this object esto){
+			Type tipo=esto.GetType();
+			foreach(var f in tipo.GetFields()){
+				yield return f.Name.Replace("_"," ");
+			}
+		}
+	}
 	[TestFixture]
 	public class ProbarObjeto{
 		[Test]
