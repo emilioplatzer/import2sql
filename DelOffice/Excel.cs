@@ -152,7 +152,7 @@ namespace DelOffice
 		Diccionario<int, object> cacheArriba=new Diccionario<int, object>();
 		Diccionario<int, object> cacheIzquierda=new Diccionario<int, object>();
 		protected AccesoExcel(Excel.Worksheet hoja):
-			this(hoja.get_Range("A1",___),hoja)
+			this(hoja.get_Range("A1","IV65535"),hoja)
 		{ 	
 		}
 		protected AccesoExcel(Excel.Range rango,Excel.Worksheet hoja){
@@ -217,6 +217,7 @@ namespace DelOffice
 			}else if(valor is string){
 				var cadena=valor as string;
 				rango.Value2=(cadena.Length>0 && Char.IsNumber(cadena,0)?"'":"")+cadena;
+				rango.WrapText=false;
 			}else if(valor is System.Collections.IEnumerable){
 				var rta=new StringBuilder();
 				var coma=new Separador(", ");
@@ -224,6 +225,7 @@ namespace DelOffice
 					rta.Append(coma+elemento.ToString());
 				}
 				rango.Value2=rta.ToString();
+				rango.WrapText=false;
 			}else{
 				rango.Value2=valor;
 				if(valor!=null && valor.GetType()==typeof(DateTime)){
@@ -321,7 +323,6 @@ namespace DelOffice
 			return BuscarPor(contenido,Excel.XlSearchOrder.xlByRows);
 		}
 		public RangoExcel BuscarProximo(RangoExcel RangoAnterior){
-			rango.add
 			return new RangoExcel(rango.FindNext(RangoAnterior.rango),hoja);
 		}
 		public RangoExcel BuscarProximo(){
@@ -437,6 +438,12 @@ namespace DelOffice
 			Assert.AreEqual("nada",rango.ValorNoNuloArriba(2,12));
 			Assert.AreEqual(null,rango.ValorNoNuloArriba(2,11));
 			// Assert.AreEqual("G",libro.BuscarPorFilas("FIN!").LetraColumna);
+			RangoExcel rangoEncontrado=libro.BuscarPorColumnas("FIN!");
+			Assert.AreEqual(4,rangoEncontrado.NumeroFila);
+			rangoEncontrado=libro.BuscarProximo(rangoEncontrado);
+			// Assert.Ignore("Todavía no se como repetir la búsqueda y que ande!");
+			Assert.IsTrue(rangoEncontrado.EsValido);
+			Assert.AreEqual(1,rangoEncontrado.NumeroFila);
 			libro.GuardarYCerrar();
 		}
 		[Test]
@@ -505,6 +512,7 @@ namespace DelOffice
 			hoja.Cells[1,7]=""; // string sin caracteres
 			hoja.Cells[1,8]=" "; // string con espacio
 			hoja.Cells[2,2]="dos";
+			hoja.Cells[8,15]="dos"; // para volver a encontrarla
 			hoja.Cells[3,14]="pi";
 			hoja.Cells[4,15]="algo";
 			hoja.Cells[2,13]="nada";
@@ -556,6 +564,18 @@ namespace DelOffice
 			Assert.AreEqual(2,r3.Rows.Count);
 			Assert.AreEqual(1,r3.Columns.Count);
 			Assert.AreEqual("pi",r3.get_Range("A2",___).Text);
+			Excel.Range rTodo=hoja.get_Range("A1","IV65535");
+			// Excel.Range rFind=rTodo.Find("dos",___,Excel.XlFindLookIn.xlFormulas,Excel.XlLookAt.xlWhole,___,Excel.XlSearchDirection.xlNext,___,___,___);
+			Excel.Range rFind=rTodo.Find("dos",___,___,Excel.XlLookAt.xlWhole,Excel.XlSearchOrder.xlByColumns,Excel.XlSearchDirection.xlNext,false,false,___);
+			Assert.IsNotNull(rFind,"Encontrada la primera vez");
+			Assert.AreEqual(2,rFind.Column);
+			// rFind=rTodo.FindNext(___);
+			rFind=rTodo.FindNext(rFind);
+			Assert.IsNotNull(rFind,"Encontrada la segunda vez");
+			Assert.AreEqual(15,rFind.Column);
+			rFind=rTodo.FindNext(rFind);
+			Assert.IsNotNull(rFind,"Encontrada la tercera vez");
+			Assert.AreEqual(2,rFind.Column);
 			libro.Close(___,___,___);
 		}
 		[Test]

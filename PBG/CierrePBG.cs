@@ -92,7 +92,7 @@ namespace PBG
 					goto reintentar;
 				}
 				if(opcion==System.Windows.Forms.DialogResult.Ignore){
-					atencion="No se puede ignoarar";
+					atencion="No se puede ignorar ni omitir";
 					goto repetirmensaje;
 				}
 				if(opcion==System.Windows.Forms.DialogResult.Abort){
@@ -147,7 +147,7 @@ namespace PBG
 				libro.Guardar();
 			}
 		}
-		public void ProcesarLibro(string Carpeta,string archivo,int linea){
+		public void ProcesarLibro(string Carpeta,string archivo,int linea,string Responsable){
 			resumen=new Resumen();
 			string NombreArchivo=
 				(Carpeta==null || Carpeta=="esta"?Archivo.CarpetaActual():Carpeta)
@@ -155,6 +155,7 @@ namespace PBG
 				+(archivo.ToLower().EndsWith(".xls")?"":".xls");
 			resumen.Carpeta_y_Archivo=NombreArchivo;
 			resumen.Fecha_Procesamiento=DateTime.Now;
+			resumen.Responsable=Responsable;
 			hojaResumen.PonerHorizontal(linea,1,resumen);
 			libro.Guardar();
 			haciendo="";
@@ -165,21 +166,16 @@ namespace PBG
 				haciendo="abriendo el libro de excel "+NombreArchivo;
 				LibroExcel libroDatos=LibroExcel.Abrir(NombreArchivo);
 				haciendo="buscando entre las hojas una Tabla!RA!";
-				Conjunto<RangoExcel> Rangos=new Conjunto<RangoExcel>();
 			    for(int i=1; i<=libroDatos.CantidadHojas; i++){
 					HojaExcel hoja=libroDatos.Hoja(i);
 					RangoExcel rango=hoja.BuscarPorColumnas("Tabla!RA!");
 					Conjunto<int> Vistos=new Conjunto<int>();
 					while(rango.EsValido && !Vistos.Contiene(rango.NumeroFila*256+rango.NumeroColumna)){
-						Rangos.Add(rango);
+						ProcesarTabla(rango);
 				      	Vistos.Add(rango.NumeroFila*256+rango.NumeroColumna);
 						Console.WriteLine("voy por {0} {1},{2} ",rango.NombreHoja,rango.NumeroFila,rango.NumeroColumna);
 						rango=hoja.BuscarProximo(rango);
 					}
-				}
-				haciendo="recorriendo los rangos donde hay tablas";
-				foreach(RangoExcel r in Rangos.Keys){
-					ProcesarTabla(r);
 				}
 				libroDatos.CerrarNoHayCambios();
 			}catch(Exception ex){
@@ -191,14 +187,16 @@ namespace PBG
 		public void ProcesarLista(){
 			string Carpeta;
 			string Archivo;
+			string Responsable;
 			int linea=2;
 			while(true){
 				Carpeta=hojaProcesamiento.TextoCelda(linea,1);
 				Archivo=hojaProcesamiento.TextoCelda(linea,2);
+				Responsable=hojaProcesamiento.TextoCelda(linea,3);
 				if(Archivo==null || Archivo.Trim()==""){
 					break;
 				}
-				ProcesarLibro(Carpeta,Archivo,linea);
+				ProcesarLibro(Carpeta,Archivo,linea,Responsable);
 				linea++;
 			}
 			libro.Guardar();
@@ -298,7 +296,7 @@ namespace PBG
 		public void CrearEjemploProdAli(){
 			object[,] datos={
 				{null,null,null,null,null,null,null,null},
-				{null,"Tabla!RA!","Rama",01110,"Desde",1993,null,null},
+				{null,"Tabla!RA!","Rama","01110","Desde",1993,null,null},
 				{null,null,0,0,0,0,0,0},
 				{null,null,0,0,0,0,0,0},
 				{null,null,0,0,0,0,0,1993},
@@ -325,9 +323,12 @@ namespace PBG
 			HojaExcel hResultados=cierre.libro.Hoja(CierrePBG.NombreHojaResultados);
 			Assert.AreEqual("Año",hResultados.ValorCelda("A1"));
 			Assert.AreEqual(1993,hResultados.ValorCelda("A2"));
-			Assert.AreEqual("01110",hResultados.ValorCelda("E2"));
+			Assert.AreEqual("15000",hResultados.ValorCelda("E2"));
 			HojaExcel hResumen=cierre.libro.Hoja(CierrePBG.NombreHojaResumen);
-			Assert.AreEqual("Agricultura.xls",hResumen.ValorCelda("B2"));
+			Assert.IsTrue(hResumen.TextoCelda("A2").EndsWith("Agricultura.xls"),"es agricultura");
+			Assert.AreEqual("José",hResumen.TextoCelda("B2"));
+			Assert.AreEqual("15000, 01120",hResumen.TextoCelda("E2"));
+			Assert.AreEqual("01110, 91120",hResumen.TextoCelda("E5"));
 		}
 	}
 }
