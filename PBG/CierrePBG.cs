@@ -29,9 +29,19 @@ namespace PBG
 		HojaExcel hojaProcesamiento;
 		HojaExcel hojaResumen;
 		HojaExcel hojaResultados;
+		HojaExcel hojaTablaClanae;
 		Resumen resumen;
 		string haciendo;
 		int lineaResultados;
+		Diccionario<string, RenglonClanae> TablaClanae=new Diccionario<string, RenglonClanae>();
+		class RenglonClanae{
+			public int Digitos;
+			public string Letra;
+			public string Clanae_2_digitos;
+			public string Clanae_3_digitos;
+			public string Clanae_5_digitos;
+			public string Descripcion;
+		}
 		class Resumen{
 			public string Carpeta_y_Archivo;
 			public string Responsable;
@@ -68,6 +78,14 @@ namespace PBG
 					hojaResultados=libro.NuevaHoja(NombreHojaResultados);
 					lineaResultados=2;
 				}
+				haciendo="accediendo a la tabla clanae";
+				try{
+					hojaTablaClanae=libro.Hoja(NombreHojaTablaClanae);
+				}catch(System.Runtime.InteropServices.COMException ex){
+				}
+				if(hojaTablaClanae!=null){
+					LevantarTablaClanae();
+				}
 				string[,] columnasResultado={{"Año","Digito","Clanae 2 Digitos","Clanae 3 Digitos","Clanae 5 Digitos","DESCRIP","Sectorialista","-","Vbp_c","va_c","Ci_c","Vbp_k","va_k","Ci_k"}};
 				hojaResultados.Rellenar(columnasResultado);
 				haciendo="guardando los datos estructurales "+en;
@@ -80,6 +98,25 @@ namespace PBG
 		}
 		~CierrePBG(){
 			libro.GuardarYCerrar();
+		}
+		public void LevantarTablaClanae(){
+			RenglonClanae renglon;
+			int linea=2;
+			while(true){
+				renglon=new RenglonClanae();
+				renglon.Letra=hojaTablaClanae.TextoCelda(linea,2);
+				if(renglon.Letra==null || renglon.Letra.Trim()==""){
+					break;
+				}
+				renglon.Clanae_2_digitos=hojaTablaClanae.TextoCelda(linea,3);
+				renglon.Clanae_3_digitos=hojaTablaClanae.TextoCelda(linea,4);
+				renglon.Clanae_5_digitos=hojaTablaClanae.TextoCelda(linea,5);
+				renglon.Descripcion=hojaTablaClanae.TextoCelda(linea,6);
+				renglon.Digitos=hojaTablaClanae.NumeroCelda(linea,1);
+				string codigo=renglon.Clanae_5_digitos.BlancosANull()??renglon.Clanae_3_digitos.BlancosANull()??renglon.Clanae_2_digitos.BlancosANull()??renglon.Letra;
+				TablaClanae[codigo]=renglon;
+				linea++;
+			}
 		}
 		public void TratarVarios(AccionExplicada accion){
 			haciendo="";
@@ -121,7 +158,18 @@ namespace PBG
 			{
 				haciendo="obteniendo la rama";
 				string rama=rango.TextoCelda(1,3);
+				RenglonClanae clanae;
 				resumen.Ramas_Encontradas.Add(rama);
+				if(TablaClanae.ContainsKey(rama)){
+					clanae=TablaClanae[rama];
+				}else{
+					clanae=new RenglonClanae();
+					clanae.Letra="Z! Error! No esta en la tabla";
+					clanae.Clanae_2_digitos=rama.PadRight(2).Substring(0,2);
+					clanae.Clanae_3_digitos=rama.PadRight(3).Substring(0,3);
+					clanae.Clanae_5_digitos=rama;
+					clanae.Descripcion="ERROR! NO ENCONTRADO EN LA TABLA";
+				}
 				haciendo="buscando la indicación de cuál es el primer año a considerar. Dice '"+rango.TextoCelda(1,5)+"'";
 				int desdeAno=rango.NumeroCelda(1,5);
 				int ano=0;
@@ -139,10 +187,11 @@ namespace PBG
 					while(ano>0){
 						haciendo="pasando la fila "+fila+" de la hoja "+rango.NombreHoja;
 						hojaResultados.PonerValor(lineaResultados,1,ano);
-						hojaResultados.PonerValor(lineaResultados,2,5);
-						hojaResultados.PonerTexto(lineaResultados,3,rama.PadRight(2).Substring(0,2));
-						hojaResultados.PonerTexto(lineaResultados,4,rama.PadRight(3).Substring(0,3));
-						hojaResultados.PonerTexto(lineaResultados,5,rama);
+						hojaResultados.PonerValor(lineaResultados,2,clanae.Letra);
+						hojaResultados.PonerTexto(lineaResultados,3,clanae.Clanae_2_digitos);
+						hojaResultados.PonerTexto(lineaResultados,4,clanae.Clanae_3_digitos);
+						hojaResultados.PonerTexto(lineaResultados,5,clanae.Clanae_5_digitos);
+						hojaResultados.PonerTexto(lineaResultados,6,clanae.Descripcion);
 						for(int col=2; col<9; col++){
 							object valor=rango.ValorCelda(fila,col);
 							hojaResultados.PonerValor(lineaResultados,col+7,valor);
@@ -205,7 +254,7 @@ namespace PBG
 				Carpeta=hojaProcesamiento.TextoCelda(linea,1);
 				Archivo=hojaProcesamiento.TextoCelda(linea,2);
 				Responsable=hojaProcesamiento.TextoCelda(linea,3);
-				if(Archivo==null || Archivo.Trim()==""){
+				if(Archivo.BlancosANull()==null){
 					break;
 				}
 				ProcesarLibro(Carpeta,Archivo,linea,Responsable);
@@ -244,20 +293,14 @@ namespace PBG
 		}
 		public void CrearTablaClanae(){
 			HojaExcel HojaTablaClanae=libroCierre.NuevaHoja(CierrePBG.NombreHojaTablaClanae);
-			string[,] TablaClanaeEjemplo={
-				{"Clanae 5 digitos","descripcion"},
-				{"01110","Cultivo de cereales, oleaginosas y forrajeras"},
-				{"01120","Cultivo de hortalizas, legumbres, flores y plantas ornamentales"},
-				{"15000","ELABORACION DE PRODUCTOS ALIMENTICIOS Y BEBIDAS"}
+			object[,] TablaClanaeEjemplo={
+				{"Digitos","Letra","Clanae 2 digitos","Clanae 3 digitos","Clanae 5 digitos","Descripcion"},
+				{5,"A","01","011","01110","Cultivo de cereales, oleaginosas y forrajeras"},
+				{5,"A","01","012","01120","Cultivo de hortalizas, legumbres, flores y plantas ornamentales"},
+				{1,"D",null,null,null,"INDUSTRIA"},
+				{2,"D","15",null,null,"ELABORACION DE PRODUCTOS ALIMENTICIOS Y BEBIDAS"}
 			};
-			RangoExcel rango=HojaTablaClanae.Rango(1,3,5000,4);
-			rango.Rellenar(TablaClanaeEjemplo);
-			HojaTablaClanae.PonerTexto(1,1,"Clanae 2 digitos");
-			HojaTablaClanae.PonerTexto(1,2,"Clanae 3 digitos");
-			for(int fila=2; fila<=TablaClanaeEjemplo.GetLength(0); fila++){
-				HojaTablaClanae.PonerTexto(fila,1,TablaClanaeEjemplo[fila-1,0].Substring(0,2));
-				HojaTablaClanae.PonerTexto(fila,2,TablaClanaeEjemplo[fila-1,0].Substring(0,3));
-			}
+			HojaTablaClanae.Rellenar(TablaClanaeEjemplo);
 		}
 		public void CrearTablaProcesamiento(){
 			HojaExcel Hoja=libroCierre.NuevaHoja(CierrePBG.NombreHojaProcesamiento);
@@ -280,7 +323,7 @@ namespace PBG
 		public void CrearEjemploAgricultura(){
 			object[,] datos={
 				{null,null,null,null,null,null,null},
-				{"Tabla!RA!","Rama",15000,"Desde",1993,null,null},
+				{"Tabla!RA!","Rama",15,"Desde",1993,null,null},
 				{"basura",0,0,0,0,0,0},
 				{null,null,null,null,null,null,null},
 				{"Años","VBP a corrientes","VA a precios corrientes","Consumo Intermedio a precios corrientes","VBP a precios de 1993","VA  a precios de 1993","Consumo Intermedio a precios de 1993"},
@@ -301,7 +344,17 @@ namespace PBG
 				{1994,2800,2000,800,3800,2000,1800},
 				{1995,3800,3000,800,5800,3000,2800},
 				{null,null,null,null,null,null,null},
-				{null,null,null,null,null,null,null}
+				{null,null,null,null,null,null,null},
+				{null,0,0,0,0,0,0},
+				{null,0,0,0,0,0,0},
+				{"Tabla!RA!","Rama","D","Desde",1993,null,null},
+				{"basura",0,0,0,0,0,0},
+				{null,0,0,0,0,0,0},
+				{"Años","VBP a precios corrientes","VA a precios corrientes","Consumo Intermedio a precios corrientes","VBP a precios de 1993","VA  a precios de 1993","Consumo Intermedio a precios de 1993"},
+				{1993,18000,10000,8000,18000,10000,8000},
+				{1994,28000,20000,8000,38000,20000,18000},
+				{1995,38000,30000,8000,58000,30000,28000},
+				{1996,48000,40000,8000,78000,40000,38000}
 			};
 			CrearEjemplo(datos,Archivo.CarpetaActual()+@"\Agricultura.xls","Agri");
 		}
@@ -335,11 +388,12 @@ namespace PBG
 			HojaExcel hResultados=cierre.libro.Hoja(CierrePBG.NombreHojaResultados);
 			Assert.AreEqual("Año",hResultados.ValorCelda("A1"));
 			Assert.AreEqual(1993,hResultados.ValorCelda("A2"));
-			Assert.AreEqual("15000",hResultados.ValorCelda("E2"));
+			Assert.AreEqual("15",hResultados.ValorCelda("C2"));
+			Assert.IsNull(hResultados.ValorCelda("E2"));
 			HojaExcel hResumen=cierre.libro.Hoja(CierrePBG.NombreHojaResumen);
 			Assert.IsTrue(hResumen.TextoCelda("A2").EndsWith("Agricultura.xls"),"es agricultura");
 			Assert.AreEqual("José",hResumen.TextoCelda("B2"));
-			Assert.AreEqual("15000, 01120",hResumen.TextoCelda("E2"));
+			Assert.AreEqual("15, 01120, D",hResumen.TextoCelda("E2"));
 			Assert.AreEqual("01110, 91120",hResumen.TextoCelda("E5"));
 		}
 	}
