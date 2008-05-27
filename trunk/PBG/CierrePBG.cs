@@ -8,6 +8,7 @@
  */
 
 using System;
+using System.IO;
 using NUnit.Framework;
 
 using Comunes;
@@ -51,6 +52,7 @@ namespace PBG
 				haciendo="accediendo a la hoja "+NombreHojaResumen+en;
 				try{
 					hojaResumen=libro.Hoja(NombreHojaResumen);
+					hojaResumen.Rango("A2:IV65535").Borrar();
 				}catch(System.Runtime.InteropServices.COMException ex){
 					haciendo="creando la hoja "+NombreHojaResumen+en;
 					hojaResumen=libro.NuevaHoja(NombreHojaResumen);
@@ -59,6 +61,8 @@ namespace PBG
 				haciendo="accediendo a la hoja "+NombreHojaResultados+en;
 				try{
 					hojaResultados=libro.Hoja(NombreHojaResultados);
+					hojaResultados.Rango("A2:IV65535").Borrar();
+					lineaResultados=2;
 				}catch(System.Runtime.InteropServices.COMException ex){
 					haciendo="creando la hoja "+NombreHojaResultados+en;
 					hojaResultados=libro.NuevaHoja(NombreHojaResultados);
@@ -69,6 +73,10 @@ namespace PBG
 				haciendo="guardando los datos estructurales "+en;
 				libro.Guardar();
 			});
+		}
+		public CierrePBG()
+			:this(new ParametrosCierrePBG("PBG"))
+		{
 		}
 		~CierrePBG(){
 			libro.GuardarYCerrar();
@@ -132,8 +140,8 @@ namespace PBG
 						haciendo="pasando la fila "+fila+" de la hoja "+rango.NombreHoja;
 						hojaResultados.PonerValor(lineaResultados,1,ano);
 						hojaResultados.PonerValor(lineaResultados,2,5);
-						hojaResultados.PonerTexto(lineaResultados,3,rama.Substring(0,2));
-						hojaResultados.PonerTexto(lineaResultados,4,rama.Substring(0,3));
+						hojaResultados.PonerTexto(lineaResultados,3,rama.PadRight(2).Substring(0,2));
+						hojaResultados.PonerTexto(lineaResultados,4,rama.PadRight(3).Substring(0,3));
 						hojaResultados.PonerTexto(lineaResultados,5,rama);
 						for(int col=2; col<9; col++){
 							object valor=rango.ValorCelda(fila,col);
@@ -150,7 +158,7 @@ namespace PBG
 		public void ProcesarLibro(string Carpeta,string archivo,int linea,string Responsable){
 			resumen=new Resumen();
 			string NombreArchivo=
-				(Carpeta==null || Carpeta=="esta"?Archivo.CarpetaActual():Carpeta)
+				(Carpeta==null || Carpeta=="esta"?Path.GetDirectoryName(param.ExcelComandante):Carpeta)
 				+@"\"+archivo
 				+(archivo.ToLower().EndsWith(".xls")?"":".xls");
 			resumen.Carpeta_y_Archivo=NombreArchivo;
@@ -159,25 +167,29 @@ namespace PBG
 			hojaResumen.PonerHorizontal(linea,1,resumen);
 			libro.Guardar();
 			haciendo="";
-			try{
+			Accion sigoCon=delegate(){
 				haciendo="buscando el archivo "+NombreArchivo;
 				resumen.Carpeta_y_Archivo=System.IO.Path.GetFullPath(NombreArchivo);
 				resumen.Fecha_Archivo=System.IO.File.GetCreationTime(NombreArchivo);
 				haciendo="abriendo el libro de excel "+NombreArchivo;
 				LibroExcel libroDatos=LibroExcel.Abrir(NombreArchivo);
 				haciendo="buscando entre las hojas una Tabla!RA!";
+				Console.WriteLine("voy por {0} ",resumen.Carpeta_y_Archivo);
 			    for(int i=1; i<=libroDatos.CantidadHojas; i++){
 					HojaExcel hoja=libroDatos.Hoja(i);
 					RangoExcel rango=hoja.BuscarPorColumnas("Tabla!RA!");
 					Conjunto<int> Vistos=new Conjunto<int>();
 					while(rango.EsValido && !Vistos.Contiene(rango.NumeroFila*256+rango.NumeroColumna)){
+						Console.WriteLine("voy por hoja [{0}] tabla en ({1},{2}) ",rango.NombreHoja,rango.NumeroFila,rango.NumeroColumna);
 						ProcesarTabla(rango);
 				      	Vistos.Add(rango.NumeroFila*256+rango.NumeroColumna);
-						Console.WriteLine("voy por {0} {1},{2} ",rango.NombreHoja,rango.NumeroFila,rango.NumeroColumna);
 						rango=hoja.BuscarProximo(rango);
 					}
 				}
 				libroDatos.CerrarNoHayCambios();
+			};
+			try{
+				sigoCon();
 			}catch(Exception ex){
 				resumen.Error="Error "+haciendo;
 				resumen.Mensaje_del_sistema=ex.Message+":"+ex.GetType().FullName;

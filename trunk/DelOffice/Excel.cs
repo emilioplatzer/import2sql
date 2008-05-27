@@ -50,7 +50,7 @@ namespace DelOffice
 			};
 		}
 		public static LibroExcel Abrir(string nombreArchivo){
-			LibroExcel nuevo=new LibroExcel(ApExcel.Workbooks.Open(nombreArchivo,___,___,___,___,___,___,___,___,___,___,___,___,___,___));
+			LibroExcel nuevo=new LibroExcel(ApExcel.Workbooks.Open(nombreArchivo,false,___,___,___,___,___,___,___,___,___,___,___,___,___));
 			nuevo.abierto=true;
 			return nuevo;
 		}
@@ -352,6 +352,16 @@ namespace DelOffice
 		public string NombreHoja{
 			get{ return hoja.Name; }
 		}
+		void LimpiarCache(){
+			cacheCelda=new Diccionario<int, object>();
+			cacheArriba=new Diccionario<int, object>();
+			cacheIzquierda=new Diccionario<int, object>();
+		}
+		public void Borrar(){
+			// rango.Delete(Excel.XlDeleteShiftDirection.xlShiftUp);
+			LimpiarCache();
+			rango.ClearContents();
+		}
 	}
 	public class ColeccionExcel{
 		System.Collections.Generic.Dictionary<string, LibroExcel> libros;
@@ -445,6 +455,19 @@ namespace DelOffice
 			Assert.IsTrue(rangoEncontrado.EsValido);
 			Assert.AreEqual(1,rangoEncontrado.NumeroFila);
 			libro.GuardarYCerrar();
+		}
+		[Test]
+		public void Borrado(){
+			LibroExcel libro=LibroExcel.Abrir(nombreArchivo);
+			RangoExcel rango=libro.Rango("B2","N3");
+			rango.PonerTexto(2,2,"este");
+			rango.Borrar();
+			Assert.IsNull(rango.ValorCelda(2,1));
+			Assert.IsNull(rango.ValorCelda(2,2));
+			Assert.IsNull(rango.ValorCelda(3,1));
+			Assert.IsNull(rango.ValorCelda(3,2));
+			Assert.IsNull(rango.ValorCelda(4,1));
+			libro.DescartarYCerrar();
 		}
 		[Test]
 		public void TipoFecha(){
