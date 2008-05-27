@@ -424,4 +424,12 @@ namespace Comunes
 			}
 		}
 	}
+	public static class ParaCadena{
+		public static string BlancosANull(this string esto){
+			if(esto==null || esto.Trim()==""){
+				return null;
+			}
+			return esto;
+		}
+	}
 }
