@@ -82,6 +82,7 @@ namespace BasesDatos
 				case OperadorFuncion.Nvl: return "COALESCE(";
 				case OperadorFuncion.PrimeraPalabra: return "PRIMERPALABRA(";
 				case OperadorFuncion.SinPrimeraPalabra: return "SINPRIMERPALABRA(";
+				case OperadorFuncion.Normalizar: return "NORMALIZAR(";
 				/*
 				case OperadorFuncion.PrimeraPalabra: return "TRANSLATE(SUBSTRING(TRIM(BOTH ";
 				case OperadorFuncion.SinPrimeraPalabra: return "TRIM(BOTH ' ' FROM TRIM(BOTH '.' FROM REGEXP_REPLACE(";

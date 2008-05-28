@@ -35,10 +35,11 @@ namespace Tareas
 			
 		}
 		*/
-		public class CampoConjunto:CampoChar{ public CampoConjunto():base(10){} };
+		public class CampoConjunto:CampoChar{ public CampoConjunto():base(20){} };
+		public class CampoLote:CampoChar{ public CampoLote():base(20){} };
 		public class CampoNombre:CampoChar{ public CampoNombre():base(250){} };
-		public class CampoMetodo:CampoChar{ public CampoMetodo():base(10){} };
-		public class CampoPalabra:CampoChar{ public CampoPalabra():base(10){} };
+		public class CampoMetodo:CampoChar{ public CampoMetodo():base(20){} };
+		public class CampoPalabra:CampoChar{ public CampoPalabra():base(20){} };
 		public class Nombres:TablaTmp{
 			[Pk] public CampoConjunto cConjunto;
 			[Pk] public CampoNombre cNombre;
@@ -54,6 +55,11 @@ namespace Tareas
 			[Pk] public CampoNombre cNombre;
 			[Pk] public CampoEntero cOrden;
 			public CampoPalabra cPalabra;
+		}
+		public class Diccionario:TablaTmp{
+			[Pk] public CampoLote cLote;
+			[Pk] public CampoPalabra cPalabra;
+			[Pk] public CampoPalabra cPalabraNormalizada;
 		}
 		public ComparacionPadrones(BaseDatos db)
 			:base(db)
@@ -97,6 +103,17 @@ namespace Tareas
 				);
 			}
 			AsignacionOrdenada("exacta");
+		}
+		public void NormalizarPalabras(){
+			NombresPalabras np=new NombresPalabras();
+			using(Ejecutador ej=new Ejecutador(db)){
+				ej.Ejecutar(
+					new SentenciaUpdate(np,np.cPalabra.Es(Fun.Normalizar(np.cPalabra)))
+				);
+			}
+		}
+		public void PasarDiccionario(string lote){
+			
 		}
 		public void SepararPalabras(){
 			Nombres nombres=new ComparacionPadrones.Nombres();
@@ -284,6 +301,48 @@ LANGUAGE plpgsql".Replace("{TABLA}",nombres.NombreTabla)
 			cp.ReordenarPalabras();
 			cp.AsignacionOrdenada("reordenada");
 			CompararCoincidencias(coinciden2v,coinciden2n);			
+		}
+		[Test]
+		public void Pr04Normalizadas(){
+			cp.ReordenarPalabras();
+			string[] viejos={"San Martín","Belgrano","Corrientes","No esta"};
+			string[] nuevos={"Martin San","Belgrano","Corrientes","Tampoco esta"};
+			string[] coinciden1={"Belgrano","Corrientes"};
+			string[] coinciden2v={"Belgrano","Corrientes","San Martín"};
+			string[] coinciden2n={"Belgrano","Corrientes","Martin San"};
+			Vaciar();
+			Cargar(viejos,nuevos);
+			cp.AsignacionExacta();
+			cp.SepararPalabras();
+			cp.ReordenarPalabras();
+			cp.AsignacionOrdenada("reordenada");
+			CompararCoincidencias(coinciden1,coinciden1);
+			cp.NormalizarPalabras();
+			cp.ReordenarPalabras();
+			cp.AsignacionOrdenada("Normalizadas");
+			CompararCoincidencias(coinciden2v,coinciden2n);			
+		}
+		[Test]
+		public void Pr05ViaDiccionario(){
+			cp.ReordenarPalabras();
+			cp.ReordenarPalabras();
+			string[] viejos={"Sn Martín","Belgrano","Corrientes","No esta","Dr. Rómulo Naón"};
+			string[] nuevos={"Martin San","Belgrano","Corrientes","Tampoco esta","Doctor Romulo Naon"};
+			string[] coinciden1={"Belgrano","Corrientes"};
+			string[] coinciden2v={"Belgrano","Corrientes","San Martín"};
+			string[] coinciden2n={"Belgrano","Corrientes","Martin San"};
+			Vaciar();
+			Cargar(viejos,nuevos);
+			cp.AsignacionExacta();
+			cp.SepararPalabras();
+			cp.ReordenarPalabras();
+			cp.AsignacionOrdenada("reordenada");
+			cp.NormalizarPalabras();
+			cp.ReordenarPalabras();
+			cp.AsignacionOrdenada("Normalizadas");
+			CompararCoincidencias(coinciden1,coinciden1);
+			cp.PasarDiccionario("ABR");
+			CompararCoincidencias(coinciden2v,coinciden2n);	
 		}
 	}
 }

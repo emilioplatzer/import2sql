@@ -12,3 +12,42 @@ CREATE TABLE TablaExistente
 ) WITHOUT OIDS;
 ALTER TABLE TablaExistente OWNER TO import2sql;
 INSERT INTO tablaexistente (texto, numero) VALUES ('uno',1);
+
+-- Function: primerpalabra(frase text)
+
+-- DROP FUNCTION primerpalabra(frase text);
+
+CREATE OR REPLACE FUNCTION primerpalabra(frase text)
+  RETURNS text AS
+$BODY$
+begin
+  return translate(substring(trim(both frase) from '^([^ .]+)(?:[ .]+|$)'),' .','');
+end
+$BODY$
+  LANGUAGE 'plpgsql' IMMUTABLE STRICT;
+ALTER FUNCTION primerpalabra(frase text) OWNER TO postgres;
+
+-- Function: sinprimerpalabra(frase text)
+
+-- DROP FUNCTION sinprimerpalabra(frase text);
+
+CREATE OR REPLACE FUNCTION sinprimerpalabra(frase text)
+  RETURNS text AS
+$BODY$
+begin
+  return trim(both ' ' from trim(both '.' from regexp_replace(frase,'^[ .]*[^ .]+(?:[ .]|$)','')));
+end
+$BODY$
+  LANGUAGE 'plpgsql' IMMUTABLE STRICT;
+ALTER FUNCTION sinprimerpalabra(frase text) OWNER TO postgres;
+
+CREATE OR REPLACE FUNCTION normalizar(frase text)
+  RETURNS text AS
+$BODY$
+begin
+  return translate(frase,'·ÈÌÛ˙‡ËÏÚ˘‰ÎÔˆ¸‚ÍÓÙ˚„ıÒ ¡…Õ”⁄¿»Ã“ŸƒÀœ÷‹¬ Œ‘€√’—',
+                         'aeiouaeiouaeiouaeiouaon AEIOUAEIOUAEIOUAEIOUAON');
+end
+$BODY$
+  LANGUAGE 'plpgsql' IMMUTABLE STRICT;
+ALTER FUNCTION sinprimerpalabra(frase text) OWNER TO postgres;

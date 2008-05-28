@@ -564,5 +564,8 @@ namespace ModeladorSql
 		public static IElementoTipado<string> SinPrimeraPalabra(this IElementoTipado<string> E1){
 			return new OperacionFuncion<string, string>(E1,OperadorFuncion.SinPrimeraPalabra);
 		}
+		public static IElementoTipado<string> Normalizar(this IElementoTipado<string> E1){
+			return new OperacionFuncion<string, string>(E1,OperadorFuncion.Normalizar);
+		}
 	}
 }
