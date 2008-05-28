@@ -23,8 +23,26 @@ namespace Interactivo
 	{
 		bool camposAgregados=false;
 		Object ObjetoBase;
-		public Formulario()
-		{
+		int margen=10;
+		int cursorX;
+		int cursorY;
+		public Formulario(){
+			cursorX=10;
+			cursorY=margen;
+		}
+		void Agregar(Control c){
+			Controls.Add(c);
+			c.Top=cursorY;
+			c.Left=cursorX;
+		}
+		public void AgregarEnLinea(Control c){
+			Agregar(c);
+			cursorX=c.Right+margen;
+		}
+		public void AgregarEnProximaLinea(Control c){
+			Agregar(c);
+			cursorX=margen;
+			cursorY=c.Bottom+margen;
 		}
 		public void AgregarCampos(){
 			if(!camposAgregados){

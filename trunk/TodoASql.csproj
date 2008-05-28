@@ -80,6 +80,7 @@
     <Compile Include="ModeladorSql\Repositorio.cs" />
     <Compile Include="ModeladorSql\Tabla.cs" />
     <Compile Include="PBG\CierrePBG.cs" />
+    <Compile Include="PBG\FormCierrePBG.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Pruebas\PruebasReflexion.cs" />
     <Compile Include="Tareas\ComparacionPadrones.cs" />

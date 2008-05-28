@@ -96,7 +96,9 @@ namespace TodoASql
 				*/
 				// new PBG.PrCierrePBG().Estamos();
 				// new PBG.CierrePBG().ProcesarLista();
-				// /*
+				var f=new PBG.FormCierrePBG();
+				f.ShowDialog();
+				/*
 				var t=new Tareas.PrComparacionPadrones();
 				t.Pr01Exacta();
 				t.Pr02ExtraccionPalabras();
