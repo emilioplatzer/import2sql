@@ -95,12 +95,14 @@ namespace TodoASql
 				System.Windows.Forms.MessageBox.Show("Listo");
 				*/
 				// new PBG.PrCierrePBG().Estamos();
-				new PBG.CierrePBG().ProcesarLista();
-				/*
+				// new PBG.CierrePBG().ProcesarLista();
+				// /*
 				var t=new Tareas.PrComparacionPadrones();
 				t.Pr01Exacta();
 				t.Pr02ExtraccionPalabras();
 				t.Pr03Reordenacion();
+				t.Pr04Normalizadas();
+				t.Pr05ViaDiccionario();
 				// */
 				// new PrModeladorSql.prModelador().Subselect();
 			    /*
