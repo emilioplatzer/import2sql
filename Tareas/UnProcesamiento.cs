@@ -179,13 +179,16 @@ namespace Tareas
 			 */
 			{
 				periodoAnterior="null";
-				int mes=4;
-				for(int semana=4;semana>=1;semana--){
-					periodoActual="'a2008m0"+mes.ToString()+"s"+semana.ToString()+"'";
-					db.EjecutrarSecuencia(
-						@"INSERT INTO calculos VALUES ("+periodoActual+",-1,'S',"+periodoAnterior+")"
-					);
-					periodoAnterior=periodoActual;
+				for(int mes=5;mes>=4;mes--){
+					for(int semana=4;semana>=1;semana--){
+						periodoActual="'a2008m0"+mes.ToString()+"s"+semana.ToString()+"'";
+						if(periodoActual.CompareTo("'a2008m05s4")<0){
+							db.EjecutrarSecuencia(
+								@"INSERT INTO calculos VALUES ("+periodoActual+",-1,'S',"+periodoAnterior+")"
+							);
+							periodoAnterior=periodoActual;
+						}
+					}
 				}
 			}
 			System.Console.WriteLine("Importando Precios");

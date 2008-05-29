@@ -63,7 +63,7 @@ namespace Indices
 		IOTI, // por otro tipo de informante
 		IP, // por los pares
 		MB, // Mes base
-		O, // Observado efectivamente
+		R, // Relevado efectivamente
 	};
 	/********************* TABLAS ***************************/
 	[Alias("pr")]
@@ -250,6 +250,7 @@ namespace Indices
 		[Fk] public Informantes fkInformantes;
 		[Fk] public TipoInf fkTipoInf;
 	}
+	public class CalEspInfTemp:CalEspInf{}
 	public class NovEspInf:Tabla{
 		public enum Estados{Alta,Baja,Reemplazo};
 		[Pk] public CampoPeriodo cPeriodo;
