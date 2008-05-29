@@ -27,8 +27,8 @@ namespace BasesDatos
 		static Bitacora bitacora;
 		static Bitacora bitacoraAsertos;
 		static EjecutadorBaseDatos(){
-			bitacora=new Bitacora("i2sb_query.sql","i2sb_queries.sql");
-			bitacoraAsertos=new Bitacora("i2sb_Asert.txt","i2sb_Asertos.txt");
+			bitacora=new Bitacora("i2s_query.sql","i2s_queries.sql");
+			bitacoraAsertos=new Bitacora("i2s_Asert.txt","i2s_Asertos.txt");
 		}
 		protected EjecutadorBaseDatos(IDbConnection con)
 		{

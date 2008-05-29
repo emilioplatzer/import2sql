@@ -183,6 +183,9 @@ namespace Indices
 				cg.EsFkDe(c,cg0);
 				gh.EsFkDe(cg0);
 				cgp.EsFkDe(c,cgp.cGrupo.Es(gh.cGrupoPadre),cg0);
+				var cgne=new CalGru();
+				cgne.EsFkDe(c,cg0);
+				cgne.LiberadaDelContextoDelEjecutador=true;
 				for(int i=1;i<=9;i++){
 					ej.Ejecutar(
 						new SentenciaInsert(cg)
@@ -192,7 +195,7 @@ namespace Indices
 						        cg.cImputacionGru.Es(Imputaciones.G)
 						       )
 						.Where(gh.cNivel.Igual(i),
-						       cg.NoExiste(),
+						       cgne.NoExiste(),
 						       cg0.cPeriodo.Igual(c.cPeriodoAnterior) // OJO! Esto deber'ia calcularse automaticamente. Pero falta indicarselo arriba en alguna fk
 						      )
 					);
@@ -302,16 +305,39 @@ WHERE gr.esproducto='N'
 						.Select(nei,cei.cImputacionEspInf.Es(Imputaciones.B),i)
 						.Where(cei.NoExistePara(nei),nei.cEstado.Igual(NovEspInf.Estados.Alta).Or(nei.cEstado.Igual(NovEspInf.Estados.Reemplazo)))
 					);
+					/*
 					CalEspInf ceiss=new CalEspInf();
 					ceiss.SubSelect("ceiss",rv.cPeriodo,ceiss.cCalculo.Es(cal.cCalculo.Valor),ceiss.cPromedioEspInf.EsPromedioGeometrico(rv.cPrecio),rv.cInformante)
 						.Where(rv.cPrecio.Mayor(Constante<double>.Cero));
 					cei.EsFkDe(ceiss);
-					RelVar rv2=new RelVar();
-					rv2.Alias="rv2";
-					cei.EsFkDe(rv2,cei.cCalculo.Es(cal.cCalculo.Valor),cal);
-					ej.Ejecutar( // Calcular el promedio si hay
-						new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei.SelectPromedioGeometrico(rv2.cPrecio)))
-					);
+					*/
+					if("metodo directo"=="ahora no"){
+						RelVar rv2=new RelVar();
+						rv2.Alias="rv2";
+						cei.EsFkDe(rv2,cei.cCalculo.Es(cal.cCalculo.Valor),cal);
+						ej.Ejecutar( // Calcular el promedio si hay
+							new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei.SelectPromedioGeometrico(rv2.cPrecio))
+						                           ,cei.cImputacionEspInf.Es(Imputaciones.R))
+						);
+					}else{
+						CalEspInfTemp ceit=new CalEspInfTemp();
+						ej.Ejecutar(
+							new SentenciaDelete(ceit)
+						);
+						i.EsFkDe(rv);
+						ej.Ejecutar(
+							new SentenciaInsert(ceit)
+							.Select(ceit.cPromedioEspInf.EsPromedioGeometrico(rv.cPrecio)
+							        ,ceit.cImputacionEspInf.Es(Imputaciones.R)
+							        ,rv,ceit.cCalculo.Es(cal.cCalculo.Valor),i)
+							.Where(rv.cPrecio.Mayor(0.0)) // OJO deber'ia deducirlo
+						);
+						ceit.EsFkDe(cei);
+						ej.Ejecutar(
+							new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(ceit.cPromedioEspInf)
+						                           ,cei.cImputacionEspInf.Es(ceit.cImputacionEspInf))
+						);
+					}
 					CalEspTI ce=new CalEspTI();
 					CalEspInf cei1=new CalEspInf();
 					cei1.UsarFk();
@@ -743,7 +769,7 @@ AND c.calculo="+cal.cCalculo.Valor
 				t.cCalculo[ins]=cal.cCalculo;
 				t.cProducto[ins]=prod.cProducto;
 				t.cPromedioProd[ins]=promedio;
-				t.cImputacionProd[ins]=Imputaciones.O;
+				t.cImputacionProd[ins]=Imputaciones.R;
 			}		
 		}
 		public void ExpandirEspecificacionesYVariedades(){

@@ -18,6 +18,7 @@ namespace Comunes
 	{
 		string nombreArchivoTodosRegistros;
 		string nombreArchivoUltimoRegistro;
+		DateTime tickAnterior;
 		public Bitacora()
 		{
 		}
@@ -30,7 +31,15 @@ namespace Comunes
 			}
 		}
 		public string prefijo(){
-			return "-- "+DateTime.Now.Hour+":"+DateTime.Now.Minute+":"+DateTime.Now.Second+Archivo.Eol;
+			string rta="-- "
+				+DateTime.Now.ToLongTimeString()
+				+(tickAnterior==null?""
+				  :"-"+tickAnterior.ToLongTimeString()+"="+(DateTime.Now-tickAnterior).ToString()
+				 )
+				+Archivo.Eol;
+			tickAnterior=DateTime.Now.AddDays(1);
+			tickAnterior=tickAnterior.AddDays(-1);
+			return rta;
 		}
 		public T Registrar<T>(T mensaje){
 			if(nombreArchivoUltimoRegistro!=null){
