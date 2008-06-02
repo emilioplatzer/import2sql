@@ -198,6 +198,35 @@ namespace Indices
 						       cgne.NoExiste(),
 						       cg0.cPeriodo.Igual(c.cPeriodoAnterior) // OJO! Esto deber'ia calcularse automaticamente. Pero falta indicarselo arriba en alguna fk
 						      )
+						/*
+INSERT INTO calgru (periodo, calculo, agrupacion, grupo,
+ indiceparcialactual, indiceparcialanterior, imputaciongru)
+SELECT x.periodo, x.calculo, x.agrupacion, x.grupo, x.indiceparcialactual, x.indiceparcialanterior, x.imputaciongru
+FROM (
+ SELECT cal.periodo, cal.calculo, cg0.agrupacion, cg0.grupo,
+ cg0.indice*cgp.indiceparcialactual/cgp.indiceparcialanterior AS indiceparcialactual, cg0.indice AS indiceparcialanterior, 'G' AS imputaciongru
+ FROM calculos cal, calgru cg0, calgru cgp, grupos gh
+ WHERE gh.nivel=2
+ AND cg0.periodo=cal.periodoanterior
+ AND gh.agrupacion=cg0.agrupacion
+ AND gh.grupo=cg0.grupo
+ AND cgp.periodo=cal.periodo
+ AND cgp.calculo=cal.calculo
+ AND cgp.agrupacion=cg0.agrupacion
+ AND cgp.grupo=gh.grupopadre
+ AND cal.periodo='a2008m05s3'
+ AND cal.calculo=0
+ AND cgp.agrupacion='C'
+ AND cgp.periodo='a2008m05s3'
+ AND cgp.calculo=0
+ AND gh.agrupacion='C' ) x 
+LEFT JOIN calgru z ON
+ x.periodo=z.periodo
+ AND x.calculo=z.calculo
+ AND x.agrupacion=z.agrupacion
+ AND x.grupo=z.grupo
+WHERE z.periodo is null
+						 */
 					);
 				}
 				g.EsFkDe(cg);

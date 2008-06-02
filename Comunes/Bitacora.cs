@@ -11,9 +11,6 @@ using System;
 
 namespace Comunes
 {
-	/// <summary>
-	/// Description of Bitacora.
-	/// </summary>
 	public class Bitacora
 	{
 		string nombreArchivoTodosRegistros;
@@ -42,11 +39,12 @@ namespace Comunes
 			return rta;
 		}
 		public T Registrar<T>(T mensaje){
+			string prefijo=this.prefijo();
 			if(nombreArchivoUltimoRegistro!=null){
-				Archivo.Escribir(nombreArchivoUltimoRegistro,prefijo()+mensaje.ToString());
+				Archivo.Escribir(nombreArchivoUltimoRegistro,prefijo+mensaje.ToString());
 			}
 			if(nombreArchivoTodosRegistros!=null){
-				Archivo.Agregar(nombreArchivoTodosRegistros,prefijo()+Cadena.AgregarSiFalta(mensaje.ToString(),"\n"));
+				Archivo.Agregar(nombreArchivoTodosRegistros,prefijo+Cadena.AgregarSiFalta(mensaje.ToString(),"\n"));
 			}
 			return mensaje;
 		}
