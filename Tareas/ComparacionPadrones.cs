@@ -113,7 +113,14 @@ namespace Tareas
 			}
 		}
 		public void PasarDiccionario(string lote){
-			
+			NombresPalabras np=new NombresPalabras();
+			Diccionario d=new Diccionario();
+			using(Ejecutador ej=new Ejecutador(db)){
+				ej.Ejecutar(
+					new SentenciaUpdate(np,np.cPalabra.Es(d.cPalabraNormalizada))
+					.Where(np.cPalabra.Igual(d.cPalabra),d.cLote.Igual(lote))
+				);
+			}
 		}
 		public void SepararPalabras(){
 			Nombres nombres=new ComparacionPadrones.Nombres();
@@ -215,6 +222,10 @@ LANGUAGE plpgsql".Replace("{TABLA}",nombres.NombreTabla)
 					break;
 			}
 			#pragma warning restore 162
+			ComparacionPadrones.Diccionario diccionario=new Tareas.ComparacionPadrones.Diccionario();
+			diccionario.InsertarDirecto(db,"ABR","San","Sn");
+			diccionario.InsertarDirecto(db,"ABR","Doctor","Dr");
+			diccionario.InsertarDirecto(db,"ABR","Doctora","Dra");
 		}
 		public void Vaciar(){
 			Ejecutador ej=new Ejecutador(db);
@@ -329,19 +340,21 @@ LANGUAGE plpgsql".Replace("{TABLA}",nombres.NombreTabla)
 			string[] viejos={"Sn Martín","Belgrano","Corrientes","No esta","Dr. Rómulo Naón"};
 			string[] nuevos={"Martin San","Belgrano","Corrientes","Tampoco esta","Doctor Romulo Naon"};
 			string[] coinciden1={"Belgrano","Corrientes"};
-			string[] coinciden2v={"Belgrano","Corrientes","San Martín"};
-			string[] coinciden2n={"Belgrano","Corrientes","Martin San"};
+			string[] coinciden2v={"Belgrano","Corrientes","Dr. Rómulo Naón","Sn Martín"};
+			string[] coinciden2n={"Belgrano","Corrientes","Doctor Romulo Naon","Martin San"};
 			Vaciar();
 			Cargar(viejos,nuevos);
 			cp.AsignacionExacta();
 			cp.SepararPalabras();
 			cp.ReordenarPalabras();
-			cp.AsignacionOrdenada("reordenada");
+			cp.AsignacionOrdenada("reordenadas");
 			cp.NormalizarPalabras();
 			cp.ReordenarPalabras();
-			cp.AsignacionOrdenada("Normalizadas");
+			cp.AsignacionOrdenada("normalizadas");
 			CompararCoincidencias(coinciden1,coinciden1);
 			cp.PasarDiccionario("ABR");
+			cp.ReordenarPalabras();
+			cp.AsignacionOrdenada("abreviaturas");
 			CompararCoincidencias(coinciden2v,coinciden2n);	
 		}
 	}
