@@ -133,6 +133,8 @@ namespace DelOffice
 		public void UnExcel(){
 			string carpetaExcel=Archivo.CarpetaActual()+@"\temp_borrar\";
 			string nombreExcel=carpetaExcel+"pruebaExcelRecolector1.xls";
+			Archivo.Borrar(nombreExcel.Replace(@"temp_borrar\",@"temp_borrar\salteados\"));
+			Archivo.Borrar(nombreExcel.Replace(@"temp_borrar\",@"temp_borrar\procesados\"));
 			object[,] datosHoja1={
 				{"Nombre","Apellido","CUCID","FechaVisita","Cantidad"},
 				{"pepe","Perez","123456","12/04/2008","1"},
