@@ -390,11 +390,11 @@ namespace Comunes
 		[Test]
 		public void ProbarAnchoMaximo(){
 			string[] numeros={"uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez"};
-			Assert.Ignore("Tengo que arreglar esta pavada");
+			// Assert.Ignore("Tengo que arreglar esta pavada");
 			{
 				Separador coma=new Separador(", ").AnchoMaximo(13);
 				Assert.AreEqual(
-					"uno, dos, \ntres, \ncuatro, \ncinco, seis, \nsiete, ocho, \nnueve, diez"
+					"uno, dos, \ntres, cuatro, \ncinco, seis, \nsiete, ocho, \nnueve, diez"
 					,coma.Concatenar(numeros)
 				);
 			}
@@ -406,7 +406,7 @@ namespace Comunes
 					coma.AgregarEn(s,n);
 				}
 				Assert.AreEqual(
-					"El primer renglon\nuno, dos, \ntres, \ncuatro, \ncinco, seis, \nsiete, ocho, \nnueve, diez"
+					"El primer renglon\nuno, dos, \ntres, cuatro, \ncinco, seis, \nsiete, ocho, \nnueve, diez"
 					,s.ToString()
 				);
 			}
@@ -418,7 +418,7 @@ namespace Comunes
 					coma.AgregarEn(s,n);
 				}
 				Assert.AreEqual(
-					"El primer renglon\nuno, dos, \ntres, \ncuatro, \ncinco, seis, \nsiete, ocho, \nnueve, diez"
+					"El primer renglon\nuno, dos, tres, \ncuatro, cinco, \nseis, siete, \nocho, nueve, \ndiez"
 					,s.ToString()
 				);
 			}

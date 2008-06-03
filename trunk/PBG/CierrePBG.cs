@@ -320,7 +320,7 @@ namespace PBG
 			LibroExcel libro=LibroExcel.Nuevo();
 			HojaExcel hoja=libro.NuevaHoja(HojaNombre);
 			hoja.Rellenar(datos);
-			libro.GuardarYCerrar(NombreArchivo);
+			libro.GuardarYCerrar(Carpeta+@"\"+NombreArchivo);
 		}
 		public void CrearEjemploAgricultura(){
 			object[,] datos={
@@ -382,7 +382,7 @@ namespace PBG
 				{null,1995,3800,3000,800,5800,3000,2800},
 				{null,1996,4800,4000,800,7800,4000,3800}
 			};
-			CrearEjemplo(datos,Archivo.CarpetaActual()+@"\temp_borrar\",@"ProdAlim.xls","ProdAlim");
+			CrearEjemplo(datos,Archivo.CarpetaActual()+@"\temp_borrar",@"ProdAlim.xls","ProdAlim");
 		}
 		[Test]
 		public void Estamos(){
