@@ -279,7 +279,7 @@ namespace PBG
 		LibroExcel libroCierre;
 		public PrCierrePBG(){
 			param=new ParametrosCierrePBG();
-			param.ExcelComandante=Archivo.CarpetaActual()+@"\CierrePBG_prueba";
+			param.ExcelComandante=Archivo.CarpetaActual()+@"\CierrePBG_prueba.xls";
 			Archivo.Borrar(param.ExcelComandante);
 			libroCierre=LibroExcel.Nuevo();
 			CrearTablaClanae();
@@ -313,8 +313,10 @@ namespace PBG
 			};
 			Hoja.Rellenar(TablaProcesamiento);
 		}
-		public void CrearEjemplo(object[,] datos,string NombreArchivo,string HojaNombre){
-			Archivo.Borrar(NombreArchivo);
+		public void CrearEjemplo(object[,] datos,string Carpeta,string NombreArchivo,string HojaNombre){
+			Archivo.Borrar(Carpeta+@"\"+NombreArchivo);
+			Archivo.Borrar(Archivo.CarpetaActual()+@"\temp_borrar\salteados\"+NombreArchivo);
+			Archivo.Borrar(Archivo.CarpetaActual()+@"\temp_borrar\procesados\"+NombreArchivo);
 			LibroExcel libro=LibroExcel.Nuevo();
 			HojaExcel hoja=libro.NuevaHoja(HojaNombre);
 			hoja.Rellenar(datos);
@@ -356,7 +358,7 @@ namespace PBG
 				{1995,38000,30000,8000,58000,30000,28000},
 				{1996,48000,40000,8000,78000,40000,38000}
 			};
-			CrearEjemplo(datos,Archivo.CarpetaActual()+@"\Agricultura.xls","Agri");
+			CrearEjemplo(datos,Archivo.CarpetaActual(),@"Agricultura.xls","Agri");
 		}
 		public void CrearEjemploProdAli(){
 			object[,] datos={
@@ -380,7 +382,7 @@ namespace PBG
 				{null,1995,3800,3000,800,5800,3000,2800},
 				{null,1996,4800,4000,800,7800,4000,3800}
 			};
-			CrearEjemplo(datos,Archivo.CarpetaActual()+@"\temp_borrar\ProdAlim.xls","ProdAlim");
+			CrearEjemplo(datos,Archivo.CarpetaActual()+@"\temp_borrar\",@"ProdAlim.xls","ProdAlim");
 		}
 		[Test]
 		public void Estamos(){
