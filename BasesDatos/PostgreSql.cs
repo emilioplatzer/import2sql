@@ -105,7 +105,7 @@ namespace BasesDatos
 	public class ProbarPostgreSql{
 		public static PostgreSql AbrirBase(){
 			System.Windows.Forms.Application.OleRequired();
-			return PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
+			return PostgreSql.Abrir("127.0.0.1","import2sqldb","import2sql","sqlimport");
 		}
 		#if SinPostgre
 		[Test]

@@ -57,6 +57,9 @@ namespace Comunes
 			return this;
 		}
 		public bool Contiene(T t){
+			if(t==null) {
+				return false;
+			}
 			return ContainsKey(t);
 		}
 		public bool ContieneTodas(Conjunto<T> conj){

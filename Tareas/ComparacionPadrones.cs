@@ -10,11 +10,13 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Windows.Forms;
 using NUnit.Framework;
 
 using Comunes;
 using BasesDatos;
 using ModeladorSql;
+using Interactivo;
 	
 namespace Tareas
 {
@@ -40,16 +42,22 @@ namespace Tareas
 		public class CampoNombre:CampoChar{ public CampoNombre():base(250){} };
 		public class CampoMetodo:CampoChar{ public CampoMetodo():base(20){} };
 		public class CampoPalabra:CampoChar{ public CampoPalabra():base(20){} };
+		public class CampoDescripcion:CampoChar{ public CampoDescripcion():base(250){} };
 		public class Nombres:TablaTmp{
 			[Pk] public CampoConjunto cConjunto;
 			[Pk] public CampoNombre cNombre;
 			public CampoNombre cNombreReordenado;
 			public CampoLogico cUsado;
 		}
+		public class Resultados:TablaTmp{
+			[Pk] public CampoMetodo cMetodo;
+			public CampoDescripcion cDescripcion;
+		}
 		public class Asignacion:TablaTmp{
 			[Pk] public CampoNombre cNombreViejo;
 			public CampoNombre cNombreNuevo;
 			public CampoMetodo cMetodo;
+			[Fk] public Resultados fkResultados;
 		}
 		public class NombresPalabras:TablaTmp{
 			[Pk] public CampoNombre cNombre;
@@ -66,12 +74,14 @@ namespace Tareas
 		{
 		}
 		public void AsignacionOrdenada(string queMetodo){
+			Resultados res=new Resultados();
 			Asignacion a=new Asignacion();
 			Nombres n=new Nombres();
 			n.Alias="n";
 			Nombres v=new Nombres();
 			v.Alias="v";
 			using(Ejecutador ej=new Ejecutador(db)){
+				res.InsertarValores(db,res.cMetodo.Es(queMetodo),res.cDescripcion.Es(queMetodo));
 				ej.Ejecutar(
 					new SentenciaInsert(a)
 						.Select(a.cNombreViejo.Es(v.cNombre),a.cNombreNuevo.Es(n.cNombre),a.cMetodo.Es(queMetodo))
@@ -198,6 +208,23 @@ LANGUAGE plpgsql".Replace("{TABLA}",nombres.NombreTabla)
 			                   .Replace("{JOIN}",Separador.Concatenar(pkEnAmbos.ConvertAll(campo => campo.NombreCampo+"=c_frase."+campo.NombreCampo)," AND ")));
 			db.ExecuteNonQuery("SELECT REORDENARPALABRAS();");
 		}
+		public void PrepararCorrespondencia(){
+			AsignacionExacta();
+			SepararPalabras();
+			ReordenarPalabras();
+			AsignacionOrdenada("reordenadas");
+			NormalizarPalabras();
+			ReordenarPalabras();
+			AsignacionOrdenada("normalizadas");
+			PasarDiccionario("ABR");
+			ReordenarPalabras();
+			AsignacionOrdenada("abreviaturas");
+		}
+		public void Mostrar(){
+			var asignacion=new Asignacion();
+			asignacion.UsarFk();
+			Application.Run(new GrillaBaseDatos(db,asignacion.fkResultados,asignacion));
+		}
 	}
 	[TestFixture]
 	public class PrComparacionPadrones{
@@ -207,7 +234,7 @@ LANGUAGE plpgsql".Replace("{TABLA}",nombres.NombreTabla)
 			#pragma warning disable 162
 			switch(1){ // Solo se va a tomar un camino
 				case 1:
-					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
+					db=PostgreSql.Abrir("127.0.0.1","import2sqldb","import2sql","sqlimport");
 					cp=new ComparacionPadrones(db);
 					cp.EliminarTablas();
 					cp.CrearTablas();
@@ -232,6 +259,7 @@ LANGUAGE plpgsql".Replace("{TABLA}",nombres.NombreTabla)
 			ej.Ejecutar(new SentenciaDelete(new ComparacionPadrones.NombresPalabras()));
 			ej.Ejecutar(new SentenciaDelete(new ComparacionPadrones.Asignacion()));
 			ej.Ejecutar(new SentenciaDelete(new ComparacionPadrones.Nombres()));
+			ej.Ejecutar(new SentenciaDelete(new ComparacionPadrones.Resultados()));
 		}
 		public void Cargar1(string[] datos,string conjunto){
 			ComparacionPadrones.Nombres n=new ComparacionPadrones.Nombres();
@@ -356,6 +384,7 @@ LANGUAGE plpgsql".Replace("{TABLA}",nombres.NombreTabla)
 			cp.ReordenarPalabras();
 			cp.AsignacionOrdenada("abreviaturas");
 			CompararCoincidencias(coinciden2v,coinciden2n);	
+			cp.Mostrar();
 		}
 	}
 }
