@@ -71,6 +71,7 @@
     <Compile Include="Indices\DerIndices.cs" />
     <Compile Include="Indices\Indice.cs" />
     <Compile Include="Interactivo\Formulario.cs" />
+    <Compile Include="Interactivo\GrillaBaseDatos.cs" />
     <Compile Include="Interactivo\PruebaFormularios.cs" />
     <Compile Include="ModeladorSql\Campo.cs" />
     <Compile Include="ModeladorSql\Ejecutador.cs" />

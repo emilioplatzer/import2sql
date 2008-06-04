@@ -822,7 +822,7 @@ AND c.calculo="+cal.cCalculo.Valor
 			#pragma warning disable 162
 			switch(3){ // No anda con sqlite hasta que no implemente EXP 
 				case 1: // probar con postgre
-					db=PostgreSql.Abrir("127.0.0.1","import2sqlDB","import2sql","sqlimport");
+					db=PostgreSql.Abrir("127.0.0.1","import2sqldb","import2sql","sqlimport");
 					repo=new RepositorioPruebaIndice(db);
 					repo.EliminarTablas();
 					repo.CrearTablas();
