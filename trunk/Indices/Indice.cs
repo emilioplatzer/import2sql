@@ -139,27 +139,52 @@ namespace Indices
 				// Tabla a insertar:
 				CalGru cg=new CalGru();
 				// Tabla base:
+				Calculos c=new Calculos();
+				Grupos g=new Grupos();
+				CalGru cg0=new CalGru();
+				cg0.Alias="cg0";
+				// c.EsFkDe(cg0,c.cPeriodoAnterior.Es(cg0.cPeriodo)); //,c.cPeriodo);
+				ej.Ejecutar(
+					new SentenciaInsert(cg)
+					.Select(c,g,cg.cImputacionGru.Es(Imputaciones.B))
+					        /*
+					        cg.cIndiceParcialAnterior.SeaNulo()
+					        ,cg.cIndiceParcialActual.SeaNulo()
+					        ,cg.cIndice.SeaNulo()
+					        ,cg.c
+					        cg0)
+					        */
+				);
 				CalProd cp=new CalProd();
 				cp.UsarFk();
-				Calculos c=cp.fkCalculos;
+				c=cp.fkCalculos;
 				CalProd cp0=new CalProd();
 				cp0.Alias="cp0";
 				cp0.EsFkDe(cp,cp0.cPeriodo.Es(c.cPeriodoAnterior));
 				cp0.LiberadaDelContextoDelEjecutador=true;
-				CalGru cg0=new CalGru();
-				cg0.Alias="cg0";
 				cg0.EsFkDe(cp0,cg0.cGrupo.Es(cp0.cProducto),cg0.cAgrupacion.Es(agrupacion.cAgrupacion.Valor));
 				cg0.LiberadaDelContextoDelEjecutador=true;
 				cg0.UsarFk();
-				Grupos g=cg0.fkGrupos;
+				g=cg0.fkGrupos;
+				var acg=new AuxCalGru();
+				acg.EsFkDe(cg);
 				ej.Ejecutar(
-					new SentenciaInsert(cg)
+					new SentenciaDelete(acg)
+				);
+				ej.Ejecutar(
+					new SentenciaInsert(acg)
 					.Select(c,cg0.cAgrupacion,g.cGrupo
-					        ,cg.cIndice.Es(cg0.cIndice.Por(cp.cPromedioProd.Dividido(cp0.cPromedioProd)))
-					        ,cg.cIndiceParcialActual.Es(cg0.cIndice.Por(cp.cPromedioProd.Dividido(cp0.cPromedioProd)))
-					        ,cg.cIndiceParcialAnterior.Es(cg0.cIndice)
-					        ,cg.cImputacionGru.Es(cp.cImputacionProd)
+					        ,acg.cIndice.Es(cg0.cIndice.Por(cp.cPromedioProd.Dividido(cp0.cPromedioProd)))
+					        ,acg.cIndiceParcialActual.Es(cg0.cIndice.Por(cp.cPromedioProd.Dividido(cp0.cPromedioProd)))
+					        ,acg.cIndiceParcialAnterior.Es(cg0.cIndice)
+					        ,acg.cImputacionGru.Es(cp.cImputacionProd)
 					        ,cg0.cFactor)
+				);
+				ej.Ejecutar(
+					new SentenciaUpdate(cg,cg.cIndiceParcialActual.Es(acg.cIndiceParcialActual)
+					                    ,cg.cIndiceParcialAnterior.Es(acg.cIndiceParcialAnterior)
+					                    ,cg.cImputacionGru.Es(acg.cImputacionGru))
+					.Where(cg.cImputacionGru.Igual(Imputaciones.B))
 				);
 				Grupos gh=new Grupos();
 				gh.Alias="gh";
@@ -171,34 +196,50 @@ namespace Indices
 				cgp.Alias="cgp";
 				for(int i=9;i>=0;i--){
 					ej.Ejecutar(
-						new SentenciaInsert(cgp)
+						new SentenciaDelete(acg)
+					);
+					ej.Ejecutar(
+						new SentenciaInsert(acg)
 						.Select(c,gp,
-						        cgp.cIndiceParcialActual.Es(Fun.Sum(cg.cIndiceParcialActual.Por(gh.cPonderador)).Dividido(Fun.Sum(gh.cPonderador))),
-						        cgp.cIndiceParcialAnterior.Es(Fun.Sum(cg.cIndiceParcialAnterior.Por(gh.cPonderador)).Dividido(Fun.Sum(gh.cPonderador))),
-						        cgp.cImputacionGru.Es(Fun.Min(cg.cImputacionGru)))
+						        acg.cIndiceParcialActual.Es(Fun.Sum(cg.cIndiceParcialActual.Por(gh.cPonderador)).Dividido(Fun.Sum(gh.cPonderador))),
+						        acg.cIndiceParcialAnterior.Es(Fun.Sum(cg.cIndiceParcialAnterior.Por(gh.cPonderador)).Dividido(Fun.Sum(gh.cPonderador))),
+						        acg.cImputacionGru.Es(Fun.Min(cg.cImputacionGru)))
 						.Where(gh.cNivel.Igual(i))
+					);
+					ej.Ejecutar(
+						new SentenciaUpdate(cg,cg.cIndiceParcialActual.Es(acg.cIndiceParcialActual)
+						                    ,cg.cIndiceParcialAnterior.Es(acg.cIndiceParcialAnterior)
+						                    ,cg.cImputacionGru.Es(acg.cImputacionGru))
+						.Where(cg.cImputacionGru.Igual(Imputaciones.B))
 					);
 				}
 				cg0.NoEsFk();
 				cg.EsFkDe(c,cg0);
 				gh.EsFkDe(cg0);
 				cgp.EsFkDe(c,cgp.cGrupo.Es(gh.cGrupoPadre),cg0);
-				var cgne=new CalGru();
-				cgne.EsFkDe(c,cg0);
-				cgne.LiberadaDelContextoDelEjecutador=true;
 				for(int i=1;i<=9;i++){
 					ej.Ejecutar(
-						new SentenciaInsert(cg)
+						new SentenciaDelete(acg)
+					);
+					ej.Ejecutar(
+						new SentenciaInsert(acg)
 						.Select(c,cg0.CamposPk(),
-						        cg.cIndiceParcialActual.Es(cg0.cIndice.Por(cgp.cIndiceParcialActual.Dividido(cgp.cIndiceParcialAnterior))),
-						        cg.cIndiceParcialAnterior.Es(cg0.cIndice),
-						        cg.cImputacionGru.Es(Imputaciones.G)
+						        acg.cIndiceParcialActual.Es(cg0.cIndice.Por(cgp.cIndiceParcialActual.Dividido(cgp.cIndiceParcialAnterior))),
+						        acg.cIndiceParcialAnterior.Es(cg0.cIndice),
+						        acg.cImputacionGru.Es(Imputaciones.G)
 						       )
 						.Where(gh.cNivel.Igual(i),
-						       cgne.NoExiste(),
 						       cg0.cPeriodo.Igual(c.cPeriodoAnterior) // OJO! Esto deber'ia calcularse automaticamente. Pero falta indicarselo arriba en alguna fk
 						      )
-						/*
+					);
+					ej.Ejecutar(
+						new SentenciaUpdate(cg,cg.cIndiceParcialActual.Es(acg.cIndiceParcialActual)
+						                    ,cg.cIndiceParcialAnterior.Es(acg.cIndiceParcialAnterior)
+						                    ,cg.cImputacionGru.Es(acg.cImputacionGru))
+						.Where(cg.cImputacionGru.Igual(Imputaciones.B))
+					);
+					/*
+					ej.ExecuteNonQuery(@"
 INSERT INTO calgru (periodo, calculo, agrupacion, grupo,
  indiceparcialactual, indiceparcialanterior, imputaciongru)
 SELECT x.periodo, x.calculo, x.agrupacion, x.grupo, x.indiceparcialactual, x.indiceparcialanterior, x.imputaciongru
@@ -225,9 +266,12 @@ LEFT JOIN calgru z ON
  AND x.calculo=z.calculo
  AND x.agrupacion=z.agrupacion
  AND x.grupo=z.grupo
-WHERE z.periodo is null
-						 */
-					);
+WHERE z.periodo is null"
+					            .Replace("periodo='a2008m05s3'","periodo="+db.StuffValor(cal.cPeriodo.Valor))
+					            .Replace("calculo=0","calculo="+db.StuffValor(cal.cCalculo.Valor))
+					            .Replace("nivel=2","nivel="+db.StuffValor(i))
+					           );
+					           */
 				}
 				g.EsFkDe(cg);
 				ej.Ejecutar(

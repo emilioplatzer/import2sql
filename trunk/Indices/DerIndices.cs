@@ -177,6 +177,7 @@ namespace Indices
 			Leer(db,p.cPeriodo,p.cCalculo,a.cAgrupacion,a.cAgrupacion);
 		}
 	}
+	public class AuxCalGru:CalGru{}
 	[Alias("ti")]
 	public class TipoInf:Tabla{
 		[Pk] public CampoTipo cTipoInformante;
