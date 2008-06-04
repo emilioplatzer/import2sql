@@ -51,7 +51,7 @@ namespace TodoASql
 				DateTime comenzo=DateTime.Now;
 				Console.WriteLine("Comenzo "+DateTime.Now.ToLongTimeString());
 				// new PruebasInteractivas().ProbarGrilla();
-				new PruebasExternas().GenerarMensual();
+				// new PruebasExternas().GenerarMensual();
 				/*
 				PruebasExternas p=new PruebasExternas();
 				p.ArmarBase();

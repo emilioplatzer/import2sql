@@ -70,6 +70,10 @@ namespace Indices
 			for(int i=0; i<=20; i++){
 				db.ExecuteNonQuery("INSERT INTO numeros (numero) VALUES ("+i.ToString()+");");
 			}
+			using(var ej=new Ejecutador(db)){
+				ej.ExecuteNonQuery("CREATE INDEX calculos_ant_i ON calculos (periodoanterior,calculo)");
+				ej.ExecuteNonQuery("CREATE INDEX grupos_padres_i ON grupos (agrupacion,grupopadre)");
+			}
 		}
 		public override void EliminarTablas(){
 			EliminarTablas(db,this.GetType().Namespace);
@@ -345,7 +349,7 @@ WHERE gr.esproducto='N'
 			}
 		}
 		public void CalcularPreciosPeriodo(Calculos cal,bool ControlarPeriodoAnterior){
-			System.Console.WriteLine("Calculando promedios de precios e imputaciones del periodo "+cal.cPeriodo.Valor);
+			System.Console.WriteLine("Calculando promedios de precios e imputaciones "+cal.cPeriodo.Valor+" "+DateTime.Now.ToLongTimeString());
 			using(Ejecutador ej=new Ejecutador(db,cal)){
 				{
 					Calculos c=new Calculos();
