@@ -40,7 +40,6 @@ namespace Interactivo
 			btnUpdate.Text="Actualizar";
 			AdaptarCambioTamanno();
 			btnUpdate.Click+=new EventHandler(btnUpdateClicked);
-			SizeChanged+=new EventHandler(formSizeChanged);
 			Controls.AddRange(new Control[] { dg, btnUpdate });
 		}
 		public void AdaptarCambioTamanno(){
@@ -70,9 +69,6 @@ namespace Interactivo
 				var da_odbc=da as OdbcDataAdapter;
 				da_odbc.Update(ds,tabla.NombreTabla);
 			}
-		}
-		public void formSizeChanged(object sender, EventArgs e){
-			AdaptarCambioTamanno();
 		}
 	}
 	public class GrillaBaseDatos:Form{

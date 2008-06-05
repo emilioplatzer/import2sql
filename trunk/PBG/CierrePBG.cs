@@ -63,7 +63,9 @@ namespace PBG
 				try{
 					hojaResumen=libro.Hoja(NombreHojaResumen);
 					hojaResumen.Rango("A2:IV65535").Borrar();
+					#pragma warning disable 168
 				}catch(System.Runtime.InteropServices.COMException ex){
+					#pragma warning restore 168
 					haciendo="creando la hoja "+NombreHojaResumen+en;
 					hojaResumen=libro.NuevaHoja(NombreHojaResumen);
 				}
@@ -73,7 +75,9 @@ namespace PBG
 					hojaResultados=libro.Hoja(NombreHojaResultados);
 					hojaResultados.Rango("A2:IV65535").Borrar();
 					lineaResultados=2;
+					#pragma warning disable 168
 				}catch(System.Runtime.InteropServices.COMException ex){
+					#pragma warning restore 168
 					haciendo="creando la hoja "+NombreHojaResultados+en;
 					hojaResultados=libro.NuevaHoja(NombreHojaResultados);
 					lineaResultados=2;

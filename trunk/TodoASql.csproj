@@ -86,6 +86,7 @@
     <Compile Include="Pruebas\PruebasReflexion.cs" />
     <Compile Include="Tareas\ComparacionPadrones.cs" />
     <Compile Include="Tareas\MailASql.cs" />
+    <Compile Include="Tareas\RezonificacionDomiciliaria.cs" />
     <Compile Include="Tareas\SegundoProc.cs" />
     <Compile Include="Tareas\UnProcesamiento.cs" />
   </ItemGroup>
