@@ -17,32 +17,91 @@ using NUnit.Framework;
 
 using System.Runtime.InteropServices;
 
+using Comunes;
+
 namespace Interactivo
 {
-	public class Formulario:Form
-	{
+	public class Formulario:Form{
 		bool camposAgregados=false;
 		Object ObjetoBase;
 		int margen=10;
 		int cursorX;
 		int cursorY;
+		int proximoCursorY;
+		PictureBox pbLogo;
+		Label lblTitulo;
 		public Formulario(){
 			cursorX=10;
 			cursorY=margen;
+		}
+		[EditorBrowsableAttribute()]
+		protected override void OnSizeChanged(EventArgs e){
+			base.OnSizeChanged(e);
+			CambiarTamannoTitulo();
 		}
 		void Agregar(Control c){
 			Controls.Add(c);
 			c.Top=cursorY;
 			c.Left=cursorX;
+			if(c.Bottom+margen>proximoCursorY){
+				proximoCursorY=c.Bottom+margen;
+			}
+		}
+		public void PonerTamannoAplicacion(){
+			Width=600;
+			Height=400;	
+			CambiarTamannoTitulo();
+		}
+		public void AgregarTitulo(string Titulo){
+			this.Text=Titulo;
+			lblTitulo=new Label();
+			lblTitulo.Text=Titulo;
+			lblTitulo.Font=new Font("Arial",40,FontStyle.Bold);
+			lblTitulo.AutoSize=true;
+			lblTitulo.BackColor=Color.Transparent;
+			if(pbLogo==null){
+				lblTitulo.Left=margen;
+			}else{
+				lblTitulo.Left=pbLogo.Right+margen;
+			}
+			lblTitulo.Top=margen;
+			Controls.Add(lblTitulo);
+			CambiarTamannoTitulo();
+		}
+		public void AgregarLogo(Image i,int AlturaMaxima){
+			if(AlturaMaxima>0){
+				// i.Width=i.Width/i.Height*AlturaMaxima;
+				// i.Height=AlturaMaxima;
+			}
+			pbLogo=new PictureBox();
+			pbLogo.Image=i;
+			if(AlturaMaxima>0){
+				pbLogo.Width=pbLogo.Width/pbLogo.Height*AlturaMaxima;
+				pbLogo.Height=AlturaMaxima;
+			}
+			Controls.Add(pbLogo);
+			cursorY=pbLogo.Bottom+margen;
 		}
 		public void AgregarEnLinea(Control c){
 			Agregar(c);
 			cursorX=c.Right+margen;
 		}
-		public void AgregarEnProximaLinea(Control c){
+		public void AgregarGrillado(string valor){
+			var c=new Label();
+			c.Text=valor;
+			c.AutoSize=true;
 			Agregar(c);
+		}
+		public void AgregarGrillado(string valor,Accion accion){
+			var c=new Button();
+			c.Text=valor;
+			c.Click+=delegate(object sender, EventArgs e) { accion(); };
+			AgregarEnLinea(c);
+		}
+		public void ProximaLinea(){
 			cursorX=margen;
-			cursorY=c.Bottom+margen;
+			cursorY=proximoCursorY;
+			proximoCursorY+=margen;
 		}
 		public void AgregarCampos(){
 			if(!camposAgregados){
@@ -91,7 +150,7 @@ namespace Interactivo
 			b.Text="Tomar";
 			b.Left=xtxt;
 			b.Top=y;
-			b.Click+= new EventHandler(EventoBotonTomarDesdeObjeto);
+			b.Click+=new EventHandler(EventoBotonTomarDesdeObjeto);
 			Controls.Add(b);
 		}
 		public void VolverAlObjeto(){
@@ -122,6 +181,18 @@ namespace Interactivo
 				c=c.Parent;
 			}
 			return new System.Drawing.Point(left,top);
+		}
+		public virtual void CambiarTamannoTitulo(){
+			if(lblTitulo!=null){
+				Font f=new Font(lblTitulo.Font.FontFamily,10);
+				lblTitulo.Font=f;
+				if(lblTitulo.Right<this.Right-margen*3){
+					f=new Font(lblTitulo.Font.FontFamily,
+					           (int) (10.0*(this.Right-margen*3-lblTitulo.Left)/lblTitulo.Width)
+					          );
+					lblTitulo.Font=f;
+				}
+			}
 		}
 	}
 	[TestFixture]

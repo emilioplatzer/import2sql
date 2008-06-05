@@ -168,6 +168,7 @@ namespace TodoASql
 					);
 				
 				} // */
+				RezonificacionDomiciliaria.Run();
 				Console.WriteLine("Listo!");
 				Console.WriteLine("Terminó "+DateTime.Now.ToLongTimeString());
 				System.TimeSpan demoro=DateTime.Now-comenzo;

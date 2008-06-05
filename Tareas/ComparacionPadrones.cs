@@ -225,6 +225,50 @@ LANGUAGE plpgsql".Replace("{TABLA}",nombres.NombreTabla)
 			asignacion.UsarFk();
 			Application.Run(new GrillaBaseDatos(db,asignacion.fkResultados,asignacion));
 		}
+		public void InsertarDiccionarioPropuesto(){
+			new Ejecutador(db).EjecutrarSecuencia(
+@"insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','PRIMERO','1');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','UNO','1');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','DOS','2');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','TRES','3');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','CUATRO','4');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','CINCO','5');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','SEIS','6');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','SIETE','7');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','OCHO','8');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','NUEVE','9');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','DIEZ','10');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','ONCE','11');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','DOCE','12');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','TRECE','13');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','CATORCE','14');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','QUINCE','15');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','DIECISEIS','16');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','DIECISIETE','17');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','DIECIOCHO','18');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','DIECINUEVE','19');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','VEINTE','20');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','VEINTIUNO','21');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','VEINTIDOS','22');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','VEINTITRES','23');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','VEINICUATRO','24');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','VEINTICINCO','25');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','VEINTISEIS','26');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','VEINTISIETE','27');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','VEINTIOCHO','28');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','VEINTINUEVE','29');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','TREINTA','30');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','TREINTIUNO','31');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','TREINTIDOS','32');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('NUMERO','TREINTITRES','33');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('HOMONIMOS','SETIEMBRE','SEPTIEMBRE');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('ABREV','PASAJE','PJE');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('ABREV','AVENIDA','AV');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('ABREV','PRESIDENTE','PRES');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('ABREV','DOCTOR','DR');
+insert into tmp_cp_diccionario (lote,palabra,palabraNormalizada) values ('ABREV','CORONOEL','CNEL');"
+			);
+		}
 	}
 	[TestFixture]
 	public class PrComparacionPadrones{

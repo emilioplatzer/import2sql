@@ -388,6 +388,7 @@ WHERE gr.esproducto='N'
 						.Where(rv.cPrecio.Mayor(Constante<double>.Cero));
 					cei.EsFkDe(ceiss);
 					*/
+					#pragma warning disable 162
 					if("metodo directo"=="ahora no"){
 						RelVar rv2=new RelVar();
 						rv2.Alias="rv2";
@@ -396,6 +397,7 @@ WHERE gr.esproducto='N'
 							new SentenciaUpdate(cei,cei.cPromedioEspInf.Es(cei.SelectPromedioGeometrico(rv2.cPrecio))
 						                           ,cei.cImputacionEspInf.Es(Imputaciones.R))
 						);
+						#pragma warning restore 162
 					}else{
 						CalEspInfTemp ceit=new CalEspInfTemp();
 						ej.Ejecutar(
