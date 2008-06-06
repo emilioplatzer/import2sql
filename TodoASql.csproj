@@ -18,7 +18,7 @@
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <DefineConstants>DEBUG;TRACE;SinPostgre;Semanal</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;</DefineConstants>
     <StartAction>Project</StartAction>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -70,6 +70,7 @@
     <Compile Include="Indices\CVP.cs" />
     <Compile Include="Indices\DerIndices.cs" />
     <Compile Include="Indices\Indice.cs" />
+    <Compile Include="Interactivo\FormLogin.cs" />
     <Compile Include="Interactivo\Formulario.cs" />
     <Compile Include="Interactivo\GrillaBaseDatos.cs" />
     <Compile Include="Interactivo\PruebaFormularios.cs" />

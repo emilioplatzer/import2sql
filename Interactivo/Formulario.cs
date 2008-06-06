@@ -21,6 +21,17 @@ using Comunes;
 
 namespace Interactivo
 {
+	public class TipoControl:System.Attribute{
+		public TipoControl(){
+		}
+		public virtual void Adaptar(TextBox t){			
+		}
+	}
+	public class TipoClave:TipoControl{
+		public override void Adaptar(TextBox t){
+			t.PasswordChar='*';
+		}
+	}
 	public class Formulario:Form{
 		bool camposAgregados=false;
 		Object ObjetoBase;
@@ -30,6 +41,7 @@ namespace Interactivo
 		int proximoCursorY;
 		PictureBox pbLogo;
 		Label lblTitulo;
+		public Button btnTomar;
 		public Formulario(){
 			cursorX=10;
 			cursorY=margen;
@@ -90,6 +102,7 @@ namespace Interactivo
 			var c=new Label();
 			c.Text=valor;
 			c.AutoSize=true;
+			c.BackColor=Color.Bisque;
 			Agregar(c);
 		}
 		public void AgregarGrillado(string valor,Accion accion){
@@ -137,6 +150,12 @@ namespace Interactivo
 					l.Top=y;
 					Controls.Add(l);
 					TextBox t=new TextBox();
+					foreach(var att in f.GetCustomAttributes(typeof(TipoControl),true)){
+						//if(att.GetType().IsSubclassOf(TipoControl)){
+							var tipocontrol=att as TipoControl;
+							tipocontrol.Adaptar(t);
+						//}
+					}
 					t.Name="txt_"+f.Name;
 					t.Text=objetoValor;
 					t.Left=xtxt;
@@ -145,13 +164,13 @@ namespace Interactivo
 					y+=l.Height*5/4;
 				}
 			}
-			Button b=new Button();
-			b.Name="btn_Enter";
-			b.Text="Tomar";
-			b.Left=xtxt;
-			b.Top=y;
-			b.Click+=new EventHandler(EventoBotonTomarDesdeObjeto);
-			Controls.Add(b);
+			btnTomar=new Button();
+			btnTomar.Name="btn_Enter";
+			btnTomar.Text="Tomar";
+			btnTomar.Left=xtxt;
+			btnTomar.Top=y;
+			btnTomar.Click+=new EventHandler(EventoBotonTomarDesdeObjeto);
+			Controls.Add(btnTomar);
 		}
 		public void VolverAlObjeto(){
 			Assert.IsNotNull(ObjetoBase);
@@ -167,10 +186,14 @@ namespace Interactivo
 				}
 			}
 		}
+		public virtual bool Validar(){
+			return true;
+		}
 		private void EventoBotonTomarDesdeObjeto(object sender, System.EventArgs e){
 			VolverAlObjeto();
-			System.Console.WriteLine("par.Frase "+ObjetoBase.ToString());
-			Close();
+			if(Validar()){
+				Close();
+			}
 		}
 		public static System.Drawing.Point CoordenadasVentana(Control c){
 			int left=0;
@@ -188,7 +211,7 @@ namespace Interactivo
 				lblTitulo.Font=f;
 				if(lblTitulo.Right<this.Right-margen*3){
 					f=new Font(lblTitulo.Font.FontFamily,
-					           (int) (10.0*(this.Right-margen*3-lblTitulo.Left)/lblTitulo.Width)
+					           (int) (10.0*(this.Right-margen*5-lblTitulo.Left)/lblTitulo.Width)
 					          );
 					lblTitulo.Font=f;
 				}
