@@ -20,6 +20,7 @@ namespace Tareas
 	public class RezonificacionDomiciliaria:Formulario{
 		public RezonificacionDomiciliaria(){
 			Dibujar();
+			new FormLogin();
 		}
 		public void AgregarOpcion(string titulo, Accion accion, Accion ver, string explicacion){
 			AgregarGrillado(titulo,accion);
